@@ -38,6 +38,7 @@ export default function POSView({
     await onRegisterProduct({
       barcode: unregisteredBarcode,
       name: newProdName.trim(),
+      costPrice: 0,
       price: parseFloat(newProdPrice) || 0,
       stock: parseInt(newProdStock, 10) || 0,
       active: true,

@@ -96,6 +96,7 @@ export namespace main {
 	    id: number;
 	    barcode: string;
 	    name: string;
+	    costPrice: number;
 	    price: number;
 	    stock: number;
 	    weight: number;
@@ -114,6 +115,7 @@ export namespace main {
 	        this.id = source["id"];
 	        this.barcode = source["barcode"];
 	        this.name = source["name"];
+	        this.costPrice = source["costPrice"];
 	        this.price = source["price"];
 	        this.stock = source["stock"];
 	        this.weight = source["weight"];

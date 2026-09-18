@@ -83,6 +83,9 @@ func TestAutoMigrationFromLegacySchema(t *testing.T) {
 	if prod.UnitOfMeasure != "und" {
 		t.Errorf("expected default unit 'und', got %s", prod.UnitOfMeasure)
 	}
+	if prod.CostPrice != 0.0 {
+		t.Errorf("expected default cost price 0.0, got %f", prod.CostPrice)
+	}
 	if !prod.Active {
 		t.Errorf("expected migrated product to be active")
 	}
@@ -95,6 +98,7 @@ func TestSaveAndGetProductExpanded(t *testing.T) {
 	prod := Product{
 		Barcode:       "7701234567890",
 		Name:          "Leche Entera 1L",
+		CostPrice:     2800.0,
 		Price:         3500.50,
 		Stock:         20,
 		Weight:        1.0,
@@ -116,12 +120,13 @@ func TestSaveAndGetProductExpanded(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error retrieving product: %v", err)
 	}
-	if saved.Weight != 1.0 || saved.UnitOfMeasure != "l" || saved.Location != "Pasillo 2, Estante B" {
+	if saved.CostPrice != 2800.0 || saved.Weight != 1.0 || saved.UnitOfMeasure != "l" || saved.Location != "Pasillo 2, Estante B" {
 		t.Errorf("mismatch in saved expanded properties: %+v", saved)
 	}
 
 	// 3. Update existing product by ID
 	saved.Name = "Leche Deslactosada 1L"
+	saved.CostPrice = 2950.0
 	saved.Price = 3800.0
 	saved.Location = "Pasillo 2, Estante C"
 	err = saveOrUpdateProduct(db, *saved)
@@ -133,7 +138,7 @@ func TestSaveAndGetProductExpanded(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error retrieving updated product: %v", err)
 	}
-	if updated.Name != "Leche Deslactosada 1L" || updated.Location != "Pasillo 2, Estante C" {
+	if updated.Name != "Leche Deslactosada 1L" || updated.CostPrice != 2950.0 || updated.Location != "Pasillo 2, Estante C" {
 		t.Errorf("mismatch in updated product: %+v", updated)
 	}
 }

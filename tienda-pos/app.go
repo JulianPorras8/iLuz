@@ -212,10 +212,11 @@ func (a *App) ExportInventoryCSV() (string, error) {
 	headers := []string{
 		"Código",
 		"Nombre",
-		"Precio",
+		"Precio Costo",
+		"Precio Venta",
 		"Stock",
 		"Unidad",
-		"Peso",
+		"Contenido / Peso",
 		"Tamaño",
 		"Color",
 		"Ubicación",
@@ -234,6 +235,7 @@ func (a *App) ExportInventoryCSV() (string, error) {
 		row := []string{
 			p.Barcode,
 			p.Name,
+			fmt.Sprintf("%.2f", p.CostPrice),
 			fmt.Sprintf("%.2f", p.Price),
 			strconv.Itoa(p.Stock),
 			p.UnitOfMeasure,

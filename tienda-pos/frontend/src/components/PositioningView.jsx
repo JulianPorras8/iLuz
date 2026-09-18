@@ -83,9 +83,9 @@ export default function PositioningView({
                 </div>
               </div>
               <div>
-                <span style={{ color: '#64748b', fontSize: '11px' }}>PESO</span>
+                <span style={{ color: '#64748b', fontSize: '11px' }}>CONTENIDO / PESO</span>
                 <div style={{ fontSize: '14px', fontWeight: 600 }}>
-                  {activeProduct.weight > 0 ? `${activeProduct.weight} kg` : 'N/A'}
+                  {activeProduct.weight > 0 ? `${activeProduct.weight} ${activeProduct.unitOfMeasure || ''}`.trim() : 'N/A'}
                 </div>
               </div>
             </div>

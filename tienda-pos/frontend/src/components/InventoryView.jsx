@@ -85,10 +85,11 @@ export default function InventoryView({
               <tr>
                 <th>CÓDIGO</th>
                 <th>DESCRIPCIÓN</th>
-                <th>PRECIO</th>
+                <th>P. COSTO</th>
+                <th>P. VENTA</th>
                 <th>STOCK</th>
                 <th>UNIDAD</th>
-                <th>PESO</th>
+                <th>CANT. / PESO</th>
                 <th>TAMAÑO</th>
                 <th>COLOR</th>
                 <th>UBICACIÓN</th>
@@ -99,7 +100,7 @@ export default function InventoryView({
             <tbody>
               {filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan="11" style={{ textAlign: 'center', color: '#94a3b8', padding: '40px' }}>
+                  <td colSpan="12" style={{ textAlign: 'center', color: '#94a3b8', padding: '40px' }}>
                     No se encontraron productos con los filtros actuales.
                   </td>
                 </tr>
@@ -110,12 +111,15 @@ export default function InventoryView({
                       {p.barcode}
                     </td>
                     <td style={{ fontWeight: 600 }}>{p.name}</td>
-                    <td>${(p.price || 0).toFixed(2)}</td>
+                    <td style={{ color: p.costPrice > 0 ? '#475569' : '#94a3b8' }}>
+                      {p.costPrice > 0 ? `$${p.costPrice.toFixed(2)}` : '-'}
+                    </td>
+                    <td style={{ fontWeight: 600 }}>${(p.price || 0).toFixed(2)}</td>
                     <td style={{ fontWeight: 700 }}>{p.stock}</td>
                     <td>
                       <span style={{ color: '#64748b' }}>{p.unitOfMeasure || 'und'}</span>
                     </td>
-                    <td>{p.weight > 0 ? p.weight : '-'}</td>
+                    <td>{p.weight > 0 ? `${p.weight} ${p.unitOfMeasure || ''}`.trim() : '-'}</td>
                     <td>{p.size || '-'}</td>
                     <td>{p.color || '-'}</td>
                     <td>

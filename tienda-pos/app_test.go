@@ -187,8 +187,8 @@ func TestAppExtendedModulesAndCSVExport(t *testing.T) {
 		t.Errorf("expected CSV to start with UTF-8 BOM")
 	}
 
-	// Must contain standard header
-	if !strings.Contains(csvContent, "Código,Nombre,Precio,Stock,Unidad,Peso,Tamaño,Color,Ubicación,Estado") {
+	// Must contain standard header with Precio Costo and Contenido / Peso
+	if !strings.Contains(csvContent, "Código,Nombre,Precio Costo,Precio Venta,Stock,Unidad,Contenido / Peso,Tamaño,Color,Ubicación,Estado") {
 		t.Errorf("CSV header missing or formatted incorrectly:\n%s", csvContent)
 	}
 

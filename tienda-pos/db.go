@@ -16,6 +16,7 @@ type Product struct {
 	ID            int64   `json:"id"`
 	Barcode       string  `json:"barcode"`
 	Name          string  `json:"name"`
+	CostPrice     float64 `json:"costPrice"`
 	Price         float64 `json:"price"`
 	Stock         int     `json:"stock"`
 	Weight        float64 `json:"weight"`
@@ -102,6 +103,7 @@ func initDB(filepath string) *sql.DB {
 		id              INTEGER PRIMARY KEY AUTOINCREMENT,
 		barcode         TEXT UNIQUE NOT NULL,
 		name            TEXT NOT NULL,
+		cost_price      REAL NOT NULL DEFAULT 0.0,
 		price           REAL NOT NULL DEFAULT 0.0,
 		stock           INTEGER NOT NULL DEFAULT 0,
 		weight          REAL NOT NULL DEFAULT 0.0,
@@ -203,6 +205,7 @@ func migrateProductsTable(db *sql.DB) {
 	}
 
 	columnsToAdd := map[string]string{
+		"cost_price":      "REAL NOT NULL DEFAULT 0.0",
 		"weight":          "REAL NOT NULL DEFAULT 0.0",
 		"size":            "TEXT NOT NULL DEFAULT ''",
 		"unit_of_measure": "TEXT NOT NULL DEFAULT 'und'",
@@ -245,7 +248,7 @@ func generateInternalSKU(db *sql.DB) (string, error) {
 
 func getProductByBarcode(db *sql.DB, barcode string) (*Product, error) {
 	query := `
-	SELECT id, barcode, name, price, stock, weight, size, unit_of_measure, color, location, active
+	SELECT id, barcode, name, cost_price, price, stock, weight, size, unit_of_measure, color, location, active
 	FROM products
 	WHERE barcode = ?
 	LIMIT 1`
@@ -257,6 +260,7 @@ func getProductByBarcode(db *sql.DB, barcode string) (*Product, error) {
 		&p.ID,
 		&p.Barcode,
 		&p.Name,
+		&p.CostPrice,
 		&p.Price,
 		&p.Stock,
 		&p.Weight,
@@ -305,6 +309,7 @@ func saveOrUpdateProduct(db *sql.DB, p Product) error {
 		UPDATE products SET
 			barcode = ?,
 			name = ?,
+			cost_price = ?,
 			price = ?,
 			stock = ?,
 			weight = ?,
@@ -319,6 +324,7 @@ func saveOrUpdateProduct(db *sql.DB, p Product) error {
 			query,
 			p.Barcode,
 			p.Name,
+			p.CostPrice,
 			p.Price,
 			stockToSet,
 			p.Weight,
@@ -339,10 +345,11 @@ func saveOrUpdateProduct(db *sql.DB, p Product) error {
 	}
 
 	query := `
-	INSERT INTO products (barcode, name, price, stock, weight, size, unit_of_measure, color, location, active)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	INSERT INTO products (barcode, name, cost_price, price, stock, weight, size, unit_of_measure, color, location, active)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	ON CONFLICT(barcode) DO UPDATE SET
 		name = excluded.name,
+		cost_price = excluded.cost_price,
 		price = excluded.price,
 		stock = excluded.stock,
 		weight = excluded.weight,
@@ -356,6 +363,7 @@ func saveOrUpdateProduct(db *sql.DB, p Product) error {
 		query,
 		p.Barcode,
 		p.Name,
+		p.CostPrice,
 		p.Price,
 		p.Stock,
 		p.Weight,
@@ -405,7 +413,7 @@ func restoreProduct(db *sql.DB, barcode string) error {
 
 func listAllProducts(db *sql.DB) ([]Product, error) {
 	rows, err := db.Query(`
-		SELECT id, barcode, name, price, stock, weight, size, unit_of_measure, color, location, active
+		SELECT id, barcode, name, cost_price, price, stock, weight, size, unit_of_measure, color, location, active
 		FROM products
 		WHERE active = 1
 		ORDER BY name ASC
@@ -420,7 +428,7 @@ func listAllProducts(db *sql.DB) ([]Product, error) {
 
 func listInventoryProducts(db *sql.DB, includeArchived bool) ([]Product, error) {
 	query := `
-		SELECT id, barcode, name, price, stock, weight, size, unit_of_measure, color, location, active
+		SELECT id, barcode, name, cost_price, price, stock, weight, size, unit_of_measure, color, location, active
 		FROM products
 	`
 	if !includeArchived {
@@ -440,7 +448,7 @@ func listInventoryProducts(db *sql.DB, includeArchived bool) ([]Product, error) 
 func searchProducts(db *sql.DB, search string) ([]Product, error) {
 	term := "%" + strings.TrimSpace(search) + "%"
 	rows, err := db.Query(`
-		SELECT id, barcode, name, price, stock, weight, size, unit_of_measure, color, location, active
+		SELECT id, barcode, name, cost_price, price, stock, weight, size, unit_of_measure, color, location, active
 		FROM products
 		WHERE active = 1 AND (barcode LIKE ? OR name LIKE ? OR location LIKE ?)
 		ORDER BY name ASC
@@ -463,6 +471,7 @@ func scanProductRows(rows *sql.Rows) ([]Product, error) {
 			&p.ID,
 			&p.Barcode,
 			&p.Name,
+			&p.CostPrice,
 			&p.Price,
 			&p.Stock,
 			&p.Weight,
