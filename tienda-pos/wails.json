@@ -1,0 +1,19 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "iluz",
+  "outputfilename": "iLuz",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "iLuz"
+  },
+  "info": {
+    "companyName": "iLuz",
+    "productName": "iLuz",
+    "productVersion": "1.0.0",
+    "copyright": "Copyright 2026",
+    "comments": "iLuz - Sistema de Punto de Venta y Control de Inventario"
+  }
+}

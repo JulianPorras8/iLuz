@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tienda POS & Control de Inventario</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: #f1f5f9; color: #0f172a; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+    
+    /* Header & Navigation */
+    header { background-color: #1e293b; color: #fff; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-shrink: 0; }
+    .header-left { display: flex; align-items: center; gap: 20px; }
+    .brand-title { font-size: 18px; font-weight: 800; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
+    
+    .nav-tabs { display: flex; gap: 6px; }
+    .nav-tab { background: transparent; color: #94a3b8; border: 1px solid transparent; padding: 7px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; }
+    .nav-tab:hover { background: #334155; color: #fff; }
+    .nav-tab.active { background: #2563eb; color: #fff; border-color: #3b82f6; }
+
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .search-box-container { position: relative; width: 260px; }
+    .quick-input { width: 100%; padding: 6px 12px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; font-size: 13px; }
+    .quick-input:focus { outline: 2px solid #38bdf8; border-color: transparent; }
+    .search-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: #1e293b; border: 1px solid #475569; border-radius: 6px; margin-top: 4px; z-index: 1000; max-height: 220px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: none; }
+    .search-dropdown-item { padding: 8px 12px; font-size: 13px; cursor: pointer; border-bottom: 1px solid #334155; color: #f8fafc; }
+    .search-dropdown-item:hover { background: #334155; color: #38bdf8; }
+
+    .port-controls { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+    .port-select { padding: 5px 8px; border-radius: 6px; background: #334155; color: #fff; border: 1px solid #475569; font-size: 13px; cursor: pointer; }
+    .btn-icon { padding: 5px 8px; border-radius: 6px; background: #334155; color: #fff; border: 1px solid #475569; cursor: pointer; font-size: 12px; }
+    .btn-icon:hover { background: #475569; }
+    .badge { padding: 5px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: help; user-select: none; }
+    .badge-off { background-color: #ef4444; color: #fff; }
+    .badge-on { background-color: #10b981; color: #fff; }
+
+    /* Views Layout */
+    .view-content { flex: 1; display: none; overflow: hidden; padding: 18px; }
+    .view-content.active { display: flex; flex-direction: column; }
+
+    /* POS View */
+    .pos-grid { flex: 1; display: grid; grid-template-columns: 2fr 1fr; gap: 20px; overflow: hidden; }
+    .panel { background: #fff; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; padding: 16px; overflow: hidden; }
+    .panel-title { font-size: 15px; font-weight: 700; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .table-container { flex: 1; overflow-y: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { padding: 9px 8px; font-size: 12px; color: #64748b; border-bottom: 1px solid #cbd5e1; background: #fafafa; position: sticky; top: 0; z-index: 10; }
+    td { padding: 10px 8px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+    tr:hover td { background-color: #f8fafc; }
+    .footer-total { display: flex; justify-content: space-between; align-items: center; border-top: 2px solid #e2e8f0; padding-top: 14px; margin-top: 10px; }
+    .total-price { font-size: 28px; font-weight: 800; color: #059669; }
+    
+    .btn { padding: 7px 14px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-primary { background-color: #2563eb; color: #fff; }
+    .btn-primary:hover { background-color: #1d4ed8; }
+    .btn-success { background-color: #059669; color: #fff; }
+    .btn-success:hover { background-color: #047857; }
+    .btn-clear { background-color: #e2e8f0; color: #334155; }
+    .btn-clear:hover { background-color: #cbd5e1; }
+    .btn-danger { background-color: #ef4444; color: #fff; }
+    .btn-danger:hover { background-color: #dc2626; }
+    .btn-sm { padding: 4px 8px; font-size: 11px; }
+
+    .card-active { border: 2px dashed #cbd5e1; border-radius: 8px; padding: 20px; text-align: center; background: #fafafa; }
+    .card-active h3 { font-size: 20px; margin: 8px 0; }
+    .card-price { font-size: 30px; font-weight: 800; color: #1e293b; }
+    .form-group { margin-bottom: 10px; }
+    .form-group label { display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px; }
+    .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .hidden { display: none !important; }
+
+    /* Positioning View */
+    .pos-layout { flex: 1; display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px; overflow: hidden; }
+    .loc-badge-large { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 8px; font-size: 18px; font-weight: 800; margin: 12px 0; }
+    .loc-badge-active { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+    .loc-badge-empty { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+
+    /* Inventory Toolbar & Modals */
+    .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; flex-shrink: 0; }
+    .toolbar-left { display: flex; align-items: center; gap: 10px; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); display: flex; justify-content: center; align-items: center; z-index: 2000; }
+    .modal-card { background: #fff; width: 620px; max-width: 90vw; max-height: 90vh; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); display: flex; flex-direction: column; overflow: hidden; }
+    .modal-header { padding: 14px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { padding: 20px; overflow-y: auto; }
+    .modal-footer { padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px; }
+    
+    .status-pill { padding: 3px 8px; border-radius: 9999px; font-size: 11px; font-weight: 700; display: inline-block; }
+    .status-pill-active { background: #dcfce7; color: #166534; }
+    .status-pill-archived { background: #fee2e2; color: #991b1b; }
+    .toast { position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: #fff; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.3); z-index: 3000; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: opacity 0.3s; }
+  </style>
+</head>
+<body>
+
+  <!-- Main Top Header -->
+  <header>
+    <div class="header-left">
+      <div class="brand-title">
+        <span>⚡ Tienda POS</span>
+      </div>
+
+      <nav class="nav-tabs">
+        <button class="nav-tab active" data-tab="pos" id="tab-btn-pos">🛒 Caja / POS</button>
+        <button class="nav-tab" data-tab="positioning" id="tab-btn-positioning">📍 Posicionamiento</button>
+        <button class="nav-tab" data-tab="inventory" id="tab-btn-inventory">📦 Inventario</button>
+        <button class="nav-tab" data-tab="locations" id="tab-btn-locations">🏷️ Locaciones</button>
+      </nav>
+    </div>
+
+    <div class="header-right">
+      <div class="search-box-container">
+        <input 
+          type="text" 
+          id="quick-barcode" 
+          class="quick-input" 
+          placeholder="🔍 Buscar nombre o código..." 
+          title="Escanea un código o escribe el nombre para buscar"
+          autocomplete="off"
+        />
+        <div id="quick-search-results" class="search-dropdown"></div>
+      </div>
+
+      <div class="port-controls">
+        <select id="port-select" class="port-select" title="Seleccionar puerto COM del escáner">
+          <option value="">Buscando...</option>
+        </select>
+        <button id="btn-refresh-ports" class="btn-icon" title="Refrescar puertos COM">🔄</button>
+      </div>
+
+      <div id="status-badge" class="badge badge-off" title="Esperando estado del escáner...">
+        <span id="status-text">Buscando Orbit...</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- VIEW 1: POS / CAJA -->
+  <main id="view-pos" class="view-content active">
+    <div class="pos-grid">
+      <section class="panel">
+        <div class="panel-title">
+          <span>Lista de Venta Actual</span>
+          <span style="font-size: 12px; color: #64748b;" id="cart-item-count">0 artículos</span>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>CÓDIGO</th>
+                <th>DESCRIPCIÓN</th>
+                <th>PRECIO</th>
+                <th>CANT.</th>
+                <th>SUBTOTAL</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="cart-rows"></tbody>
+          </table>
+        </div>
+        <div class="footer-total">
+          <button class="btn btn-clear" id="btn-clear-cart">Limpiar Venta</button>
+          <div>
+            <span style="font-size: 14px; color: #64748b;">Total a Cobrar:</span>
+            <span class="total-price" id="total-val">$0.00</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">Último Producto Escaneado</div>
+        <div id="active-card" class="card-active">
+          <p style="color: #94a3b8;">Pasa un producto frente al lector o busca por nombre arriba...</p>
+        </div>
+
+        <form id="pos-register-form" class="hidden" style="margin-top: 14px;">
+          <div class="form-group">
+            <label>Código de Barras</label>
+            <input type="text" id="pos-np-barcode" readonly style="background: #f1f5f9; font-family: monospace;" />
+          </div>
+          <div class="form-group">
+            <label>Nombre del Producto</label>
+            <input type="text" id="pos-np-name" required placeholder="Ej: Arroz Diana 500g" />
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Precio</label>
+              <input type="number" id="pos-np-price" step="0.01" required placeholder="0.00" />
+            </div>
+            <div class="form-group">
+              <label>Stock Inicial</label>
+              <input type="number" id="pos-np-stock" required value="10" />
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 4px;">Guardar e Ingresar a Venta</button>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <!-- VIEW 2: POSICIONAMIENTO DE ARTICULOS -->
+  <main id="view-positioning" class="view-content">
+    <div class="pos-layout">
+      <!-- Scanned Item Card -->
+      <section class="panel">
+        <div class="panel-title">Detalle del Artículo</div>
+        <div id="pos-item-details" style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: #94a3b8;">
+          <p style="font-size: 16px;">Escanea un código de barras para ver y reubicar su posición física.</p>
+        </div>
+      </section>
+
+      <!-- Location Re-assignment Card -->
+      <section class="panel">
+        <div class="panel-title">Asignación de Posición Física</div>
+        
+        <div id="relocation-controls" class="hidden" style="flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="font-size: 13px; color: #64748b;">Posición actual registrada:</div>
+            <div id="current-loc-badge" class="loc-badge-large loc-badge-empty">Sin posición</div>
+
+            <div class="form-group" style="margin-top: 14px;">
+              <label>Seleccionar de Locaciones Predefinidas:</label>
+              <select id="pos-select-location" class="form-control">
+                <option value="">-- Elige una locación --</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>O digitar Posición / Código Personalizado:</label>
+              <input type="text" id="pos-custom-location" placeholder="Ej: Pasillo 2 - Estante C - Nivel 1" />
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 8px; margin-top: 20px;">
+            <button class="btn btn-success" id="btn-save-position" style="flex: 1;">💾 Guardar Nueva Posición</button>
+            <button class="btn btn-clear" id="btn-clear-position">Quitar Posición</button>
+          </div>
+        </div>
+
+        <div id="relocation-empty-prompt" style="flex: 1; display: flex; justify-content: center; align-items: center; color: #94a3b8; text-align: center;">
+          <p>Primero escanea un producto a la izquierda para habilitar la reubicación.</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- VIEW 3: INVENTARIO (CRUD) -->
+  <main id="view-inventory" class="view-content">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <input type="text" id="inv-filter-search" class="quick-input" placeholder="🔍 Filtrar por nombre, código o ubicación..." style="width: 320px; background: #fff; color: #0f172a; border-color: #cbd5e1;" />
+        <select id="inv-filter-status" class="port-select" style="background: #fff; color: #0f172a; border-color: #cbd5e1;">
+          <option value="active">Activos</option>
+          <option value="all">Todos (Activos + Archivados)</option>
+        </select>
+        <span id="inv-counter" style="font-size: 13px; color: #64748b; font-weight: 600;">0 productos</span>
+      </div>
+
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-primary" id="btn-open-new-product">➕ Nuevo Producto</button>
+        <button class="btn btn-success" id="btn-export-csv" title="Descargar todo el inventario en formato CSV con acentos compatibles en Excel">📥 Exportar CSV</button>
+      </div>
+    </div>
+
+    <div class="panel" style="flex: 1; padding: 0;">
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>CÓDIGO</th>
+              <th>DESCRIPCIÓN</th>
+              <th>PRECIO</th>
+              <th>STOCK</th>
+              <th>UNIDAD</th>
+              <th>PESO</th>
+              <th>TAMAÑO</th>
+              <th>COLOR</th>
+              <th>UBICACIÓN</th>
+              <th>ESTADO</th>
+              <th style="text-align: right;">ACCIONES</th>
+            </tr>
+          </thead>
+          <tbody id="inventory-rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- VIEW 4: LOCACIONES CATALOG -->
+  <main id="view-locations" class="view-content">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <h3 style="font-size: 16px;">Catálogo de Pasillos, Estantes y Zonas</h3>
+        <span id="loc-counter" style="font-size: 13px; color: #64748b; font-weight: 600;">0 locaciones</span>
+      </div>
+
+      <button class="btn btn-primary" id="btn-open-new-location">➕ Nueva Locación</button>
+    </div>
+
+    <div class="panel" style="flex: 1; padding: 0;">
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 180px;">CÓDIGO</th>
+              <th style="width: 250px;">NOMBRE</th>
+              <th>DESCRIPCIÓN</th>
+              <th style="width: 140px; text-align: right;">ACCIONES</th>
+            </tr>
+          </thead>
+          <tbody id="locations-rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL: PRODUCTO (NUEVO / EDITAR) -->
+  <div id="modal-product" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-product-title" style="font-size: 16px;">Nuevo Producto</h3>
+        <button class="btn-icon" id="btn-close-product-modal" style="background: transparent; border: none; font-size: 18px; color: #64748b;">✕</button>
+      </div>
+      <form id="form-product">
+        <input type="hidden" id="prod-id" value="0" />
+        <div class="modal-body">
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Código de Barras (Opcional):</label>
+              <input type="text" id="prod-barcode" placeholder="Dejar vacío para generar INT-XXXXXX" style="font-family: monospace;" />
+              <small style="color: #64748b; font-size: 11px;">Si no tiene código físico, se autogenerará uno interno.</small>
+            </div>
+            <div class="form-group">
+              <label>Nombre del Producto (*):</label>
+              <input type="text" id="prod-name" required placeholder="Ej: Café Juan Valdez 500g" />
+            </div>
+          </div>
+
+          <div class="grid-3">
+            <div class="form-group">
+              <label>Precio de Venta (*):</label>
+              <input type="number" id="prod-price" step="0.01" min="0" required placeholder="0.00" />
+            </div>
+            <div class="form-group">
+              <label>Stock Actual (*):</label>
+              <input type="number" id="prod-stock" min="0" required value="0" />
+            </div>
+            <div class="form-group">
+              <label>Unidad de Medida:</label>
+              <select id="prod-unit">
+                <option value="und">und (Unidad)</option>
+                <option value="kg">kg (Kilogramo)</option>
+                <option value="g">g (Gramo)</option>
+                <option value="l">l (Litro)</option>
+                <option value="ml">ml (Mililitro)</option>
+                <option value="lb">lb (Libra)</option>
+                <option value="paquete">paquete</option>
+                <option value="caja">caja</option>
+                <option value="metro">metro</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid-3">
+            <div class="form-group">
+              <label>Peso (kg/lb):</label>
+              <input type="number" id="prod-weight" step="0.01" min="0" placeholder="0.00" />
+            </div>
+            <div class="form-group">
+              <label>Tamaño / Medida:</label>
+              <input type="text" id="prod-size" placeholder="Ej: Grande, 500ml, 30x20cm" />
+            </div>
+            <div class="form-group">
+              <label>Color:</label>
+              <input type="text" id="prod-color" placeholder="Ej: Rojo, Azul, Blanco" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Ubicación / Posición Física:</label>
+            <div class="grid-2">
+              <select id="prod-location-select">
+                <option value="">-- Seleccionar locación --</option>
+              </select>
+              <input type="text" id="prod-location-custom" placeholder="O escribir ubicación libre..." />
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 10px; display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="prod-active" checked style="width: auto;" />
+            <label for="prod-active" style="margin: 0; cursor: pointer;">Producto activo (disponible en punto de venta)</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-clear" id="btn-cancel-product">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Producto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: LOCACION -->
+  <div id="modal-location" class="modal-overlay hidden">
+    <div class="modal-card" style="width: 480px;">
+      <div class="modal-header">
+        <h3 id="modal-loc-title" style="font-size: 16px;">Nueva Locación</h3>
+        <button class="btn-icon" id="btn-close-loc-modal" style="background: transparent; border: none; font-size: 18px; color: #64748b;">✕</button>
+      </div>
+      <form id="form-location">
+        <input type="hidden" id="loc-id" value="0" />
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Código de Locación (*):</label>
+            <input type="text" id="loc-code" required placeholder="Ej: PAS-01, EST-B2, BODEGA-A" style="font-family: monospace; text-transform: uppercase;" />
+          </div>
+          <div class="form-group">
+            <label>Nombre de la Locación (*):</label>
+            <input type="text" id="loc-name" required placeholder="Ej: Pasillo 1 - Lácteos y Huevos" />
+          </div>
+          <div class="form-group">
+            <label>Descripción / Observaciones:</label>
+            <textarea id="loc-desc" rows="3" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px;" placeholder="Detalles de acceso, altura o tipo de mercancía"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-clear" id="btn-cancel-loc">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Locación</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Feedback -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script>
+    // Global Application State
+    let currentTab = 'pos';
+    let cart = [];
+    let activePositioningProduct = null;
+    let locationsCache = [];
+    let inventoryCache = [];
+
+    function showToast(message, duration = 3000) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.remove("hidden");
+      setTimeout(() => toast.classList.add("hidden"), duration);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // DOM Elements
+      const badge = document.getElementById("status-badge");
+      const badgeText = document.getElementById("status-text");
+      const portSelect = document.getElementById("port-select");
+      const btnRefreshPorts = document.getElementById("btn-refresh-ports");
+      const quickInput = document.getElementById("quick-barcode");
+      const quickDropdown = document.getElementById("quick-search-results");
+
+      // Tab Switching
+      document.querySelectorAll(".nav-tab").forEach(tab => {
+        tab.addEventListener("click", () => {
+          const target = tab.getAttribute("data-tab");
+          switchTab(target);
+        });
+      });
+
+      function switchTab(tabName) {
+        currentTab = tabName;
+        document.querySelectorAll(".nav-tab").forEach(t => t.classList.toggle("active", t.getAttribute("data-tab") === tabName));
+        document.querySelectorAll(".view-content").forEach(v => v.classList.toggle("active", v.id === `view-${tabName}`));
+
+        if (tabName === 'inventory') {
+          loadInventoryTable();
+        } else if (tabName === 'locations') {
+          loadLocationsTable();
+        } else if (tabName === 'positioning') {
+          syncLocationDropdowns();
+        }
+      }
+
+      // --- Port and Scanner Status Handling ---
+      function updatePortDropdown(availablePorts, currentPort) {
+        portSelect.innerHTML = "";
+        if (!availablePorts || availablePorts.length === 0) {
+          const opt = document.createElement("option");
+          opt.value = "";
+          opt.textContent = "Sin puertos COM";
+          portSelect.appendChild(opt);
+          return;
+        }
+
+        availablePorts.forEach((p) => {
+          const opt = document.createElement("option");
+          opt.value = p;
+          opt.textContent = p;
+          if (p === currentPort) opt.selected = true;
+          portSelect.appendChild(opt);
+        });
+      }
+
+      function applyScannerStatus(status) {
+        if (!status) return;
+        if (status.availablePorts) updatePortDropdown(status.availablePorts, status.port);
+
+        if (status.connected) {
+          badge.className = "badge badge-on";
+          badgeText.textContent = "Orbit Conectado (" + status.port + ")";
+          badge.title = "Lector conectado en " + status.port + " (9600 baud, 8N1).";
+        } else {
+          badge.className = "badge badge-off";
+          const portName = status.port || "COM";
+          if (status.error && (status.error.includes("No se detectaron") || status.error.includes("not found") || status.error.includes("cannot find the file"))) {
+            badgeText.textContent = portName + " no encontrado";
+          } else if (status.error && (status.error.includes("Access is denied") || status.error.includes("busy"))) {
+            badgeText.textContent = portName + " en uso";
+          } else if (status.error && status.error.includes("Iniciando")) {
+            badgeText.textContent = "Buscando " + portName + "...";
+          } else {
+            badgeText.textContent = "Reconectando " + portName + "...";
+          }
+          badge.title = status.error ? (portName + ": " + status.error) : "Desconectado";
+        }
+      }
+
+      portSelect.addEventListener("change", async (e) => {
+        if (e.target.value && window.go?.main?.App) {
+          badge.className = "badge badge-off";
+          badgeText.textContent = "Conectando a " + e.target.value + "...";
+          await window.go.main.App.SetScannerPort(e.target.value);
+        }
+      });
+
+      btnRefreshPorts.addEventListener("click", async () => {
+        if (window.go?.main?.App) {
+          const [ports, cur] = await Promise.all([
+            window.go.main.App.GetAvailablePorts(),
+            window.go.main.App.GetCurrentPort()
+          ]);
+          updatePortDropdown(ports, cur);
+        }
+      });
+
+      // --- Context-Aware Barcode Scanner Listener ---
+      if (window.runtime?.EventsOn) {
+        window.runtime.EventsOn("scanner:status", applyScannerStatus);
+        window.runtime.EventsOn("barcode:scanned", (data) => {
+          handleIncomingScan(data);
+        });
+      }
+
+      function handleIncomingScan(data) {
+        if (currentTab === 'pos') {
+          handlePosScan(data);
+        } else if (currentTab === 'positioning') {
+          handlePositioningScan(data);
+        } else if (currentTab === 'inventory') {
+          handleInventoryScan(data);
+        }
+      }
+
+      // --- Quick Search Autocomplete (Name or Barcode) ---
+      let searchTimeout = null;
+      quickInput.addEventListener("input", (e) => {
+        clearTimeout(searchTimeout);
+        const query = e.target.value.trim();
+        if (query.length < 2) {
+          quickDropdown.style.display = "none";
+          return;
+        }
+
+        searchTimeout = setTimeout(async () => {
+          if (window.go?.main?.App) {
+            const results = await window.go.main.App.SearchProducts(query);
+            renderQuickSearchResults(results);
+          }
+        }, 200);
+      });
+
+      function renderQuickSearchResults(results) {
+        quickDropdown.innerHTML = "";
+        if (!results || results.length === 0) {
+          quickDropdown.style.display = "none";
+          return;
+        }
+
+        results.forEach(p => {
+          const item = document.createElement("div");
+          item.className = "search-dropdown-item";
+          item.innerHTML = `
+            <div style="font-weight: 600;">${p.name}</div>
+            <div style="font-size: 11px; color: #94a3b8; display: flex; justify-content: space-between;">
+              <span>${p.barcode} ${p.location ? '• 📍 ' + p.location : ''}</span>
+              <span style="color: #38bdf8; font-weight: 700;">$${p.price.toFixed(2)}</span>
+            </div>
+          `;
+          item.addEventListener("click", () => {
+            quickDropdown.style.display = "none";
+            quickInput.value = "";
+            handleIncomingScan({ found: true, barcode: p.barcode, product: p });
+          });
+          quickDropdown.appendChild(item);
+        });
+        quickDropdown.style.display = "block";
+      }
+
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest(".search-box-container")) {
+          quickDropdown.style.display = "none";
+        }
+      });
+
+      // Keyboard & Barcode Scanner Wedge Handler
+      let keyBuffer = "";
+      let lastKeyTime = Date.now();
+
+      window.addEventListener("keydown", (e) => {
+        const activeTag = document.activeElement?.tagName.toLowerCase();
+        const activeId = document.activeElement?.id;
+
+        if (activeTag === "input" || activeTag === "textarea" || activeTag === "select") {
+          if (activeId !== "quick-barcode") return;
+        }
+
+        const now = Date.now();
+        const diff = now - lastKeyTime;
+        lastKeyTime = now;
+
+        if (diff > 350 && activeId !== "quick-barcode") {
+          keyBuffer = "";
+        }
+
+        if (e.key === "Enter") {
+          if (activeId === "quick-barcode") {
+            const val = quickInput.value.trim();
+            if (val && window.go?.main?.App) {
+              quickDropdown.style.display = "none";
+              window.go.main.App.ProcessBarcode(val);
+              quickInput.value = "";
+            }
+            return;
+          }
+
+          if (keyBuffer.length >= 3) {
+            e.preventDefault();
+            if (window.go?.main?.App) {
+              window.go.main.App.ProcessBarcode(keyBuffer);
+            }
+            keyBuffer = "";
+          }
+        } else if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+          keyBuffer += e.key;
+        }
+      });
+
+      // ==========================================
+      // MODULE 1: POS / CAJA LOGIC
+      // ==========================================
+      const activeCard = document.getElementById("active-card");
+      const posRegisterForm = document.getElementById("pos-register-form");
+
+      function handlePosScan(data) {
+        if (data.found && data.product) {
+          posRegisterForm.classList.add("hidden");
+          addToCart(data.product);
+          renderActiveCard(data.product);
+        } else {
+          showPosRegisterForm(data.barcode);
+        }
+      }
+
+      function addToCart(p) {
+        const item = cart.find(i => i.id === p.id || i.barcode === p.barcode);
+        if (item) {
+          item.qty += 1;
+        } else {
+          cart.push({ ...p, qty: 1 });
+        }
+        renderCart();
+      }
+
+      function renderCart() {
+        const tbody = document.getElementById("cart-rows");
+        tbody.innerHTML = "";
+        let total = 0;
+        let count = 0;
+
+        cart.forEach((item, idx) => {
+          const sub = item.price * item.qty;
+          total += sub;
+          count += item.qty;
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td style="font-family: monospace; color: #64748b;">${item.barcode}</td>
+            <td style="font-weight: 600;">
+              ${item.name}
+              ${item.location ? '<span style="font-size: 11px; color: #059669; margin-left: 6px;">📍 ' + item.location + '</span>' : ''}
+            </td>
+            <td>$${item.price.toFixed(2)}</td>
+            <td>
+              <input type="number" min="1" value="${item.qty}" style="width: 50px; padding: 3px; font-weight: 700;" data-idx="${idx}" class="cart-qty-input" />
+            </td>
+            <td style="font-weight: 700;">$${sub.toFixed(2)}</td>
+            <td style="text-align: right;">
+              <button class="btn btn-sm btn-clear" data-remove="${idx}" title="Eliminar artículo">✕</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        document.getElementById("total-val").textContent = `$${total.toFixed(2)}`;
+        document.getElementById("cart-item-count").textContent = `${count} artículos`;
+
+        tbody.querySelectorAll(".cart-qty-input").forEach(inp => {
+          inp.addEventListener("change", (e) => {
+            const i = parseInt(e.target.getAttribute("data-idx"), 10);
+            const val = parseInt(e.target.value, 10);
+            if (val > 0) cart[i].qty = val;
+            renderCart();
+          });
+        });
+
+        tbody.querySelectorAll("[data-remove]").forEach(btn => {
+          btn.addEventListener("click", (e) => {
+            const i = parseInt(e.target.getAttribute("data-remove"), 10);
+            cart.splice(i, 1);
+            renderCart();
+          });
+        });
+      }
+
+      function renderActiveCard(p) {
+        activeCard.innerHTML = `
+          <div style="color: #059669; font-weight: 700; font-size: 12px;">PRODUCTO INGRESADO</div>
+          <h3>${p.name}</h3>
+          <div style="font-family: monospace; color: #64748b; font-size: 13px;">${p.barcode}</div>
+          <div class="card-price">$${p.price.toFixed(2)}</div>
+          <div style="color: #64748b; font-size: 12px; margin-top: 4px;">
+            Stock: ${p.stock} ${p.unitOfMeasure || 'und'} ${p.location ? ' | 📍 ' + p.location : ''}
+          </div>
+        `;
+      }
+
+      function showPosRegisterForm(code) {
+        activeCard.innerHTML = `
+          <div style="color: #d97706; font-weight: 700; font-size: 12px;">CÓDIGO NO REGISTRADO</div>
+          <h3 style="font-family: monospace;">${code}</h3>
+          <p style="color: #64748b; font-size: 12px;">Ingresa los datos para registrarlo y venderlo</p>
+        `;
+        document.getElementById("pos-np-barcode").value = code;
+        posRegisterForm.classList.remove("hidden");
+        document.getElementById("pos-np-name").focus();
+      }
+
+      posRegisterForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const p = {
+          barcode: document.getElementById("pos-np-barcode").value,
+          name: document.getElementById("pos-np-name").value,
+          price: parseFloat(document.getElementById("pos-np-price").value),
+          stock: parseInt(document.getElementById("pos-np-stock").value, 10),
+          active: true,
+          unitOfMeasure: 'und'
+        };
+        await window.go.main.App.SaveProduct(p);
+        posRegisterForm.reset();
+        posRegisterForm.classList.add("hidden");
+        const fresh = await window.go.main.App.SearchBarcode(p.barcode);
+        addToCart(fresh);
+        renderActiveCard(fresh);
+        showToast("✅ Producto registrado y agregado a la venta");
+      });
+
+      document.getElementById("btn-clear-cart").addEventListener("click", () => {
+        cart = [];
+        renderCart();
+      });
+
+      // ==========================================
+      // MODULE 2: POSICIONAMIENTO LOGIC
+      // ==========================================
+      const posDetailsContainer = document.getElementById("pos-item-details");
+      const relocationControls = document.getElementById("relocation-controls");
+      const relocationEmptyPrompt = document.getElementById("relocation-empty-prompt");
+      const currentLocBadge = document.getElementById("current-loc-badge");
+      const selectPosLocation = document.getElementById("pos-select-location");
+      const customPosLocation = document.getElementById("pos-custom-location");
+
+      function handlePositioningScan(data) {
+        if (data.found && data.product) {
+          activePositioningProduct = data.product;
+          renderPositioningProduct(data.product);
+        } else {
+          activePositioningProduct = null;
+          relocationControls.classList.add("hidden");
+          relocationEmptyPrompt.classList.remove("hidden");
+          posDetailsContainer.innerHTML = `
+            <div style="color: #d97706; font-size: 14px; font-weight: 700;">⚠️ CÓDIGO NO REGISTRADO: ${data.barcode}</div>
+            <p style="color: #64748b; font-size: 13px; margin: 10px 0;">Este código de barras no pertenece a ningún artículo en la base de datos.</p>
+            <button class="btn btn-primary" id="btn-goto-create-from-pos">➕ Registrar en Inventario</button>
+          `;
+          document.getElementById("btn-goto-create-from-pos")?.addEventListener("click", () => {
+            openProductModal();
+            document.getElementById("prod-barcode").value = data.barcode;
+            switchTab('inventory');
+          });
+        }
+      }
+
+      function renderPositioningProduct(p) {
+        posDetailsContainer.innerHTML = `
+          <div style="width: 100%; text-align: left; padding: 10px 20px;">
+            <span class="status-pill ${p.active ? 'status-pill-active' : 'status-pill-archived'}">${p.active ? 'Activo' : 'Archivado'}</span>
+            <h2 style="font-size: 22px; margin: 8px 0;">${p.name}</h2>
+            <div style="font-family: monospace; font-size: 14px; color: #64748b; margin-bottom: 14px;">Código: ${p.barcode}</div>
+            
+            <div class="grid-3" style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 12px;">
+              <div><span style="color: #64748b; font-size: 11px;">PRECIO</span><div style="font-size: 16px; font-weight: 800;">$${p.price.toFixed(2)}</div></div>
+              <div><span style="color: #64748b; font-size: 11px;">STOCK</span><div style="font-size: 16px; font-weight: 800;">${p.stock} ${p.unitOfMeasure}</div></div>
+              <div><span style="color: #64748b; font-size: 11px;">PESO</span><div style="font-size: 14px; font-weight: 600;">${p.weight > 0 ? p.weight + ' kg' : 'N/A'}</div></div>
+            </div>
+
+            <div class="grid-2" style="font-size: 13px; color: #475569;">
+              <div><strong>Tamaño:</strong> ${p.size || 'No especificado'}</div>
+              <div><strong>Color:</strong> ${p.color || 'No especificado'}</div>
+            </div>
+          </div>
+        `;
+
+        // Update relocation controls
+        if (p.location && p.location.trim() !== "") {
+          currentLocBadge.className = "loc-badge-large loc-badge-active";
+          currentLocBadge.innerHTML = `📍 ${p.location}`;
+        } else {
+          currentLocBadge.className = "loc-badge-large loc-badge-empty";
+          currentLocBadge.innerHTML = `⚠️ Sin ubicación asignada`;
+        }
+
+        selectPosLocation.value = p.location || "";
+        customPosLocation.value = p.location || "";
+
+        relocationEmptyPrompt.classList.add("hidden");
+        relocationControls.classList.remove("hidden");
+        customPosLocation.focus();
+      }
+
+      selectPosLocation.addEventListener("change", (e) => {
+        if (e.target.value) {
+          customPosLocation.value = e.target.value;
+        }
+      });
+
+      document.getElementById("btn-save-position").addEventListener("click", async () => {
+        if (!activePositioningProduct) return;
+        const newLoc = customPosLocation.value.trim();
+        await window.go.main.App.UpdateProductLocation(activePositioningProduct.barcode, newLoc);
+        activePositioningProduct.location = newLoc;
+        renderPositioningProduct(activePositioningProduct);
+        showToast(`✅ Posición actualizada a: ${newLoc || 'Sin posición'}`);
+      });
+
+      document.getElementById("btn-clear-position").addEventListener("click", async () => {
+        if (!activePositioningProduct) return;
+        await window.go.main.App.UpdateProductLocation(activePositioningProduct.barcode, "");
+        activePositioningProduct.location = "";
+        renderPositioningProduct(activePositioningProduct);
+        showToast("ℹ️ Ubicación eliminada del artículo");
+      });
+
+      // ==========================================
+      // MODULE 3: INVENTARIO (CRUD) LOGIC
+      // ==========================================
+      const inventoryTableBody = document.getElementById("inventory-rows");
+      const invSearch = document.getElementById("inv-filter-search");
+      const invFilterStatus = document.getElementById("inv-filter-status");
+      const modalProduct = document.getElementById("modal-product");
+      const formProduct = document.getElementById("form-product");
+
+      async function loadInventoryTable() {
+        if (!window.go?.main?.App) return;
+        const includeArchived = invFilterStatus.value === 'all';
+        inventoryCache = await window.go.main.App.ListInventoryProducts(includeArchived);
+        renderInventoryTable();
+      }
+
+      function renderInventoryTable() {
+        const query = invSearch.value.toLowerCase().trim();
+        const filtered = inventoryCache.filter(p => {
+          if (!query) return true;
+          return (
+            (p.name && p.name.toLowerCase().includes(query)) ||
+            (p.barcode && p.barcode.toLowerCase().includes(query)) ||
+            (p.location && p.location.toLowerCase().includes(query)) ||
+            (p.color && p.color.toLowerCase().includes(query))
+          );
+        });
+
+        inventoryTableBody.innerHTML = "";
+        document.getElementById("inv-counter").textContent = `${filtered.length} productos`;
+
+        filtered.forEach(p => {
+          const tr = document.createElement("tr");
+          tr.setAttribute("data-barcode", p.barcode);
+          tr.innerHTML = `
+            <td style="font-family: monospace; font-weight: 600; color: #475569;">${p.barcode}</td>
+            <td style="font-weight: 600;">${p.name}</td>
+            <td>$${p.price.toFixed(2)}</td>
+            <td style="font-weight: 700;">${p.stock}</td>
+            <td><span style="color: #64748b;">${p.unitOfMeasure}</span></td>
+            <td>${p.weight > 0 ? p.weight : '-'}</td>
+            <td>${p.size || '-'}</td>
+            <td>${p.color || '-'}</td>
+            <td>
+              ${p.location ? '<span style="color: #059669; font-weight: 600;">📍 ' + p.location + '</span>' : '<span style="color: #94a3b8;">Sin asignar</span>'}
+            </td>
+            <td>
+              <span class="status-pill ${p.active ? 'status-pill-active' : 'status-pill-archived'}">
+                ${p.active ? 'Activo' : 'Archivado'}
+              </span>
+            </td>
+            <td style="text-align: right; white-space: nowrap;">
+              <button class="btn btn-sm btn-clear" data-edit-barcode="${p.barcode}" title="Editar">✏️</button>
+              ${p.active 
+                ? `<button class="btn btn-sm btn-clear" data-archive-barcode="${p.barcode}" title="Archivar" style="color: #ef4444;">📦 Archivar</button>` 
+                : `<button class="btn btn-sm btn-clear" data-restore-barcode="${p.barcode}" title="Reactivar" style="color: #10b981;">♻️ Activar</button>`}
+            </td>
+          `;
+          inventoryTableBody.appendChild(tr);
+        });
+
+        // Wire edit & archive buttons
+        inventoryTableBody.querySelectorAll("[data-edit-barcode]").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const bc = btn.getAttribute("data-edit-barcode");
+            const prod = inventoryCache.find(p => p.barcode === bc);
+            if (prod) openProductModal(prod);
+          });
+        });
+
+        inventoryTableBody.querySelectorAll("[data-archive-barcode]").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const bc = btn.getAttribute("data-archive-barcode");
+            await window.go.main.App.ArchiveProduct(bc);
+            showToast("📦 Producto archivado");
+            loadInventoryTable();
+          });
+        });
+
+        inventoryTableBody.querySelectorAll("[data-restore-barcode]").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const bc = btn.getAttribute("data-restore-barcode");
+            await window.go.main.App.RestoreProduct(bc);
+            showToast("♻️ Producto reactivado");
+            loadInventoryTable();
+          });
+        });
+      }
+
+      function handleInventoryScan(data) {
+        if (data.found && data.product) {
+          invSearch.value = data.product.barcode;
+          renderInventoryTable();
+          const targetRow = inventoryTableBody.querySelector(`[data-barcode="${data.product.barcode}"]`);
+          if (targetRow) {
+            targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            targetRow.style.backgroundColor = '#fef08a';
+            setTimeout(() => targetRow.style.backgroundColor = '', 2000);
+          }
+        } else {
+          showToast(`ℹ️ Código escaneado no existe: ${data.barcode}`);
+          openProductModal();
+          document.getElementById("prod-barcode").value = data.barcode;
+        }
+      }
+
+      invSearch.addEventListener("input", renderInventoryTable);
+      invFilterStatus.addEventListener("change", loadInventoryTable);
+
+      function openProductModal(prod = null) {
+        formProduct.reset();
+        syncLocationDropdowns();
+
+        if (prod) {
+          document.getElementById("modal-product-title").textContent = "Editar Producto";
+          document.getElementById("prod-id").value = prod.id;
+          document.getElementById("prod-barcode").value = prod.barcode;
+          document.getElementById("prod-name").value = prod.name;
+          document.getElementById("prod-price").value = prod.price;
+          document.getElementById("prod-stock").value = prod.stock;
+          document.getElementById("prod-unit").value = prod.unitOfMeasure || 'und';
+          document.getElementById("prod-weight").value = prod.weight || '';
+          document.getElementById("prod-size").value = prod.size || '';
+          document.getElementById("prod-color").value = prod.color || '';
+          document.getElementById("prod-location-custom").value = prod.location || '';
+          document.getElementById("prod-location-select").value = prod.location || '';
+          document.getElementById("prod-active").checked = prod.active;
+        } else {
+          document.getElementById("modal-product-title").textContent = "Nuevo Producto";
+          document.getElementById("prod-id").value = "0";
+          document.getElementById("prod-active").checked = true;
+        }
+
+        modalProduct.classList.remove("hidden");
+        document.getElementById("prod-name").focus();
+      }
+
+      document.getElementById("prod-location-select").addEventListener("change", (e) => {
+        if (e.target.value) {
+          document.getElementById("prod-location-custom").value = e.target.value;
+        }
+      });
+
+      document.getElementById("btn-open-new-product").addEventListener("click", () => openProductModal());
+      document.getElementById("btn-close-product-modal").addEventListener("click", () => modalProduct.classList.add("hidden"));
+      document.getElementById("btn-cancel-product").addEventListener("click", () => modalProduct.classList.add("hidden"));
+
+      formProduct.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const p = {
+          id: parseInt(document.getElementById("prod-id").value, 10) || 0,
+          barcode: document.getElementById("prod-barcode").value.trim(),
+          name: document.getElementById("prod-name").value.trim(),
+          price: parseFloat(document.getElementById("prod-price").value) || 0,
+          stock: parseInt(document.getElementById("prod-stock").value, 10) || 0,
+          unitOfMeasure: document.getElementById("prod-unit").value,
+          weight: parseFloat(document.getElementById("prod-weight").value) || 0,
+          size: document.getElementById("prod-size").value.trim(),
+          color: document.getElementById("prod-color").value.trim(),
+          location: document.getElementById("prod-location-custom").value.trim(),
+          active: document.getElementById("prod-active").checked
+        };
+
+        await window.go.main.App.SaveProduct(p);
+        modalProduct.classList.add("hidden");
+        showToast("✅ Producto guardado exitosamente");
+        loadInventoryTable();
+      });
+
+      // CSV Export Trigger
+      document.getElementById("btn-export-csv").addEventListener("click", async () => {
+        if (!window.go?.main?.App) return;
+        try {
+          // Attempt native Windows file save dialog first
+          const savedPath = await window.go.main.App.ExportInventoryCSVFile().catch(() => null);
+          if (savedPath) {
+            showToast(`💾 Archivo exportado exitosamente en: ${savedPath}`);
+            return;
+          }
+
+          // Fallback to browser blob download
+          const csvData = await window.go.main.App.ExportInventoryCSV();
+          const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `inventario_${new Date().toISOString().slice(0, 10)}.csv`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          showToast("💾 Inventario CSV descargado exitosamente");
+        } catch (err) {
+          console.error("Error exportando CSV:", err);
+          showToast("❌ Error al exportar inventario CSV");
+        }
+      });
+
+      // ==========================================
+      // MODULE 4: LOCACIONES CATALOG LOGIC
+      // ==========================================
+      const locTableBody = document.getElementById("locations-rows");
+      const modalLoc = document.getElementById("modal-location");
+      const formLoc = document.getElementById("form-location");
+
+      async function loadLocationsTable() {
+        if (!window.go?.main?.App) return;
+        locationsCache = await window.go.main.App.GetAllLocations();
+        document.getElementById("loc-counter").textContent = `${locationsCache.length} locaciones`;
+
+        locTableBody.innerHTML = "";
+        locationsCache.forEach(l => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td style="font-family: monospace; font-weight: 700; color: #2563eb;">${l.code}</td>
+            <td style="font-weight: 600;">${l.name}</td>
+            <td style="color: #64748b;">${l.description || '-'}</td>
+            <td style="text-align: right;">
+              <button class="btn btn-sm btn-clear" data-edit-loc="${l.id}">✏️</button>
+              <button class="btn btn-sm btn-clear" data-del-loc="${l.id}" style="color: #ef4444;">🗑️</button>
+            </td>
+          `;
+          locTableBody.appendChild(tr);
+        });
+
+        locTableBody.querySelectorAll("[data-edit-loc]").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const id = parseInt(btn.getAttribute("data-edit-loc"), 10);
+            const loc = locationsCache.find(l => l.id === id);
+            if (loc) openLocationModal(loc);
+          });
+        });
+
+        locTableBody.querySelectorAll("[data-del-loc]").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const id = parseInt(btn.getAttribute("data-del-loc"), 10);
+            if (confirm("¿Seguro que deseas eliminar esta locación del catálogo?")) {
+              await window.go.main.App.DeleteLocation(id);
+              showToast("🗑️ Locación eliminada");
+              loadLocationsTable();
+              syncLocationDropdowns();
+            }
+          });
+        });
+
+        syncLocationDropdowns();
+      }
+
+      function syncLocationDropdowns() {
+        const selects = [
+          document.getElementById("pos-select-location"),
+          document.getElementById("prod-location-select")
+        ];
+
+        selects.forEach(sel => {
+          if (!sel) return;
+          const currentVal = sel.value;
+          sel.innerHTML = `<option value="">-- Seleccionar locación --</option>`;
+          locationsCache.forEach(l => {
+            const opt = document.createElement("option");
+            opt.value = `${l.code} - ${l.name}`;
+            opt.textContent = `${l.code} - ${l.name}`;
+            if (opt.value === currentVal) opt.selected = true;
+            sel.appendChild(opt);
+          });
+        });
+      }
+
+      function openLocationModal(loc = null) {
+        formLoc.reset();
+        if (loc) {
+          document.getElementById("modal-loc-title").textContent = "Editar Locación";
+          document.getElementById("loc-id").value = loc.id;
+          document.getElementById("loc-code").value = loc.code;
+          document.getElementById("loc-name").value = loc.name;
+          document.getElementById("loc-desc").value = loc.description || '';
+        } else {
+          document.getElementById("modal-loc-title").textContent = "Nueva Locación";
+          document.getElementById("loc-id").value = "0";
+        }
+        modalLoc.classList.remove("hidden");
+        document.getElementById("loc-code").focus();
+      }
+
+      document.getElementById("btn-open-new-location").addEventListener("click", () => openLocationModal());
+      document.getElementById("btn-close-loc-modal").addEventListener("click", () => modalLoc.classList.add("hidden"));
+      document.getElementById("btn-cancel-loc").addEventListener("click", () => modalLoc.classList.add("hidden"));
+
+      formLoc.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const loc = {
+          id: parseInt(document.getElementById("loc-id").value, 10) || 0,
+          code: document.getElementById("loc-code").value.trim().toUpperCase(),
+          name: document.getElementById("loc-name").value.trim(),
+          description: document.getElementById("loc-desc").value.trim()
+        };
+
+        await window.go.main.App.SaveLocation(loc);
+        modalLoc.classList.add("hidden");
+        showToast("✅ Locación guardada exitosamente");
+        loadLocationsTable();
+      });
+
+      // --- INITIAL APP STARTUP ---
+      async function initApp(retries = 10) {
+        if (window.go?.main?.App) {
+          try {
+            const [status, ports, cur, locs] = await Promise.all([
+              window.go.main.App.GetScannerStatus(),
+              window.go.main.App.GetAvailablePorts(),
+              window.go.main.App.GetCurrentPort(),
+              window.go.main.App.GetAllLocations()
+            ]);
+            applyScannerStatus(status);
+            updatePortDropdown(ports, cur);
+            locationsCache = locs || [];
+            syncLocationDropdowns();
+          } catch (err) {
+            console.error("Error inicializando estado:", err);
+          }
+        } else if (retries > 0) {
+          setTimeout(() => initApp(retries - 1), 100);
+        }
+      }
+      initApp();
+    });
+  </script>
+</body>
+</html>

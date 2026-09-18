@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Configurar Honeywell Orbit a Modo Puerto Serial COM (USB Serial)</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 26px; max-width: 820px; margin: 0 auto; color: #1e293b; line-height: 1.5; }
+    h1 { font-size: 22px; color: #0f172a; margin-bottom: 6px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+    h2 { font-size: 17px; color: #1e40af; margin-top: 20px; margin-bottom: 8px; }
+    .alert { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 14px; margin: 16px 0; color: #991b1b; font-size: 14px; }
+    .alert-tip { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 14px; margin: 16px 0; color: #1e40af; font-size: 14px; }
+    .step-card { border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 18px 0; text-align: center; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
+    .step-title { font-weight: 700; font-size: 16px; margin-bottom: 8px; text-align: left; color: #2563eb; }
+    .step-desc { font-size: 13px; color: #64748b; margin-bottom: 12px; text-align: left; }
+    .barcode-container { margin: 10px 0; padding: 10px; display: inline-block; background: #fff; border: 1px dashed #94a3b8; border-radius: 6px; }
+    .btn-print { background: #2563eb; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-size: 15px; font-weight: 600; cursor: pointer; }
+    .btn-print:hover { background: #1d4ed8; }
+    code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 13px; color: #0f172a; }
+    ol, ul { text-align: left; margin-left: 20px; font-size: 14px; }
+    li { margin-bottom: 6px; }
+    @media print {
+      .no-print { display: none; }
+      body { padding: 0; }
+      .step-card { break-inside: avoid; border: 1px solid #94a3b8; }
+    }
+  </style>
+</head>
+<body>
+
+  <div style="display: flex; justify-content: space-between; align-items: center;" class="no-print">
+    <h1>🛠️ Configuración Honeywell Orbit (MS7120) — Modo Puerto Serial COM</h1>
+    <button class="btn-print" onclick="window.print()">🖨️ Imprimir Hoja</button>
+  </div>
+
+  <div class="alert">
+    <strong>⚠️ IMPORTANTE — LEER ANTES DE ESCANEAR:</strong><br/>
+    El Honeywell Orbit MS7120 es un <strong>lector láser</strong>. Los rayos láser <u>NO pueden leer códigos directamente desde pantallas de monitor, laptop o celular</u> debido al brillo y reflejo del cristal.<br/>
+    <strong>Debes IMPRIMIR esta hoja en papel</strong> (con el botón azul de arriba o Ctrl+P) para que el lector pueda escanear los códigos correctamente.
+  </div>
+
+  <div class="alert-tip">
+    <strong>¿Para qué sirve este modo?</strong><br/>
+    Este modo emula un <strong>puerto serial COM virtual</strong> a través del cable USB. Es el modo requerido por la aplicación <strong>TiendaPOS</strong> en la laptop para capturar los productos en segundo plano sin importar en qué ventana estés trabajando.
+  </div>
+
+  <h2>Fase 1: Códigos de Barras de Configuración</h2>
+
+  <div class="step-card">
+    <div class="step-title">PASO 1: Restaurar Valores de Fábrica (Recall Defaults)</div>
+    <div class="step-desc">Apunta el escáner a este código hasta que emita un pitido de confirmación. Limpia cualquier configuración previa.</div>
+    <div class="barcode-container">
+<svg width="328" height="120" viewBox="0 0 328 120" xmlns="http://www.w3.org/2000/svg">
+<rect width="100%" height="100%" fill="white" />
+<rect x="30.0" y="10" width="4.8" height="80" fill="black" />
+<rect x="37.2" y="10" width="2.4" height="80" fill="black" />
+<rect x="44.4" y="10" width="2.4" height="80" fill="black" />
+<rect x="56.4" y="10" width="2.4" height="80" fill="black" />
+<rect x="61.2" y="10" width="9.6" height="80" fill="black" />
+<rect x="78.0" y="10" width="2.4" height="80" fill="black" />
+<rect x="82.8" y="10" width="7.2" height="80" fill="black" />
+<rect x="94.8" y="10" width="2.4" height="80" fill="black" />
+<rect x="99.6" y="10" width="4.8" height="80" fill="black" />
+<rect x="109.2" y="10" width="7.2" height="80" fill="black" />
+<rect x="121.2" y="10" width="2.4" height="80" fill="black" />
+<rect x="126.0" y="10" width="4.8" height="80" fill="black" />
+<rect x="135.6" y="10" width="7.2" height="80" fill="black" />
+<rect x="147.6" y="10" width="2.4" height="80" fill="black" />
+<rect x="152.4" y="10" width="4.8" height="80" fill="black" />
+<rect x="162.0" y="10" width="7.2" height="80" fill="black" />
+<rect x="174.0" y="10" width="2.4" height="80" fill="black" />
+<rect x="178.8" y="10" width="4.8" height="80" fill="black" />
+<rect x="188.4" y="10" width="7.2" height="80" fill="black" />
+<rect x="200.4" y="10" width="2.4" height="80" fill="black" />
+<rect x="205.2" y="10" width="4.8" height="80" fill="black" />
+<rect x="214.8" y="10" width="7.2" height="80" fill="black" />
+<rect x="224.4" y="10" width="2.4" height="80" fill="black" />
+<rect x="231.6" y="10" width="4.8" height="80" fill="black" />
+<rect x="241.2" y="10" width="2.4" height="80" fill="black" />
+<rect x="250.8" y="10" width="4.8" height="80" fill="black" />
+<rect x="258.0" y="10" width="7.2" height="80" fill="black" />
+<rect x="267.6" y="10" width="4.8" height="80" fill="black" />
+<rect x="279.6" y="10" width="7.2" height="80" fill="black" />
+<rect x="289.2" y="10" width="2.4" height="80" fill="black" />
+<rect x="294.0" y="10" width="4.8" height="80" fill="black" />
+<text x="164.0" y="110" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle">Recall Defaults (999998)</text>
+</svg>
+    </div>
+  </div>
+
+  <div class="step-card">
+    <div class="step-title">PASO 2: Habilitar Modo Emulación Serial USB (Enable USB Serial Emulation Mode)</div>
+    <div class="step-desc">Escanea este código. El escáner se reiniciará y pasará a modo puerto COM virtual.</div>
+    <div class="barcode-container">
+<svg width="328" height="120" viewBox="0 0 328 120" xmlns="http://www.w3.org/2000/svg">
+<rect width="100%" height="100%" fill="white" />
+<rect x="30.0" y="10" width="4.8" height="80" fill="black" />
+<rect x="37.2" y="10" width="2.4" height="80" fill="black" />
+<rect x="44.4" y="10" width="2.4" height="80" fill="black" />
+<rect x="56.4" y="10" width="2.4" height="80" fill="black" />
+<rect x="61.2" y="10" width="9.6" height="80" fill="black" />
+<rect x="78.0" y="10" width="2.4" height="80" fill="black" />
+<rect x="82.8" y="10" width="4.8" height="80" fill="black" />
+<rect x="92.4" y="10" width="2.4" height="80" fill="black" />
+<rect x="97.2" y="10" width="7.2" height="80" fill="black" />
+<rect x="109.2" y="10" width="2.4" height="80" fill="black" />
+<rect x="116.4" y="10" width="7.2" height="80" fill="black" />
+<rect x="128.4" y="10" width="4.8" height="80" fill="black" />
+<rect x="135.6" y="10" width="4.8" height="80" fill="black" />
+<rect x="145.2" y="10" width="7.2" height="80" fill="black" />
+<rect x="154.8" y="10" width="2.4" height="80" fill="black" />
+<rect x="162.0" y="10" width="4.8" height="80" fill="black" />
+<rect x="171.6" y="10" width="2.4" height="80" fill="black" />
+<rect x="178.8" y="10" width="7.2" height="80" fill="black" />
+<rect x="188.4" y="10" width="7.2" height="80" fill="black" />
+<rect x="198.0" y="10" width="4.8" height="80" fill="black" />
+<rect x="205.2" y="10" width="7.2" height="80" fill="black" />
+<rect x="214.8" y="10" width="2.4" height="80" fill="black" />
+<rect x="222.0" y="10" width="7.2" height="80" fill="black" />
+<rect x="231.6" y="10" width="4.8" height="80" fill="black" />
+<rect x="241.2" y="10" width="2.4" height="80" fill="black" />
+<rect x="248.4" y="10" width="4.8" height="80" fill="black" />
+<rect x="258.0" y="10" width="2.4" height="80" fill="black" />
+<rect x="267.6" y="10" width="4.8" height="80" fill="black" />
+<rect x="279.6" y="10" width="7.2" height="80" fill="black" />
+<rect x="289.2" y="10" width="2.4" height="80" fill="black" />
+<rect x="294.0" y="10" width="4.8" height="80" fill="black" />
+<text x="164.0" y="110" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle">Enable USB Serial Emulation Mode (316470)</text>
+</svg>
+    </div>
+  </div>
+
+  <div class="step-card">
+    <div class="step-title">PASO 3 (Opcional): Confirmar Sufijo Retorno de Carro (CR Suffix / Enter)</div>
+    <div class="step-desc">Asegura que el escáner envíe el salto de línea al final de cada lectura de producto para que el sistema procese el código inmediatamente.</div>
+    <div class="barcode-container">
+<svg width="328" height="120" viewBox="0 0 328 120" xmlns="http://www.w3.org/2000/svg">
+<rect width="100%" height="100%" fill="white" />
+<rect x="30.0" y="10" width="4.8" height="80" fill="black" />
+<rect x="37.2" y="10" width="2.4" height="80" fill="black" />
+<rect x="44.4" y="10" width="2.4" height="80" fill="black" />
+<rect x="56.4" y="10" width="2.4" height="80" fill="black" />
+<rect x="61.2" y="10" width="9.6" height="80" fill="black" />
+<rect x="78.0" y="10" width="2.4" height="80" fill="black" />
+<rect x="82.8" y="10" width="2.4" height="80" fill="black" />
+<rect x="90.0" y="10" width="7.2" height="80" fill="black" />
+<rect x="102.0" y="10" width="4.8" height="80" fill="black" />
+<rect x="109.2" y="10" width="2.4" height="80" fill="black" />
+<rect x="116.4" y="10" width="7.2" height="80" fill="black" />
+<rect x="128.4" y="10" width="4.8" height="80" fill="black" />
+<rect x="135.6" y="10" width="4.8" height="80" fill="black" />
+<rect x="145.2" y="10" width="7.2" height="80" fill="black" />
+<rect x="154.8" y="10" width="2.4" height="80" fill="black" />
+<rect x="162.0" y="10" width="4.8" height="80" fill="black" />
+<rect x="171.6" y="10" width="7.2" height="80" fill="black" />
+<rect x="181.2" y="10" width="2.4" height="80" fill="black" />
+<rect x="188.4" y="10" width="2.4" height="80" fill="black" />
+<rect x="195.6" y="10" width="7.2" height="80" fill="black" />
+<rect x="207.6" y="10" width="4.8" height="80" fill="black" />
+<rect x="214.8" y="10" width="4.8" height="80" fill="black" />
+<rect x="224.4" y="10" width="2.4" height="80" fill="black" />
+<rect x="229.2" y="10" width="7.2" height="80" fill="black" />
+<rect x="241.2" y="10" width="2.4" height="80" fill="black" />
+<rect x="246.0" y="10" width="9.6" height="80" fill="black" />
+<rect x="258.0" y="10" width="7.2" height="80" fill="black" />
+<rect x="267.6" y="10" width="4.8" height="80" fill="black" />
+<rect x="279.6" y="10" width="7.2" height="80" fill="black" />
+<rect x="289.2" y="10" width="2.4" height="80" fill="black" />
+<rect x="294.0" y="10" width="4.8" height="80" fill="black" />
+<text x="164.0" y="110" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle">Enable CR Suffix (116613)</text>
+</svg>
+    </div>
+  </div>
+
+  <div class="step-card">
+    <div class="step-title">PASO 4: Reiniciar Conexión USB</div>
+    <div class="step-desc">
+      <ol>
+        <li>Desconecta el cable USB del escáner de la laptop por <strong>5 a 10 segundos</strong>.</li>
+        <li>Vuelve a conectarlo en el puerto USB.</li>
+      </ol>
+    </div>
+  </div>
+
+  <h2>Fase 2: Configuración del Puerto COM en Windows</h2>
+
+  <div class="step-card" style="text-align: left;">
+    <div class="step-title">Paso a Paso en la Laptop (Windows):</div>
+    <ol>
+      <li><strong>Instalar el Driver HSM USB Serial (si no está instalado):</strong><br/>
+        Para que Windows reconozca el escáner como puerto serial COM, necesita el controlador oficial: <code>Honeywell Scanning and Mobility (HSM) USB Serial Driver</code>.
+      </li>
+      <li><strong>Abrir el Administrador de Dispositivos:</strong><br/>
+        Presiona las teclas <code>Windows + X</code> en la laptop y selecciona <strong>Administrador de dispositivos</strong> (o presiona <code>Win + R</code>, escribe <code>devmgmt.msc</code> y pulsa Enter).
+      </li>
+      <li><strong>Identificar el Puerto COM:</strong><br/>
+        Despliega la sección <strong>Puertos (COM y LPT)</strong>.<br/>
+        Verás un dispositivo llamado <code>Honeywell Scanning and Mobility USB Serial Port (COM...)</code> o <code>Metrologic USB Serial Device</code>.<br/>
+        Fíjate qué número tiene asignado entre paréntesis (por ejemplo: <code>COM3</code>, <code>COM4</code>, etc.).
+      </li>
+      <li><strong>Si deseas cambiarlo a COM3 (recomendado):</strong>
+        <ul>
+          <li>Haz clic derecho sobre el dispositivo Honeywell y elige <strong>Propiedades</strong>.</li>
+          <li>Ve a la pestaña <strong>Configuración de puerto</strong> (Port Settings).</li>
+          <li>Haz clic en el botón <strong>Opciones avanzadas...</strong> (Advanced).</li>
+          <li>En el campo <strong>Número de puerto COM</strong>, selecciona <code>COM3</code> de la lista desplegable.</li>
+          <li>Haz clic en <strong>Aceptar</strong> y nuevamente en <strong>Aceptar</strong>.</li>
+        </ul>
+      </li>
+      <li><strong>Parámetros de Comunicación Estándar:</strong>
+        <ul>
+          <li>Velocidad en baudios (Baud Rate): <code>9600</code></li>
+          <li>Bits de datos: <code>8</code></li>
+          <li>Paridad: <code>Ninguna (None)</code></li>
+          <li>Bits de parada: <code>1</code></li>
+          <li>Control de flujo: <code>Ninguno (None)</code></li>
+        </ul>
+      </li>
+      <li><strong>En la aplicación TiendaPOS:</strong><br/>
+        Abre TiendaPOS en la laptop. En la parte superior derecha verás el indicador de estado del escáner. Si está en verde con <code>COM3 Conectado</code>, ya está listo. Si tu escáner quedó en otro puerto (como COM4), puedes seleccionarlo directamente en el desplegable de puertos de la barra superior.
+      </li>
+    </ol>
+  </div>
+
+</body>
+</html>

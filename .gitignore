@@ -1,0 +1,41 @@
+# Binaries and compiled output
+build/bin/
+**/build/bin/
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Node dependencies and build artifacts
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# SQLite databases & temp files
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# Operating System & IDE files
+.DS_Store
+**/.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Agents & local cache
+.agents/
+**/.agents/
+.env
+.env.local
+.env.*.local

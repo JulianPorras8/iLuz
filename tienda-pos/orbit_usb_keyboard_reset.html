@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Restaurar Honeywell Orbit a Modo Verificador de Precios (USB Keyboard)</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 30px; max-width: 800px; margin: 0 auto; color: #1e293b; }
+    h1 { font-size: 22px; color: #0f172a; margin-bottom: 6px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+    .alert { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 14px; margin: 16px 0; color: #991b1b; font-size: 14px; }
+    .alert-tip { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 14px; margin: 16px 0; color: #1e40af; font-size: 14px; }
+    .step-card { border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 18px 0; text-align: center; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
+    .step-title { font-weight: 700; font-size: 16px; margin-bottom: 8px; text-align: left; color: #2563eb; }
+    .step-desc { font-size: 13px; color: #64748b; margin-bottom: 12px; text-align: left; }
+    .barcode-container { margin: 10px 0; padding: 10px; display: inline-block; background: #fff; border: 1px dashed #94a3b8; border-radius: 6px; }
+    .btn-print { background: #2563eb; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-size: 15px; font-weight: 600; cursor: pointer; }
+    .btn-print:hover { background: #1d4ed8; }
+    @media print {
+      .no-print { display: none; }
+      body { padding: 0; }
+      .step-card { break-inside: avoid; border: 1px solid #94a3b8; }
+    }
+  </style>
+</head>
+<body>
+
+  <div style="display: flex; justify-content: space-between; align-items: center;" class="no-print">
+    <h1>🛠️ Restaurar Escáner Honeywell Orbit (MS7120)</h1>
+    <button class="btn-print" onclick="window.print()">🖨️ Imprimir Hoja</button>
+  </div>
+
+  <div class="alert">
+    <strong>⚠️ IMPORTANTE — LEER ANTES DE ESCANEAR:</strong><br/>
+    El Honeywell Orbit MS7120 es un <strong>lector láser</strong>. Los láseres <u>NO PUEDEN leer códigos directamente desde pantallas de celular o monitores</u> debido al reflejo del vidrio. 
+    <strong>Debes IMPRIMIR esta hoja en papel</strong> (con el botón azul de arriba o Ctrl+P) para que el lector pueda escanear los códigos.
+  </div>
+
+  <div class="alert-tip">
+    <strong>¿Por qué no leía el aparato de tu papá?</strong><br/>
+    Los verificadores de precios esperan que el lector funcione como un <strong>Teclado USB (USB Keyboard)</strong>: al escanear, el lector "escribe" los números y da <em>Enter</em> automáticamente. Anteriormente lo configuramos en modo serial COM virtual para el software POS. Siguiendo estos 2 pasos volverá exactamente a su modo original.
+  </div>
+
+  <div class="step-card">
+    <div class="step-title">PASO 1: Restaurar Valores de Fábrica (Recall Defaults)</div>
+    <div class="step-desc">Apunta el lector láser a este código hasta que emita un pitido (beeps). Esto borra el modo serial COM y restablece la configuración USB original.</div>
+    <div class="barcode-container">
+      <svg width="329" height="120" viewBox="0 0 329 120" xmlns="http://www.w3.org/2000/svg">
+<rect width="100%" height="100%" fill="white" />
+<rect x="30.0" y="10" width="4.8" height="80" fill="black" />
+<rect x="37.2" y="10" width="2.4" height="80" fill="black" />
+<rect x="44.4" y="10" width="2.4" height="80" fill="black" />
+<rect x="56.4" y="10" width="2.4" height="80" fill="black" />
+<rect x="61.2" y="10" width="9.6" height="80" fill="black" />
+<rect x="78.0" y="10" width="2.4" height="80" fill="black" />
+<rect x="82.8" y="10" width="7.2" height="80" fill="black" />
+<rect x="94.8" y="10" width="2.4" height="80" fill="black" />
+<rect x="99.6" y="10" width="4.8" height="80" fill="black" />
+<rect x="109.2" y="10" width="7.2" height="80" fill="black" />
+<rect x="121.2" y="10" width="2.4" height="80" fill="black" />
+<rect x="126.0" y="10" width="4.8" height="80" fill="black" />
+<rect x="135.6" y="10" width="7.2" height="80" fill="black" />
+<rect x="147.6" y="10" width="2.4" height="80" fill="black" />
+<rect x="152.4" y="10" width="4.8" height="80" fill="black" />
+<rect x="162.0" y="10" width="7.2" height="80" fill="black" />
+<rect x="174.0" y="10" width="2.4" height="80" fill="black" />
+<rect x="178.8" y="10" width="4.8" height="80" fill="black" />
+<rect x="188.4" y="10" width="7.2" height="80" fill="black" />
+<rect x="200.4" y="10" width="2.4" height="80" fill="black" />
+<rect x="205.2" y="10" width="4.8" height="80" fill="black" />
+<rect x="214.8" y="10" width="7.2" height="80" fill="black" />
+<rect x="224.4" y="10" width="2.4" height="80" fill="black" />
+<rect x="231.6" y="10" width="4.8" height="80" fill="black" />
+<rect x="241.2" y="10" width="2.4" height="80" fill="black" />
+<rect x="250.8" y="10" width="4.8" height="80" fill="black" />
+<rect x="258.0" y="10" width="7.2" height="80" fill="black" />
+<rect x="267.6" y="10" width="4.8" height="80" fill="black" />
+<rect x="279.6" y="10" width="7.2" height="80" fill="black" />
+<rect x="289.2" y="10" width="2.4" height="80" fill="black" />
+<rect x="294.0" y="10" width="4.8" height="80" fill="black" />
+<text x="164.4" y="110" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle">Recall Defaults (999998)</text>
+</svg>
+    </div>
+  </div>
+
+  <div class="step-card">
+    <div class="step-title">PASO 2: Confirmar Modo Teclado USB (Enable USB Keyboard Emulation)</div>
+    <div class="step-desc">Escanea este código para asegurar que el escáner emule un teclado USB estándar en cualquier aparato.</div>
+    <div class="barcode-container">
+      <svg width="329" height="120" viewBox="0 0 329 120" xmlns="http://www.w3.org/2000/svg">
+<rect width="100%" height="100%" fill="white" />
+<rect x="30.0" y="10" width="4.8" height="80" fill="black" />
+<rect x="37.2" y="10" width="2.4" height="80" fill="black" />
+<rect x="44.4" y="10" width="2.4" height="80" fill="black" />
+<rect x="56.4" y="10" width="2.4" height="80" fill="black" />
+<rect x="61.2" y="10" width="9.6" height="80" fill="black" />
+<rect x="78.0" y="10" width="2.4" height="80" fill="black" />
+<rect x="82.8" y="10" width="4.8" height="80" fill="black" />
+<rect x="92.4" y="10" width="2.4" height="80" fill="black" />
+<rect x="97.2" y="10" width="7.2" height="80" fill="black" />
+<rect x="109.2" y="10" width="2.4" height="80" fill="black" />
+<rect x="116.4" y="10" width="7.2" height="80" fill="black" />
+<rect x="128.4" y="10" width="4.8" height="80" fill="black" />
+<rect x="135.6" y="10" width="4.8" height="80" fill="black" />
+<rect x="145.2" y="10" width="7.2" height="80" fill="black" />
+<rect x="154.8" y="10" width="2.4" height="80" fill="black" />
+<rect x="162.0" y="10" width="4.8" height="80" fill="black" />
+<rect x="171.6" y="10" width="2.4" height="80" fill="black" />
+<rect x="178.8" y="10" width="7.2" height="80" fill="black" />
+<rect x="188.4" y="10" width="2.4" height="80" fill="black" />
+<rect x="195.6" y="10" width="7.2" height="80" fill="black" />
+<rect x="205.2" y="10" width="4.8" height="80" fill="black" />
+<rect x="214.8" y="10" width="2.4" height="80" fill="black" />
+<rect x="222.0" y="10" width="7.2" height="80" fill="black" />
+<rect x="231.6" y="10" width="4.8" height="80" fill="black" />
+<rect x="241.2" y="10" width="2.4" height="80" fill="black" />
+<rect x="253.2" y="10" width="2.4" height="80" fill="black" />
+<rect x="258.0" y="10" width="4.8" height="80" fill="black" />
+<rect x="267.6" y="10" width="4.8" height="80" fill="black" />
+<rect x="279.6" y="10" width="7.2" height="80" fill="black" />
+<rect x="289.2" y="10" width="2.4" height="80" fill="black" />
+<rect x="294.0" y="10" width="4.8" height="80" fill="black" />
+<text x="164.4" y="110" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle">Enable USB Keyboard Emulation Mode (316400)</text>
+</svg>
+    </div>
+  </div>
+
+  <div class="step-card">
+    <div class="step-title">PASO 3: Desconectar y Probar</div>
+    <div class="step-desc" style="text-align: left;">
+      <ol style="margin-left: 20px; line-height: 1.6;">
+        <li>Desconecta el cable USB del escáner por 5 segundos y vuelve a conectarlo.</li>
+        <li><strong>Prueba en la computadora:</strong> Abre el <em>Bloc de Notas (Notepad)</em> en Windows. Escanea cualquier producto (por ejemplo, una caja de leche o galletas). Deberán aparecer los números en la pantalla y el cursor saltar a la siguiente línea.</li>
+        <li><strong>Conectar al Verificador de Precios:</strong> Una vez verificado en la computadora, conéctalo al aparato de tu papá. Al escanear un producto, volverá a mostrar el precio tal como lo hacía antes.</li>
+      </ol>
+    </div>
+  </div>
+
+</body>
+</html>
