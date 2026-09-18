@@ -1079,4 +1079,117 @@ func TestInventorySession_ClosedSessionRejectsCounts(t *testing.T) {
 	}
 }
 
+func TestDB_DeepBranchCoverage(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	// 1. saveLocation branches
+	// Empty code
+	if err := saveLocation(db, Location{Code: "", Name: "Test"}); err == nil {
+		t.Errorf("expected error for empty location code")
+	}
+	// Empty name
+	if err := saveLocation(db, Location{Code: "LOC-X", Name: ""}); err == nil {
+		t.Errorf("expected error for empty location name")
+	}
+	// Insert location 1 & 2
+	_ = saveLocation(db, Location{Code: "LOC-1", Name: "Loc 1"})
+	_ = saveLocation(db, Location{Code: "LOC-2", Name: "Loc 2"})
+	locs, _ := getAllLocations(db)
+	var loc1ID int64
+	for _, l := range locs {
+		if l.Code == "LOC-1" {
+			loc1ID = l.ID
+		}
+	}
+	// Update with ID
+	err := saveLocation(db, Location{ID: loc1ID, Code: "LOC-1-RENAMED", Name: "Loc 1 Updated", Description: "New desc"})
+	if err != nil {
+		t.Errorf("expected update to succeed, got %v", err)
+	}
+	// Update with colliding code
+	err = saveLocation(db, Location{ID: loc1ID, Code: "LOC-2", Name: "Colliding Code"})
+	if err == nil || !strings.Contains(err.Error(), "ya está registrado") {
+		t.Errorf("expected unique constraint error, got %v", err)
+	}
+
+	// 2. getActiveInventorySession when none is active
+	active, err := getActiveInventorySession(db)
+	if err != nil || active != nil {
+		t.Errorf("expected (nil, nil) when no active session, got %+v (err: %v)", active, err)
+	}
+
+	// 3. recordInventoryCountEntry branches
+	_ = saveOrUpdateProduct(db, Product{Barcode: "LOC-FALLBACK", Name: "Item Loc Fallback", Price: 10, Stock: 5, Location: "SHELF-DEFAULT", Active: true})
+	_ = saveOrUpdateProduct(db, Product{Barcode: "NO-LOC", Name: "Item No Loc", Price: 10, Stock: 5, Location: "", Active: true})
+	sess, err := startInventorySession(db, "Audit Branch", "Julian", "ALL", "")
+	if err != nil {
+		t.Fatalf("failed starting session: %v", err)
+	}
+	items, _ := listInventorySessionItems(db, sess.ID)
+	var fallbackItem, noLocItem InventorySessionItem
+	for _, it := range items {
+		if it.Barcode == "LOC-FALLBACK" {
+			fallbackItem = it
+		} else if it.Barcode == "NO-LOC" {
+			noLocItem = it
+		}
+	}
+
+	// Negative qty error
+	if err := recordInventoryCountEntry(db, fallbackItem.ID, "EST", -5, false); err == nil {
+		t.Errorf("expected error for negative qty")
+	}
+	// Non-existent item ID error
+	if err := recordInventoryCountEntry(db, 999999, "EST", 1, false); err == nil {
+		t.Errorf("expected error for non-existent item ID")
+	}
+	// Empty locationCode uses item location fallback ("SHELF-DEFAULT")
+	if err := recordInventoryCountEntry(db, fallbackItem.ID, "", 1, false); err != nil {
+		t.Errorf("expected location fallback to succeed, got %v", err)
+	}
+	// Empty locationCode with empty item location uses "GENERAL" fallback
+	if err := recordInventoryCountEntry(db, noLocItem.ID, "", 1, false); err != nil {
+		t.Errorf("expected GENERAL fallback to succeed, got %v", err)
+	}
+
+	// 4. undoLastInventoryEntry branches
+	// Non-existent item ID
+	if err := undoLastInventoryEntry(db, 999999); err == nil {
+		t.Errorf("expected error for undo on non-existent item")
+	}
+	// Undo when count reaches 0 (deletes row and reverts is_counted to 0)
+	if err := undoLastInventoryEntry(db, noLocItem.ID); err != nil {
+		t.Errorf("expected undo to 0 to succeed, got %v", err)
+	}
+	// Undo when already 0 entries (ErrNoRows) -> returns nil
+	if err := undoLastInventoryEntry(db, noLocItem.ID); err != nil {
+		t.Errorf("expected idempotent nil when nothing left to undo, got %v", err)
+	}
+
+	// 5. closeInventorySession & exportSessionReportCSV branches
+	// Close non-existent session
+	if err := closeInventorySession(db, 999999, nil); err == nil {
+		t.Errorf("expected error closing non-existent session")
+	}
+	// Close active session
+	if err := closeInventorySession(db, sess.ID, []int64{fallbackItem.ProductID}); err != nil {
+		t.Errorf("failed closing active session: %v", err)
+	}
+	// Close already closed session
+	if err := closeInventorySession(db, sess.ID, nil); err == nil {
+		t.Errorf("expected error closing already closed session")
+	}
+	// Export CSV non-existent session
+	if _, err := exportSessionReportCSV(db, 999999); err == nil {
+		t.Errorf("expected error exporting non-existent session")
+	}
+	// Export CSV closed session (tests closedAt.Valid branch)
+	closedCSV, err := exportSessionReportCSV(db, sess.ID)
+	if err != nil || !strings.Contains(closedCSV, "Fecha Cierre") {
+		t.Errorf("expected closed CSV to contain 'Fecha Cierre', got: %s (err: %v)", closedCSV, err)
+	}
+}
+
+
 

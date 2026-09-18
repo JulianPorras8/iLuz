@@ -23,8 +23,13 @@ type ScannerStatusPayload struct {
 	AvailablePorts []string `json:"availablePorts"`
 }
 
+var (
+	getPortsList   = serial.GetPortsList
+	openSerialPort = serial.Open
+)
+
 func getAvailableSerialPorts() []string {
-	ports, err := serial.GetPortsList()
+	ports, err := getPortsList()
 	if err != nil || len(ports) == 0 {
 		return []string{}
 	}
@@ -78,7 +83,7 @@ func startScannerWorker(ctx context.Context, db *sql.DB, comPort string, onStatu
 			continue
 		}
 
-		port, err := serial.Open(targetPort, mode)
+		port, err := openSerialPort(targetPort, mode)
 		if err != nil {
 			emitStatus(ScannerStatusPayload{
 				Connected:      false,
