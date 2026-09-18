@@ -12,6 +12,45 @@ import StartAuditModal from './components/StartAuditModal.jsx';
 import AuditReconciliationModal from './components/AuditReconciliationModal.jsx';
 import Toast from './components/Toast.jsx';
 
+// Shared singleton AudioContext for responsive audio feedback without leaking contexts
+let audioCtxSingleton = null;
+function playSoundChime(success = true) {
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    if (!audioCtxSingleton || audioCtxSingleton.state === 'closed') {
+      audioCtxSingleton = new AudioContextClass();
+    }
+    if (audioCtxSingleton.state === 'suspended') {
+      audioCtxSingleton.resume();
+    }
+    const osc = audioCtxSingleton.createOscillator();
+    const gain = audioCtxSingleton.createGain();
+
+    if (success) {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, audioCtxSingleton.currentTime); // A5
+      gain.gain.setValueAtTime(0.15, audioCtxSingleton.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtxSingleton.currentTime + 0.08);
+      osc.connect(gain);
+      gain.connect(audioCtxSingleton.destination);
+      osc.start();
+      osc.stop(audioCtxSingleton.currentTime + 0.08);
+    } else {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(320, audioCtxSingleton.currentTime);
+      gain.gain.setValueAtTime(0.18, audioCtxSingleton.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtxSingleton.currentTime + 0.15);
+      osc.connect(gain);
+      gain.connect(audioCtxSingleton.destination);
+      osc.start();
+      osc.stop(audioCtxSingleton.currentTime + 0.15);
+    }
+  } catch (e) {
+    // silently ignore if audio blocked
+  }
+}
+
 export default function App() {
   // Navigation
   const [currentTab, setCurrentTab] = useState('pos');
@@ -38,6 +77,7 @@ export default function App() {
   const [auditLocationCode, setAuditLocationCode] = useState('EST-A1');
   const [isStartAuditModalOpen, setIsStartAuditModalOpen] = useState(false);
   const [isReconciliationModalOpen, setIsReconciliationModalOpen] = useState(false);
+  const [lastTouchedAuditItemId, setLastTouchedAuditItemId] = useState(null);
 
   // Modals
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
@@ -155,6 +195,11 @@ export default function App() {
           setIsProductModalOpen(true);
         }
       } else if (currentTab === 'audit') {
+        if (isReconciliationModalOpen) {
+          showToast('⏸️ Finalización en progreso: escaneos en pausa', 'warning');
+          return;
+        }
+
         if (activeAuditSession) {
           (async () => {
             try {
@@ -164,15 +209,19 @@ export default function App() {
                 auditLocationCode
               );
               if (updated) {
+                playSoundChime(true);
                 showToast(`+1 en ${auditLocationCode}: ${updated.productName}`, 'success');
+                setLastTouchedAuditItemId(updated.id);
                 const items = await window.go.main.App.ListInventorySessionItems(activeAuditSession.id);
                 setAuditItems(items || []);
               }
             } catch (err) {
+              playSoundChime(false);
               const errStr = String(err || '');
               if (errStr.includes('UNKNOWN_BARCODE:')) {
                 const unknownCode = errStr.split('UNKNOWN_BARCODE:')[1] || barcode;
                 showToast(`Código ${unknownCode} no registrado. Abriendo catálogo para crearlo...`, 'warning');
+                setUnregisteredBarcode(unknownCode);
                 setEditingProduct({ barcode: unknownCode, active: true });
                 setIsProductModalOpen(true);
               } else {
@@ -185,7 +234,7 @@ export default function App() {
         }
       }
     },
-    [currentTab, activeAuditSession, auditLocationCode, showToast]
+    [currentTab, activeAuditSession, auditLocationCode, isReconciliationModalOpen, showToast]
   );
 
   useEffect(() => {
@@ -317,12 +366,31 @@ export default function App() {
       const updated = await window.go.main.App.ListInventoryProducts(true);
       setProducts(updated || []);
 
-      // If registered from POS unregistered prompt
+      // If registered from POS or Audit unregistered prompt
       if (unregisteredBarcode && prodData.barcode === unregisteredBarcode) {
-        const fresh = (updated || []).find((p) => p.barcode === prodData.barcode);
-        if (fresh) {
-          setCart((prev) => [...prev, { ...fresh, qty: 1 }]);
-          setLastScannedProduct(fresh);
+        if (currentTab === 'pos') {
+          const fresh = (updated || []).find((p) => p.barcode === prodData.barcode);
+          if (fresh) {
+            setCart((prev) => [...prev, { ...fresh, qty: 1 }]);
+            setLastScannedProduct(fresh);
+            setUnregisteredBarcode(null);
+          }
+        } else if (currentTab === 'audit' && activeAuditSession) {
+          // Auto-enroll new product into active audit session with initial +1 count (Spec Rule 5)
+          try {
+            const updatedItem = await window.go.main.App.RecordInventoryScan(
+              activeAuditSession.id,
+              prodData.barcode,
+              auditLocationCode
+            );
+            if (updatedItem) {
+              playSoundChime(true);
+              showToast(`✅ ${prodData.name} creado y contado (+1) en ${auditLocationCode}`, 'success');
+              setLastTouchedAuditItemId(updatedItem.id);
+            }
+          } catch (scanErr) {
+            console.error('Error auto-recording scan for new product in audit:', scanErr);
+          }
           setUnregisteredBarcode(null);
         }
       }
@@ -482,14 +550,20 @@ export default function App() {
         barcode,
         locationCode
       );
-      const items = await window.go.main.App.ListInventorySessionItems(activeAuditSession.id);
-      setAuditItems(items || []);
+      if (updated) {
+        playSoundChime(true);
+        setLastTouchedAuditItemId(updated.id);
+        const items = await window.go.main.App.ListInventorySessionItems(activeAuditSession.id);
+        setAuditItems(items || []);
+      }
       return updated;
     } catch (err) {
+      playSoundChime(false);
       const errStr = String(err || '');
       if (errStr.includes('UNKNOWN_BARCODE:')) {
         const code = errStr.split('UNKNOWN_BARCODE:')[1] || barcode;
         showToast(`Código ${code} no registrado. Abriendo catálogo para crearlo...`, 'warning');
+        setUnregisteredBarcode(code);
         setEditingProduct({ barcode: code, active: true });
         setIsProductModalOpen(true);
       } else {
@@ -622,6 +696,10 @@ export default function App() {
         onPortChange={handlePortChange}
         onRefreshPorts={handleRefreshPorts}
         onProductSelect={(prod) => {
+          if (currentTab === 'audit') {
+            showToast(`🔍 ${prod.name} | Stock actual: ${prod.stock} | Ubic: ${prod.location || 'Sin ubicación'}`, 'info');
+            return;
+          }
           handleIncomingScan({ found: true, barcode: prod.barcode, product: prod });
         }}
         activeAuditSession={activeAuditSession}
@@ -692,6 +770,8 @@ export default function App() {
             locations={locations}
             activeLocationCode={auditLocationCode}
             setActiveLocationCode={setAuditLocationCode}
+            lastTouchedItemId={lastTouchedAuditItemId}
+            setLastTouchedItemId={setLastTouchedAuditItemId}
             onStartSession={() => setIsStartAuditModalOpen(true)}
             onOpenFinishAudit={() => setIsReconciliationModalOpen(true)}
             onCancelSession={handleCancelAuditSession}

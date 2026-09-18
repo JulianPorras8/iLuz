@@ -154,14 +154,9 @@ func (a *App) UpdateProductLocation(barcode string, location string) error {
 	if err != nil {
 		return err
 	}
-	// Re-emit updated product to keep UI in sync
+	// Re-emit updated product to keep UI in sync without triggering scan counters
 	prod, err := getProductByBarcode(a.db, barcode)
 	if err == nil {
-		safeEmit(a.ctx, "barcode:scanned", ScanPayload{
-			Found:   true,
-			Barcode: barcode,
-			Product: prod,
-		})
 		safeEmit(a.ctx, "product:updated", prod)
 	}
 	return nil
@@ -320,6 +315,15 @@ func (a *App) ListInventorySessionItems(sessionId int64) ([]InventorySessionItem
 }
 
 func (a *App) RecordInventoryScan(sessionId int64, barcode string, locationCode string) (*InventorySessionItem, error) {
+	var sessionStatus string
+	err := a.db.QueryRow("SELECT status FROM inventory_sessions WHERE id = ?", sessionId).Scan(&sessionStatus)
+	if err != nil {
+		return nil, fmt.Errorf("sesión de inventario no encontrada: %w", err)
+	}
+	if sessionStatus != "in_progress" {
+		return nil, fmt.Errorf("la sesión #%d no está activa (estado actual: %s)", sessionId, sessionStatus)
+	}
+
 	code := strings.TrimSpace(barcode)
 	if code == "" {
 		return nil, fmt.Errorf("código de barras vacío")

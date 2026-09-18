@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 export default function AuditReconciliationModal({
   isOpen,
@@ -10,18 +10,25 @@ export default function AuditReconciliationModal({
 }) {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [filterMode, setFilterMode] = useState('differences'); // 'all', 'differences', 'counted'
+  const prevIsOpenRef = useRef(false);
 
   useEffect(() => {
-    if (!isOpen || !items) return;
+    if (!isOpen) {
+      prevIsOpenRef.current = false;
+      return;
+    }
 
-    // By default: pre-select only counted items with real differences (Rule 3)
-    const initialSelected = new Set();
-    items.forEach((it) => {
-      if (it.isCounted && it.variance !== 0) {
-        initialSelected.add(it.productId);
-      }
-    });
-    setSelectedIds(initialSelected);
+    // Initialize selection only once upon modal open, preventing mid-count resets
+    if (!prevIsOpenRef.current && items) {
+      prevIsOpenRef.current = true;
+      const initialSelected = new Set();
+      items.forEach((it) => {
+        if (it.isCounted && it.variance !== 0) {
+          initialSelected.add(it.productId);
+        }
+      });
+      setSelectedIds(initialSelected);
+    }
 
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') onClose();

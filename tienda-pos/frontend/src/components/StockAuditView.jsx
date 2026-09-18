@@ -1,32 +1,38 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 
-// Web Audio API beep synthesizer for scanner ergonomics
+// Singleton AudioContext synthesizer for scanner ergonomics without leaking contexts
+let audioCtxSingleton = null;
 function playChime(success = true) {
   try {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextClass) return;
-    const ctx = new AudioContextClass();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+    if (!audioCtxSingleton || audioCtxSingleton.state === 'closed') {
+      audioCtxSingleton = new AudioContextClass();
+    }
+    if (audioCtxSingleton.state === 'suspended') {
+      audioCtxSingleton.resume();
+    }
+    const osc = audioCtxSingleton.createOscillator();
+    const gain = audioCtxSingleton.createGain();
 
     if (success) {
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(880, ctx.currentTime); // A5
-      gain.gain.setValueAtTime(0.12, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+      osc.frequency.setValueAtTime(880, audioCtxSingleton.currentTime); // A5
+      gain.gain.setValueAtTime(0.12, audioCtxSingleton.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtxSingleton.currentTime + 0.08);
       osc.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(audioCtxSingleton.destination);
       osc.start();
-      osc.stop(ctx.currentTime + 0.08);
+      osc.stop(audioCtxSingleton.currentTime + 0.08);
     } else {
       osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(320, ctx.currentTime);
-      gain.gain.setValueAtTime(0.15, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+      osc.frequency.setValueAtTime(320, audioCtxSingleton.currentTime);
+      gain.gain.setValueAtTime(0.15, audioCtxSingleton.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtxSingleton.currentTime + 0.15);
       osc.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(audioCtxSingleton.destination);
       osc.start();
-      osc.stop(ctx.currentTime + 0.15);
+      osc.stop(audioCtxSingleton.currentTime + 0.15);
     }
   } catch (e) {
     // AudioContext blocked or unsupported, silently fail
@@ -40,6 +46,8 @@ export default function StockAuditView({
   locations = [],
   activeLocationCode,
   setActiveLocationCode,
+  lastTouchedItemId: propLastTouchedItemId,
+  setLastTouchedItemId: propSetLastTouchedItemId,
   onStartSession,
   onOpenFinishAudit,
   onCancelSession,
@@ -61,11 +69,13 @@ export default function StockAuditView({
   // Batch Count Modal state (F2)
   const [batchModalItem, setBatchModalItem] = useState(null);
   const [batchQty, setBatchQty] = useState('');
-  const [batchReplace, setBatchReplace] = useState(false);
+  const [batchReplace, setBatchReplace] = useState(true);
   const batchInputRef = useRef(null);
 
-  // Tracking last touched item for Undo
-  const [lastTouchedItemId, setLastTouchedItemId] = useState(null);
+  // Tracking last touched item for Undo (support both prop or internal state)
+  const [internalLastTouchedItemId, setInternalLastTouchedItemId] = useState(null);
+  const lastTouchedItemId = propLastTouchedItemId !== undefined ? propLastTouchedItemId : internalLastTouchedItemId;
+  const setLastTouchedItemId = propSetLastTouchedItemId || setInternalLastTouchedItemId;
 
   // Compute Active Location String
   const currentCountLocation = isCustomLoc
@@ -77,13 +87,14 @@ export default function StockAuditView({
     const handleKeyDown = (e) => {
       if (e.key === 'F2') {
         e.preventDefault();
-        // If an item is being searched or selected, open batch modal
         if (session && items.length > 0) {
-          const target = items[0];
+          // Target currently filtered item, or last touched item, or first item
+          const target = (lastTouchedItemId && items.find((it) => it.id === lastTouchedItemId))
+            || (displayedItems.length > 0 ? displayedItems[0] : items[0]);
           if (target) {
             setBatchModalItem(target);
             setBatchQty('');
-            setBatchReplace(false);
+            setBatchReplace(true); // Default to replace mode (Spec Rule 5)
           }
         }
       } else if (e.key === 'Escape' && batchModalItem) {
@@ -92,7 +103,7 @@ export default function StockAuditView({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [session, items, batchModalItem]);
+  }, [session, items, displayedItems, lastTouchedItemId, batchModalItem]);
 
   // Focus batch input when modal opens
   useEffect(() => {
@@ -176,7 +187,7 @@ export default function StockAuditView({
   const handleOpenBatch = (item) => {
     setBatchModalItem(item);
     setBatchQty('');
-    setBatchReplace(false);
+    setBatchReplace(true);
   };
 
   // Submit Batch Count
@@ -360,7 +371,7 @@ export default function StockAuditView({
                         </span>
                       </td>
                       <td style={{ fontSize: '12px', color: '#64748b' }}>{s.startedAt?.slice(0, 16).replace('T', ' ')}</td>
-                      <td style={{ fontSize: '12px', color: '#64748b' }}>{s.endedAt?.slice(0, 16).replace('T', ' ') || '-'}</td>
+                      <td style={{ fontSize: '12px', color: '#64748b' }}>{(s.closedAt || s.endedAt)?.slice(0, 16).replace('T', ' ') || '-'}</td>
                       <td style={{ textAlign: 'center' }}>
                         <span
                           style={{
@@ -522,6 +533,7 @@ export default function StockAuditView({
             onChange={(e) => {
               if (e.target.value === 'CUSTOM') {
                 setIsCustomLoc(true);
+                setActiveLocationCode(customLocation.trim() || 'GENERAL');
               } else {
                 setIsCustomLoc(false);
                 setActiveLocationCode(e.target.value);
@@ -529,14 +541,19 @@ export default function StockAuditView({
             }}
             style={{ width: 'auto', minWidth: '160px', padding: '6px 10px', fontSize: '13px', fontWeight: 600 }}
           >
-            <option value="EST-A1">EST-A1 (Estante A1)</option>
-            <option value="BOD-01">BOD-01 (Bodega Principal)</option>
-            <option value="TIENDA">TIENDA (Piso de Venta)</option>
-            {locations.map((loc) => (
-              <option key={loc.id} value={loc.code}>
-                {loc.code} - {loc.name}
-              </option>
-            ))}
+            {locations && locations.length > 0 ? (
+              locations.map((loc) => (
+                <option key={loc.id} value={loc.code}>
+                  {loc.code} - {loc.name}
+                </option>
+              ))
+            ) : (
+              <>
+                <option value="EST-A1">EST-A1 (Estante A1)</option>
+                <option value="BOD-01">BOD-01 (Bodega Principal)</option>
+                <option value="TIENDA">TIENDA (Piso de Venta)</option>
+              </>
+            )}
             <option value="CUSTOM">➕ Otra ubicación manual...</option>
           </select>
 
@@ -546,7 +563,10 @@ export default function StockAuditView({
               className="form-control"
               placeholder="Ej. BODEGA-2"
               value={customLocation}
-              onChange={(e) => setCustomLocation(e.target.value)}
+              onChange={(e) => {
+                setCustomLocation(e.target.value);
+                setActiveLocationCode(e.target.value.trim() || 'GENERAL');
+              }}
               style={{ width: '130px', padding: '6px 8px', fontSize: '13px' }}
               autoFocus
             />

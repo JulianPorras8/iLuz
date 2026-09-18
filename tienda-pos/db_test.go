@@ -961,4 +961,122 @@ func TestInventorySession_ExportCSV(t *testing.T) {
 	}
 }
 
+func TestInventorySession_ZoneScopeMatching(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	_ = saveOrUpdateProduct(db, Product{Barcode: "ZONE-1", Name: "Exact Match", Price: 10, Stock: 5, Location: "EST-A1", Active: true})
+	_ = saveOrUpdateProduct(db, Product{Barcode: "ZONE-2", Name: "Composite Match", Price: 10, Stock: 5, Location: "EST-A1 - Estante A1 Principal", Active: true})
+	_ = saveOrUpdateProduct(db, Product{Barcode: "ZONE-3", Name: "Other Shelf", Price: 10, Stock: 5, Location: "EST-A2 - Estante A2", Active: true})
+	_ = saveOrUpdateProduct(db, Product{Barcode: "ZONE-4", Name: "Prefix Collision", Price: 10, Stock: 5, Location: "EST-A10 - Estante A10", Active: true})
+
+	sess, err := startInventorySession(db, "Zone Audit", "Julian", "EST-A1", "")
+	if err != nil {
+		t.Fatalf("failed starting zone session: %v", err)
+	}
+
+	items, err := listInventorySessionItems(db, sess.ID)
+	if err != nil {
+		t.Fatalf("failed listing session items: %v", err)
+	}
+
+	if len(items) != 2 {
+		t.Fatalf("expected exactly 2 items matching EST-A1, got %d", len(items))
+	}
+
+	barcodes := make(map[string]bool)
+	for _, it := range items {
+		barcodes[it.Barcode] = true
+	}
+	if !barcodes["ZONE-1"] || !barcodes["ZONE-2"] {
+		t.Errorf("expected ZONE-1 and ZONE-2 to be captured in snapshot, got: %+v", barcodes)
+	}
+	if barcodes["ZONE-3"] || barcodes["ZONE-4"] {
+		t.Errorf("ZONE-3 or ZONE-4 should not be in snapshot, got: %+v", barcodes)
+	}
+}
+
+func TestInventorySession_BackendStockFreeze(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	p := Product{Barcode: "FREEZE-1", Name: "Item Frozen", Price: 20.0, Stock: 15, Active: true}
+	_ = saveOrUpdateProduct(db, p)
+
+	// Verify initial stock
+	saved, _ := getProductByBarcode(db, "FREEZE-1")
+	if saved.Stock != 15 {
+		t.Fatalf("expected initial stock 15, got %d", saved.Stock)
+	}
+
+	// 1. Start an inventory audit session
+	sess, err := startInventorySession(db, "Audit Active", "Julian", "ALL", "")
+	if err != nil {
+		t.Fatalf("failed starting session: %v", err)
+	}
+
+	// 2. Attempt to update stock while session is in progress
+	saved.Stock = 999
+	saved.Price = 25.0 // Non-stock fields should still update
+	err = saveOrUpdateProduct(db, *saved)
+	if err != nil {
+		t.Fatalf("saveOrUpdateProduct returned error: %v", err)
+	}
+
+	// Verify stock was FROZEN to 15, but price updated to 25
+	duringAudit, _ := getProductByBarcode(db, "FREEZE-1")
+	if duringAudit.Stock != 15 {
+		t.Errorf("CRITICAL: stock freeze failed during active audit! Expected 15, got %d", duringAudit.Stock)
+	}
+	if duringAudit.Price != 25.0 {
+		t.Errorf("expected price to update to 25.0, got %f", duringAudit.Price)
+	}
+
+	// 3. Close the audit session
+	_ = cancelInventorySession(db, sess.ID)
+
+	// 4. Update stock now that audit is closed
+	duringAudit.Stock = 42
+	err = saveOrUpdateProduct(db, *duringAudit)
+	if err != nil {
+		t.Fatalf("saveOrUpdateProduct error after audit closed: %v", err)
+	}
+
+	afterAudit, _ := getProductByBarcode(db, "FREEZE-1")
+	if afterAudit.Stock != 42 {
+		t.Errorf("expected stock to update to 42 after audit closed, got %d", afterAudit.Stock)
+	}
+}
+
+func TestInventorySession_ClosedSessionRejectsCounts(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	_ = saveOrUpdateProduct(db, Product{Barcode: "GUARD-1", Name: "Guarded Item", Price: 10, Stock: 5, Active: true})
+	sess, _ := startInventorySession(db, "Guard Test", "Julian", "ALL", "")
+	items, _ := listInventorySessionItems(db, sess.ID)
+	itemID := items[0].ID
+
+	// Count 2 while active
+	err := recordInventoryCountEntry(db, itemID, "EST-A1", 2, false)
+	if err != nil {
+		t.Fatalf("expected count to succeed on active session: %v", err)
+	}
+
+	// Cancel session
+	_ = cancelInventorySession(db, sess.ID)
+
+	// Attempt count on cancelled session must fail
+	err = recordInventoryCountEntry(db, itemID, "EST-A1", 3, false)
+	if err == nil {
+		t.Fatalf("expected error recording count on cancelled session, but succeeded")
+	}
+
+	// Attempt undo on cancelled session must fail
+	err = undoLastInventoryEntry(db, itemID)
+	if err == nil {
+		t.Fatalf("expected error undoing count on cancelled session, but succeeded")
+	}
+}
+
 

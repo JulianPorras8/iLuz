@@ -156,7 +156,8 @@ func initDB(filepath string) *sql.DB {
 		session_item_id INTEGER NOT NULL REFERENCES inventory_session_items(id) ON DELETE CASCADE,
 		location_code   TEXT NOT NULL DEFAULT '',
 		qty             INTEGER NOT NULL CHECK (qty >= 0),
-		counted_at      DATETIME DEFAULT CURRENT_TIMESTAMP
+		counted_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+		UNIQUE(session_item_id, location_code)
 	);
 	`
 	if _, err := db.Exec(baseSchema); err != nil {
@@ -173,6 +174,7 @@ func initDB(filepath string) *sql.DB {
 	CREATE INDEX IF NOT EXISTS idx_inv_items_counted ON inventory_session_items(session_id, is_counted);
 	CREATE INDEX IF NOT EXISTS idx_inv_items_barcode ON inventory_session_items(session_id, barcode);
 	CREATE INDEX IF NOT EXISTS idx_count_entries_item ON inventory_count_entries(session_item_id);
+	CREATE UNIQUE INDEX IF NOT EXISTS idx_count_entries_unique ON inventory_count_entries(session_item_id, location_code);
 	`
 	if _, err := db.Exec(indexes); err != nil {
 		log.Fatalf("Error creando índices migrados: %v", err)
@@ -290,6 +292,15 @@ func saveOrUpdateProduct(db *sql.DB, p Product) error {
 	}
 
 	if p.ID > 0 {
+		// Rule 6 Backend Enforcement: If an audit session is in progress, do not alter live stock
+		var activeAuditCount int
+		_ = db.QueryRow("SELECT COUNT(1) FROM inventory_sessions WHERE status = 'in_progress'").Scan(&activeAuditCount)
+		stockToSet := p.Stock
+		if activeAuditCount > 0 {
+			// Preserve existing stock from database
+			_ = db.QueryRow("SELECT stock FROM products WHERE id = ?", p.ID).Scan(&stockToSet)
+		}
+
 		query := `
 		UPDATE products SET
 			barcode = ?,
@@ -309,7 +320,7 @@ func saveOrUpdateProduct(db *sql.DB, p Product) error {
 			p.Barcode,
 			p.Name,
 			p.Price,
-			p.Stock,
+			stockToSet,
 			p.Weight,
 			p.Size,
 			p.UnitOfMeasure,
@@ -576,15 +587,20 @@ func startInventorySession(db *sql.DB, name, responsible, scope, notes string) (
 			ORDER BY name ASC;
 		`, sessionID)
 	} else {
+		baseScope := strings.TrimSpace(strings.Split(scope, " - ")[0])
 		_, err = tx.Exec(`
 			INSERT INTO inventory_session_items (
 				session_id, product_id, barcode, product_name, location, unit_price, system_stock_at_start, counted_qty, is_counted
 			)
 			SELECT ?, id, barcode, name, location, price, stock, 0, 0
 			FROM products
-			WHERE active = 1 AND location = ?
+			WHERE active = 1 AND (
+				location = ? OR location = ? OR 
+				location LIKE ? || ' - %' OR location LIKE ? || ' - %' OR 
+				location LIKE ? || ' %' OR location LIKE ? || ' %'
+			)
 			ORDER BY name ASC;
-		`, sessionID, scope)
+		`, sessionID, scope, baseScope, scope, baseScope, scope, baseScope)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("error capturando snapshot de productos: %w", err)
@@ -692,31 +708,38 @@ func listInventorySessionItems(db *sql.DB, sessionId int64) ([]InventorySessionI
 		item.Variance = item.CountedQty - item.SystemStockAtStart
 		item.Difference = float64(item.Variance) * item.UnitPrice
 
-		// Fetch location breakdown
-		entryRows, err := db.Query(`
-			SELECT location_code, SUM(qty)
-			FROM inventory_count_entries
-			WHERE session_item_id = ?
-			GROUP BY location_code
-			ORDER BY location_code ASC;
-		`, item.ID)
-		if err == nil {
-			var parts []string
-			for entryRows.Next() {
-				var loc string
-				var sumQty int
-				if err := entryRows.Scan(&loc, &sumQty); err == nil {
-					if loc == "" {
-						loc = "General"
-					}
-					parts = append(parts, fmt.Sprintf("%s: %d", loc, sumQty))
-				}
-			}
-			entryRows.Close()
-			item.Breakdown = strings.Join(parts, ", ")
-		}
-
 		list = append(list, item)
+	}
+
+	// Bulk fetch location breakdowns (eliminates N+1 query)
+	breakdownMap := make(map[int64][]string)
+	entryRows, err := db.Query(`
+		SELECT e.session_item_id, e.location_code, SUM(e.qty)
+		FROM inventory_count_entries e
+		JOIN inventory_session_items i ON i.id = e.session_item_id
+		WHERE i.session_id = ?
+		GROUP BY e.session_item_id, e.location_code
+		ORDER BY e.location_code ASC;
+	`, sessionId)
+	if err == nil {
+		defer entryRows.Close()
+		for entryRows.Next() {
+			var sItemID int64
+			var loc string
+			var sumQty int
+			if err := entryRows.Scan(&sItemID, &loc, &sumQty); err == nil {
+				if loc == "" {
+					loc = "General"
+				}
+				breakdownMap[sItemID] = append(breakdownMap[sItemID], fmt.Sprintf("%s: %d", loc, sumQty))
+			}
+		}
+	}
+
+	for i := range list {
+		if parts, ok := breakdownMap[list[i].ID]; ok {
+			list[i].Breakdown = strings.Join(parts, ", ")
+		}
 	}
 
 	return list, nil
@@ -725,6 +748,22 @@ func listInventorySessionItems(db *sql.DB, sessionId int64) ([]InventorySessionI
 func recordInventoryCountEntry(db *sql.DB, sessionItemId int64, locationCode string, qty int, replace bool) error {
 	if qty < 0 {
 		return fmt.Errorf("la cantidad contada no puede ser negativa")
+	}
+
+	// Validate session is active and in_progress
+	var sessionStatus string
+	err := db.QueryRow(`
+		SELECT s.status 
+		FROM inventory_sessions s
+		JOIN inventory_session_items i ON i.session_id = s.id
+		WHERE i.id = ?
+		LIMIT 1;
+	`, sessionItemId).Scan(&sessionStatus)
+	if err != nil {
+		return fmt.Errorf("ítem de inventario no encontrado: %w", err)
+	}
+	if sessionStatus != "in_progress" {
+		return fmt.Errorf("la toma de inventario no está activa (estado actual: %s)", sessionStatus)
 	}
 
 	loc := strings.TrimSpace(strings.ToUpper(locationCode))
@@ -744,37 +783,24 @@ func recordInventoryCountEntry(db *sql.DB, sessionItemId int64, locationCode str
 	}
 	defer tx.Rollback()
 
-	var entryID int64
-	var curQty int
-	err = tx.QueryRow(`
-		SELECT id, qty FROM inventory_count_entries 
-		WHERE session_item_id = ? AND location_code = ? 
-		LIMIT 1;
-	`, sessionItemId, loc).Scan(&entryID, &curQty)
-
-	if err == sql.ErrNoRows {
+	// Atomic upsert with ON CONFLICT (prevents lost counts on concurrent rapid scans)
+	if replace {
 		_, err = tx.Exec(`
-			INSERT INTO inventory_count_entries (session_item_id, location_code, qty)
-			VALUES (?, ?, ?);
+			INSERT INTO inventory_count_entries (session_item_id, location_code, qty, counted_at)
+			VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+			ON CONFLICT(session_item_id, location_code)
+			DO UPDATE SET qty = excluded.qty, counted_at = CURRENT_TIMESTAMP;
 		`, sessionItemId, loc, qty)
-		if err != nil {
-			return err
-		}
-	} else if err == nil {
-		newQty := curQty + qty
-		if replace {
-			newQty = qty
-		}
-		_, err = tx.Exec(`
-			UPDATE inventory_count_entries 
-			SET qty = ?, counted_at = CURRENT_TIMESTAMP
-			WHERE id = ?;
-		`, newQty, entryID)
-		if err != nil {
-			return err
-		}
 	} else {
-		return err
+		_, err = tx.Exec(`
+			INSERT INTO inventory_count_entries (session_item_id, location_code, qty, counted_at)
+			VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+			ON CONFLICT(session_item_id, location_code)
+			DO UPDATE SET qty = inventory_count_entries.qty + excluded.qty, counted_at = CURRENT_TIMESTAMP;
+		`, sessionItemId, loc, qty)
+	}
+	if err != nil {
+		return fmt.Errorf("error registrando conteo físico: %w", err)
 	}
 
 	// Recalculate derived counted_qty (Rule 1)
@@ -793,6 +819,22 @@ func recordInventoryCountEntry(db *sql.DB, sessionItemId int64, locationCode str
 }
 
 func undoLastInventoryEntry(db *sql.DB, sessionItemId int64) error {
+	// Validate session is active
+	var sessionStatus string
+	err := db.QueryRow(`
+		SELECT s.status 
+		FROM inventory_sessions s
+		JOIN inventory_session_items i ON i.session_id = s.id
+		WHERE i.id = ?
+		LIMIT 1;
+	`, sessionItemId).Scan(&sessionStatus)
+	if err != nil {
+		return fmt.Errorf("ítem de inventario no encontrado: %w", err)
+	}
+	if sessionStatus != "in_progress" {
+		return fmt.Errorf("la toma de inventario no está activa (estado actual: %s)", sessionStatus)
+	}
+
 	tx, err := db.Begin()
 	if err != nil {
 		return err
