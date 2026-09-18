@@ -82,36 +82,6 @@ export default function StockAuditView({
     ? (customLocation.trim() || 'GENERAL')
     : (activeLocationCode || 'EST-A1');
 
-  // Keyboard shortcut listener (F2 for batch count, Escape to close modal)
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'F2') {
-        e.preventDefault();
-        if (session && items.length > 0) {
-          // Target currently filtered item, or last touched item, or first item
-          const target = (lastTouchedItemId && items.find((it) => it.id === lastTouchedItemId))
-            || (displayedItems.length > 0 ? displayedItems[0] : items[0]);
-          if (target) {
-            setBatchModalItem(target);
-            setBatchQty('');
-            setBatchReplace(true); // Default to replace mode (Spec Rule 5)
-          }
-        }
-      } else if (e.key === 'Escape' && batchModalItem) {
-        setBatchModalItem(null);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [session, items, displayedItems, lastTouchedItemId, batchModalItem]);
-
-  // Focus batch input when modal opens
-  useEffect(() => {
-    if (batchModalItem && batchInputRef.current) {
-      setTimeout(() => batchInputRef.current?.focus(), 50);
-    }
-  }, [batchModalItem]);
-
   // Statistics
   const stats = useMemo(() => {
     if (!items || items.length === 0) {
@@ -151,6 +121,36 @@ export default function StockAuditView({
 
     return result;
   }, [items, filterMode, searchQuery]);
+
+  // Keyboard shortcut listener (F2 for batch count, Escape to close modal)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'F2') {
+        e.preventDefault();
+        if (session && items.length > 0) {
+          // Target currently filtered item, or last touched item, or first item
+          const target = (lastTouchedItemId && items.find((it) => it.id === lastTouchedItemId))
+            || (displayedItems.length > 0 ? displayedItems[0] : items[0]);
+          if (target) {
+            setBatchModalItem(target);
+            setBatchQty('');
+            setBatchReplace(true); // Default to replace mode (Spec Rule 5)
+          }
+        }
+      } else if (e.key === 'Escape' && batchModalItem) {
+        setBatchModalItem(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [session, items, displayedItems, lastTouchedItemId, batchModalItem]);
+
+  // Focus batch input when modal opens
+  useEffect(() => {
+    if (batchModalItem && batchInputRef.current) {
+      setTimeout(() => batchInputRef.current?.focus(), 50);
+    }
+  }, [batchModalItem]);
 
   // Handle Quick Scan Submit
   const handleScanSubmit = async (e) => {
