@@ -7,6 +7,7 @@ import LocationsView from './components/LocationsView.jsx';
 import StockAuditView from './components/StockAuditView.jsx';
 import ProductModal from './components/ProductModal.jsx';
 import LocationModal from './components/LocationModal.jsx';
+import ShelfModal from './components/ShelfModal.jsx';
 import ConfirmModal from './components/ConfirmModal.jsx';
 import StartAuditModal from './components/StartAuditModal.jsx';
 import AuditReconciliationModal from './components/AuditReconciliationModal.jsx';
@@ -63,6 +64,7 @@ export default function App() {
   // Data State
   const [products, setProducts] = useState([]);
   const [locations, setLocations] = useState([]);
+  const [shelves, setShelves] = useState([]);
   const [cart, setCart] = useState([]);
 
   // Active Contexts
@@ -85,6 +87,9 @@ export default function App() {
 
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [editingLocation, setEditingLocation] = useState(null);
+
+  const [isShelfModalOpen, setIsShelfModalOpen] = useState(false);
+  const [editingShelf, setEditingShelf] = useState(null);
 
   const [confirmDialog, setConfirmDialog] = useState({
     isOpen: false,
@@ -109,11 +114,12 @@ export default function App() {
     if (!window.go?.main?.App) return;
 
     try {
-      const [status, ports, port, locs, prods, activeSess, completedSess] = await Promise.all([
+      const [status, ports, port, locs, shs, prods, activeSess, completedSess] = await Promise.all([
         window.go.main.App.GetScannerStatus ? window.go.main.App.GetScannerStatus() : null,
         window.go.main.App.GetAvailablePorts ? window.go.main.App.GetAvailablePorts() : [],
         window.go.main.App.GetCurrentPort ? window.go.main.App.GetCurrentPort() : 'COM3',
         window.go.main.App.GetAllLocations ? window.go.main.App.GetAllLocations() : [],
+        window.go.main.App.GetAllShelves ? window.go.main.App.GetAllShelves() : [],
         window.go.main.App.ListInventoryProducts ? window.go.main.App.ListInventoryProducts(true) : [],
         window.go.main.App.GetActiveInventorySession ? window.go.main.App.GetActiveInventorySession() : null,
         window.go.main.App.ListCompletedInventorySessions ? window.go.main.App.ListCompletedInventorySessions() : [],
@@ -123,6 +129,7 @@ export default function App() {
       setAvailablePorts(ports || []);
       setCurrentPort(port || 'COM3');
       setLocations(locs || []);
+      setShelves(shs || []);
       setProducts(prods || []);
       setActiveAuditSession(activeSess || null);
       setCompletedAuditSessions(completedSess || []);
@@ -496,6 +503,51 @@ export default function App() {
     });
   };
 
+  // --- Shelf Operations ---
+  const handleSaveShelf = async (shelfData) => {
+    try {
+      await window.go.main.App.SaveShelf(shelfData);
+      setIsShelfModalOpen(false);
+      setEditingShelf(null);
+      showToast('✅ Estante guardado y posiciones generadas', 'success');
+
+      const [shs, locs] = await Promise.all([
+        window.go.main.App.GetAllShelves(),
+        window.go.main.App.GetAllLocations(),
+      ]);
+      setShelves(shs || []);
+      setLocations(locs || []);
+    } catch (err) {
+      console.error('Error saving shelf:', err);
+      showToast('❌ Error al guardar estante: ' + (err.message || err), 'error');
+    }
+  };
+
+  const handleRequestDeleteShelf = (shelf) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Eliminar Estante',
+      message: `¿Estás seguro de que deseas eliminar el estante "${shelf.code} - ${shelf.name}"? Las posiciones existentes no se borrarán si contienen artículos.`,
+      isDanger: true,
+      onConfirm: async () => {
+        setConfirmDialog({ isOpen: false });
+        try {
+          await window.go.main.App.DeleteShelf(shelf.id);
+          showToast('🗑️ Estante eliminado', 'info');
+          const [shs, locs] = await Promise.all([
+            window.go.main.App.GetAllShelves(),
+            window.go.main.App.GetAllLocations(),
+          ]);
+          setShelves(shs || []);
+          setLocations(locs || []);
+        } catch (err) {
+          console.error('Error deleting shelf:', err);
+          showToast('❌ Error al eliminar estante', 'error');
+        }
+      },
+    });
+  };
+
   // --- CSV Export ---
   const handleExportCSV = async () => {
     try {
@@ -723,6 +775,7 @@ export default function App() {
           <PositioningView
             activeProduct={activePositioningProduct}
             locations={locations}
+            shelves={shelves}
             onUpdateLocation={handleUpdateProductLocation}
             onOpenCreateProduct={(code) => {
               setEditingProduct({ barcode: code, active: true });
@@ -750,6 +803,16 @@ export default function App() {
         {currentTab === 'locations' && (
           <LocationsView
             locations={locations}
+            shelves={shelves}
+            onOpenNewShelf={() => {
+              setEditingShelf(null);
+              setIsShelfModalOpen(true);
+            }}
+            onEditShelf={(sh) => {
+              setEditingShelf(sh);
+              setIsShelfModalOpen(true);
+            }}
+            onRequestDeleteShelf={handleRequestDeleteShelf}
             onOpenNewLocation={() => {
               setEditingLocation(null);
               setIsLocationModalOpen(true);
@@ -813,6 +876,19 @@ export default function App() {
           onClose={() => {
             setIsLocationModalOpen(false);
             setEditingLocation(null);
+            window.focus();
+          }}
+        />
+      )}
+
+      {isShelfModalOpen && (
+        <ShelfModal
+          isOpen={isShelfModalOpen}
+          shelf={editingShelf}
+          onSave={handleSaveShelf}
+          onClose={() => {
+            setIsShelfModalOpen(false);
+            setEditingShelf(null);
             window.focus();
           }}
         />

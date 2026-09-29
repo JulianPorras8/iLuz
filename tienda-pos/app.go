@@ -198,6 +198,22 @@ func (a *App) DeleteLocation(id int64) error {
 	return deleteLocation(a.db, id)
 }
 
+func (a *App) GetAllShelves() ([]Shelf, error) {
+	return getAllShelves(a.db)
+}
+
+func (a *App) SaveShelf(shelf Shelf) error {
+	return saveShelf(a.db, shelf)
+}
+
+func (a *App) DeleteShelf(id int64) error {
+	return deleteShelf(a.db, id)
+}
+
+func (a *App) GetShelfOccupancy(shelfCode string) (map[string]ShelfOccupancyItem, error) {
+	return getShelfOccupancy(a.db, shelfCode)
+}
+
 func (a *App) ExportInventoryCSV() (string, error) {
 	products, err := listInventoryProducts(a.db, true)
 	if err != nil {

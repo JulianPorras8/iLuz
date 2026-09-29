@@ -10,6 +10,8 @@ export function CloseInventorySession(arg1:number,arg2:Array<number>):Promise<vo
 
 export function DeleteLocation(arg1:number):Promise<void>;
 
+export function DeleteShelf(arg1:number):Promise<void>;
+
 export function EmitScannerStatus():Promise<void>;
 
 export function ExportInventoryCSV():Promise<string>;
@@ -26,11 +28,15 @@ export function GetAllLocations():Promise<Array<main.Location>>;
 
 export function GetAllProducts():Promise<Array<main.Product>>;
 
+export function GetAllShelves():Promise<Array<main.Shelf>>;
+
 export function GetAvailablePorts():Promise<Array<string>>;
 
 export function GetCurrentPort():Promise<string>;
 
 export function GetScannerStatus():Promise<main.ScannerStatusPayload>;
+
+export function GetShelfOccupancy(arg1:string):Promise<{[key: string]: main.ShelfOccupancyItem}>;
 
 export function ListCompletedInventorySessions():Promise<Array<main.InventorySession>>;
 
@@ -49,6 +55,8 @@ export function RestoreProduct(arg1:string):Promise<void>;
 export function SaveLocation(arg1:main.Location):Promise<void>;
 
 export function SaveProduct(arg1:main.Product):Promise<void>;
+
+export function SaveShelf(arg1:main.Shelf):Promise<void>;
 
 export function SearchBarcode(arg1:string):Promise<main.Product>;
 

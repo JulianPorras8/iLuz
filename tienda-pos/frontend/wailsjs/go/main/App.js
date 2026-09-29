@@ -18,6 +18,10 @@ export function DeleteLocation(arg1) {
   return window['go']['main']['App']['DeleteLocation'](arg1);
 }
 
+export function DeleteShelf(arg1) {
+  return window['go']['main']['App']['DeleteShelf'](arg1);
+}
+
 export function EmitScannerStatus() {
   return window['go']['main']['App']['EmitScannerStatus']();
 }
@@ -50,6 +54,10 @@ export function GetAllProducts() {
   return window['go']['main']['App']['GetAllProducts']();
 }
 
+export function GetAllShelves() {
+  return window['go']['main']['App']['GetAllShelves']();
+}
+
 export function GetAvailablePorts() {
   return window['go']['main']['App']['GetAvailablePorts']();
 }
@@ -60,6 +68,10 @@ export function GetCurrentPort() {
 
 export function GetScannerStatus() {
   return window['go']['main']['App']['GetScannerStatus']();
+}
+
+export function GetShelfOccupancy(arg1) {
+  return window['go']['main']['App']['GetShelfOccupancy'](arg1);
 }
 
 export function ListCompletedInventorySessions() {
@@ -96,6 +108,10 @@ export function SaveLocation(arg1) {
 
 export function SaveProduct(arg1) {
   return window['go']['main']['App']['SaveProduct'](arg1);
+}
+
+export function SaveShelf(arg1) {
+  return window['go']['main']['App']['SaveShelf'](arg1);
 }
 
 export function SearchBarcode(arg1) {

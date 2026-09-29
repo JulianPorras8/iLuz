@@ -430,5 +430,69 @@ func TestApp_ErrorHandling(t *testing.T) {
 	if _, err := app.ExportInventoryCSV(); err == nil {
 		t.Errorf("expected error on closed db for ExportInventoryCSV")
 	}
+	if _, err := app.GetAllShelves(); err == nil {
+		t.Errorf("expected error on closed db for GetAllShelves")
+	}
+	if err := app.SaveShelf(Shelf{Code: "E", Name: "N"}); err == nil {
+		t.Errorf("expected error on closed db for SaveShelf")
+	}
+	if err := app.DeleteShelf(1); err == nil {
+		t.Errorf("expected error on closed db for DeleteShelf")
+	}
+	if _, err := app.GetShelfOccupancy("E"); err == nil {
+		t.Errorf("expected error on closed db for GetShelfOccupancy")
+	}
 }
+
+func TestApp_ShelvesMethods(t *testing.T) {
+	app := NewApp()
+	tmpDir := t.TempDir()
+	dbPath := filepath.Join(tmpDir, "app_shelves_test.db")
+	db := initDB(dbPath)
+	defer db.Close()
+	app.ctx = context.Background()
+	app.db = db
+
+	// 1. SaveShelf
+	shelf := Shelf{
+		Code: "SH-01",
+		Name: "Estante Frontal",
+		Levels: []ShelfLevel{
+			{Level: 1, Name: "Nivel 1", Slots: 2},
+			{Level: 2, Name: "Nivel 2", Slots: 1},
+		},
+	}
+	if err := app.SaveShelf(shelf); err != nil {
+		t.Fatalf("failed saving shelf via app: %v", err)
+	}
+
+	// 2. GetAllShelves
+	shelves, err := app.GetAllShelves()
+	if err != nil {
+		t.Fatalf("failed getting shelves via app: %v", err)
+	}
+	if len(shelves) != 1 || shelves[0].Code != "SH-01" {
+		t.Errorf("unexpected shelves returned: %+v", shelves)
+	}
+
+	// 3. GetShelfOccupancy
+	_ = app.SaveProduct(Product{Barcode: "SH-PROD-1", Name: "Test Prod", Price: 10, Stock: 7, Location: "SH-01-N1-C1", Active: true})
+	occ, err := app.GetShelfOccupancy("SH-01")
+	if err != nil {
+		t.Fatalf("failed getting shelf occupancy via app: %v", err)
+	}
+	if occ["SH-01-N1-C1"].TotalStock != 7 {
+		t.Errorf("expected total stock 7 for SH-01-N1-C1, got %d", occ["SH-01-N1-C1"].TotalStock)
+	}
+
+	// 4. DeleteShelf
+	if err := app.DeleteShelf(shelves[0].ID); err != nil {
+		t.Fatalf("failed deleting shelf via app: %v", err)
+	}
+	shelvesAfter, _ := app.GetAllShelves()
+	if len(shelvesAfter) != 0 {
+		t.Errorf("expected 0 shelves after delete, got %d", len(shelvesAfter))
+	}
+}
+
 

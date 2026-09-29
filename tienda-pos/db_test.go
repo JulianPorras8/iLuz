@@ -1196,5 +1196,134 @@ func TestDB_DeepBranchCoverage(t *testing.T) {
 	}
 }
 
+func TestShelvesCRUD_AndOccupancy(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	// 1. Validation errors
+	if err := saveShelf(db, Shelf{Code: "", Name: "Estante"}); err == nil {
+		t.Errorf("expected error for empty code")
+	}
+	if err := saveShelf(db, Shelf{Code: "EST1", Name: ""}); err == nil {
+		t.Errorf("expected error for empty name")
+	}
+	if err := saveShelf(db, Shelf{Code: "EST1", Name: "Estante", Levels: nil}); err == nil {
+		t.Errorf("expected error for empty levels")
+	}
+
+	// 2. Successful creation of asymmetric shelf
+	shelf := Shelf{
+		Code:        "EST-01",
+		Name:        "Estante Principal",
+		Description: "Pasillo central",
+		Levels: []ShelfLevel{
+			{Level: 1, Name: "Nivel 1", Slots: 3},
+			{Level: 2, Name: "Nivel 2", Slots: 2},
+			{Level: 3, Name: "Nivel 3", Slots: 1},
+		},
+	}
+	if err := saveShelf(db, shelf); err != nil {
+		t.Fatalf("failed saving shelf: %v", err)
+	}
+
+	// 3. Verify auto-generated locations in locations table
+	locs, err := getAllLocations(db)
+	if err != nil {
+		t.Fatalf("failed getting locations: %v", err)
+	}
+	locCodes := make(map[string]bool)
+	for _, l := range locs {
+		locCodes[l.Code] = true
+	}
+	expectedCodes := []string{
+		"EST-01-N1-C1", "EST-01-N1-C2", "EST-01-N1-C3",
+		"EST-01-N2-C1", "EST-01-N2-C2",
+		"EST-01-N3-C1",
+	}
+	for _, exp := range expectedCodes {
+		if !locCodes[exp] {
+			t.Errorf("expected generated location code %s not found in locations table", exp)
+		}
+	}
+
+	// 4. Verify getAllShelves
+	shelves, err := getAllShelves(db)
+	if err != nil {
+		t.Fatalf("failed getting shelves: %v", err)
+	}
+	if len(shelves) != 1 {
+		t.Fatalf("expected 1 shelf, got %d", len(shelves))
+	}
+	savedShelf := shelves[0]
+	if savedShelf.Code != "EST-01" || len(savedShelf.Levels) != 3 {
+		t.Errorf("saved shelf mismatch: %+v", savedShelf)
+	}
+	if savedShelf.Levels[0].Slots != 3 || savedShelf.Levels[1].Slots != 2 || savedShelf.Levels[2].Slots != 1 {
+		t.Errorf("shelf levels slots mismatch: %+v", savedShelf.Levels)
+	}
+
+	// 5. Update existing shelf
+	savedShelf.Name = "Estante Principal Actualizado"
+	if err := saveShelf(db, savedShelf); err != nil {
+		t.Fatalf("failed updating shelf: %v", err)
+	}
+
+	// 6. Test duplicate code error when updating a shelf to an existing code
+	// Let's create second shelf EST-02
+	shelf2 := Shelf{
+		Code: "EST-02",
+		Name: "Estante Secundario",
+		Levels: []ShelfLevel{
+			{Level: 1, Slots: 2},
+		},
+	}
+	if err := saveShelf(db, shelf2); err != nil {
+		t.Fatalf("failed saving second shelf: %v", err)
+	}
+
+	// Now try to update shelf2 with code EST-01 (should fail with UNIQUE constraint)
+	shelvesAfter, _ := getAllShelves(db)
+	var s2 Shelf
+	for _, s := range shelvesAfter {
+		if s.Code == "EST-02" {
+			s2 = s
+			break
+		}
+	}
+	s2.Code = "EST-01"
+	if err := saveShelf(db, s2); err == nil {
+		t.Errorf("expected error updating shelf2 to existing code EST-01")
+	}
+
+	// 7. Test getShelfOccupancy
+	_ = saveOrUpdateProduct(db, Product{Barcode: "P-OCC-1", Name: "Prod 1", Price: 10, Stock: 5, Location: "EST-01-N1-C1", Active: true})
+	_ = saveOrUpdateProduct(db, Product{Barcode: "P-OCC-2", Name: "Prod 2", Price: 15, Stock: 3, Location: "EST-01-N1-C1 - Nivel 1", Active: true})
+	_ = saveOrUpdateProduct(db, Product{Barcode: "P-OCC-3", Name: "Prod 3", Price: 20, Stock: 10, Location: "EST-01-N2-C2", Active: true})
+
+	occupancy, err := getShelfOccupancy(db, "EST-01")
+	if err != nil {
+		t.Fatalf("failed getting shelf occupancy: %v", err)
+	}
+	if occ1, ok := occupancy["EST-01-N1-C1"]; !ok || occ1.ProductCount != 2 || occ1.TotalStock != 8 {
+		t.Errorf("unexpected occupancy for EST-01-N1-C1: %+v", occ1)
+	}
+	if occ2, ok := occupancy["EST-01-N2-C2"]; !ok || occ2.ProductCount != 1 || occ2.TotalStock != 10 {
+		t.Errorf("unexpected occupancy for EST-01-N2-C2: %+v", occ2)
+	}
+
+	// 8. Delete shelf
+	if err := deleteShelf(db, savedShelf.ID); err != nil {
+		t.Fatalf("failed deleting shelf: %v", err)
+	}
+	shelvesFinal, err := getAllShelves(db)
+	if err != nil {
+		t.Fatalf("failed getting shelves after delete: %v", err)
+	}
+	if len(shelvesFinal) != 1 || shelvesFinal[0].Code != "EST-02" {
+		t.Errorf("expected only EST-02 remaining, got %+v", shelvesFinal)
+	}
+}
+
+
 
 

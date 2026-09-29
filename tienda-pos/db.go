@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strconv"
@@ -32,6 +33,28 @@ type Location struct {
 	Code        string `json:"code"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
+}
+
+type ShelfLevel struct {
+	Level int    `json:"level"` // 1, 2, 3... (1 is bottom)
+	Name  string `json:"name"`  // e.g. "Nivel 1"
+	Slots int    `json:"slots"` // number of casillas (e.g. 3)
+}
+
+type Shelf struct {
+	ID          int64        `json:"id"`
+	Code        string       `json:"code"`
+	Name        string       `json:"name"`
+	Description string       `json:"description"`
+	Levels      []ShelfLevel `json:"levels"`
+	LevelsJSON  string       `json:"levelsJson,omitempty"`
+	CreatedAt   string       `json:"createdAt,omitempty"`
+}
+
+type ShelfOccupancyItem struct {
+	LocationCode string `json:"locationCode"`
+	ProductCount int    `json:"productCount"`
+	TotalStock   int    `json:"totalStock"`
 }
 
 type InventorySession struct {
@@ -123,6 +146,16 @@ func initDB(filepath string) *sql.DB {
 		created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
 	);
 	CREATE INDEX IF NOT EXISTS idx_locations_code ON locations(code);
+
+	CREATE TABLE IF NOT EXISTS shelves (
+		id          INTEGER PRIMARY KEY AUTOINCREMENT,
+		code        TEXT UNIQUE NOT NULL,
+		name        TEXT NOT NULL,
+		description TEXT NOT NULL DEFAULT '',
+		levels_json TEXT NOT NULL DEFAULT '[]',
+		created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+	);
+	CREATE INDEX IF NOT EXISTS idx_shelves_code ON shelves(code);
 
 	CREATE TABLE IF NOT EXISTS inventory_sessions (
 		id            INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -544,6 +577,164 @@ func getAllLocations(db *sql.DB) ([]Location, error) {
 func deleteLocation(db *sql.DB, id int64) error {
 	_, err := db.Exec(`DELETE FROM locations WHERE id = ?`, id)
 	return err
+}
+
+// --- Shelves & Structured Positions Management ---
+
+func saveShelf(db *sql.DB, shelf Shelf) error {
+	shelf.Code = strings.TrimSpace(strings.ToUpper(shelf.Code))
+	shelf.Name = strings.TrimSpace(shelf.Name)
+	if shelf.Code == "" {
+		return fmt.Errorf("el código del estante no puede estar vacío")
+	}
+	if shelf.Name == "" {
+		return fmt.Errorf("el nombre del estante no puede estar vacío")
+	}
+	if len(shelf.Levels) == 0 {
+		return fmt.Errorf("el estante debe tener al menos un nivel")
+	}
+
+	// Validate levels and slots
+	for i := range shelf.Levels {
+		if shelf.Levels[i].Level <= 0 {
+			shelf.Levels[i].Level = i + 1
+		}
+		if shelf.Levels[i].Slots <= 0 {
+			shelf.Levels[i].Slots = 1
+		}
+		if shelf.Levels[i].Name == "" {
+			shelf.Levels[i].Name = fmt.Sprintf("Nivel %d", shelf.Levels[i].Level)
+		}
+	}
+
+	levelsBytes, err := json.Marshal(shelf.Levels)
+	if err != nil {
+		return fmt.Errorf("error serializando niveles del estante: %w", err)
+	}
+	levelsJSON := string(levelsBytes)
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	if shelf.ID > 0 {
+		query := `UPDATE shelves SET code = ?, name = ?, description = ?, levels_json = ? WHERE id = ?;`
+		_, err = tx.Exec(query, shelf.Code, shelf.Name, shelf.Description, levelsJSON, shelf.ID)
+		if err != nil {
+			if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+				return fmt.Errorf("el código de estante '%s' ya está registrado", shelf.Code)
+			}
+			return err
+		}
+	} else {
+		query := `
+		INSERT INTO shelves (code, name, description, levels_json)
+		VALUES (?, ?, ?, ?)
+		ON CONFLICT(code) DO UPDATE SET
+			name = excluded.name,
+			description = excluded.description,
+			levels_json = excluded.levels_json;
+		`
+		_, err = tx.Exec(query, shelf.Code, shelf.Name, shelf.Description, levelsJSON)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Auto-generate / upsert child locations in locations table for each slot
+	// Example: EST1-N1-C1, EST1-N1-C2, EST1-N2-C1...
+	locQuery := `
+	INSERT INTO locations (code, name, description)
+	VALUES (?, ?, ?)
+	ON CONFLICT(code) DO UPDATE SET
+		name = excluded.name,
+		description = excluded.description;
+	`
+	for _, lvl := range shelf.Levels {
+		for slot := 1; slot <= lvl.Slots; slot++ {
+			locCode := fmt.Sprintf("%s-N%d-C%d", shelf.Code, lvl.Level, slot)
+			locName := fmt.Sprintf("%s - %s, Casilla %d", shelf.Name, lvl.Name, slot)
+			locDesc := fmt.Sprintf("Estante: %s (%s)", shelf.Name, shelf.Code)
+			if _, err := tx.Exec(locQuery, locCode, locName, locDesc); err != nil {
+				return fmt.Errorf("error generando posición %s: %w", locCode, err)
+			}
+		}
+	}
+
+	return tx.Commit()
+}
+
+func getAllShelves(db *sql.DB) ([]Shelf, error) {
+	rows, err := db.Query(`SELECT id, code, name, description, levels_json, datetime(created_at, 'localtime') FROM shelves ORDER BY code ASC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	list := make([]Shelf, 0)
+	for rows.Next() {
+		var s Shelf
+		var levelsJSON string
+		var createdAt sql.NullString
+		if err := rows.Scan(&s.ID, &s.Code, &s.Name, &s.Description, &levelsJSON, &createdAt); err != nil {
+			return nil, err
+		}
+		s.LevelsJSON = levelsJSON
+		if createdAt.Valid {
+			s.CreatedAt = createdAt.String
+		}
+		if levelsJSON != "" && levelsJSON != "[]" {
+			var levels []ShelfLevel
+			if err := json.Unmarshal([]byte(levelsJSON), &levels); err == nil {
+				s.Levels = levels
+			}
+		}
+		if s.Levels == nil {
+			s.Levels = make([]ShelfLevel, 0)
+		}
+		list = append(list, s)
+	}
+	return list, nil
+}
+
+func deleteShelf(db *sql.DB, id int64) error {
+	_, err := db.Exec(`DELETE FROM shelves WHERE id = ?`, id)
+	return err
+}
+
+func getShelfOccupancy(db *sql.DB, shelfCode string) (map[string]ShelfOccupancyItem, error) {
+	shelfCode = strings.TrimSpace(strings.ToUpper(shelfCode))
+	query := `
+		SELECT location, COUNT(*), COALESCE(SUM(stock), 0)
+		FROM products
+		WHERE (location = ? OR location LIKE ? OR location LIKE ?) AND active = 1
+		GROUP BY location
+	`
+	rows, err := db.Query(query, shelfCode, shelfCode+"-%", shelfCode+" %")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := make(map[string]ShelfOccupancyItem)
+	for rows.Next() {
+		var loc string
+		var count int
+		var stock int
+		if err := rows.Scan(&loc, &count, &stock); err != nil {
+			return nil, err
+		}
+		baseCode := strings.TrimSpace(strings.Split(loc, " - ")[0])
+		existing := result[baseCode]
+		result[baseCode] = ShelfOccupancyItem{
+			LocationCode: baseCode,
+			ProductCount: existing.ProductCount + count,
+			TotalStock:   existing.TotalStock + stock,
+		}
+	}
+	return result, nil
 }
 
 // --- Physical Inventory Sessions (Stock Audits) ---
