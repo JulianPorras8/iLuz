@@ -33,8 +33,9 @@
 - **Scanner Ergonomics**: Synthesizer audio chime via Web Audio API, quick batch count (`F2`), and undo (`↺`) for accidental scans.
 - **Configuration Barcode Sheets**: Includes printable HTML reset sheets (`orbit_usb_serial_setup.html` and `orbit_usb_keyboard_reset.html`) to configure Honeywell Orbit scanners.
 
-### 4. Preserved POS Checkout Integration
-- Complete architectural blueprint in [`TODO_CHECKOUT_INTEGRATION.md`](tienda-pos/TODO_CHECKOUT_INTEGRATION.md) for future POS sales cashiering, cash drawers, and live sales variance reconciliation.
+### 4. POS Checkout Integration & Colombian Retail Compliance (Phase 2 Blueprint)
+- **Architectural Blueprint**: Detailed specification in [`tienda-pos/TODO_CHECKOUT_INTEGRATION.md`](tienda-pos/TODO_CHECKOUT_INTEGRATION.md) for transactional sales, cash shifts, and live sales variance reconciliation during open audits.
+- **Colombian Regulatory Framework**: Full legal, fiscal, and accounting analysis in [`docs/LEGAL_AND_POS_FRAMEWORK_COLOMBIA.md`](docs/LEGAL_AND_POS_FRAMEWORK_COLOMBIA.md) tailored for grocery stores (*Persona Natural No Responsable de IVA - Art. 437 E.T.*), internal sales receipts, non-recoverable VAT capitalization, perishable shrinkage (Art. 64 E.T.), and accounts receivable (*el fiao*).
 
 ---
 
