@@ -18,7 +18,17 @@ const SupplierModal = ({ isOpen, supplier, onSave, onClose }) => {
   useEffect(() => {
     if (supplier) {
       setFormData({
-        ...supplier,
+        id: supplier.id || 0,
+        name: supplier.name || '',
+        nitOrCedula: supplier.nitOrCedula || '',
+        contactName: supplier.contactName || '',
+        phone: supplier.phone || '',
+        email: supplier.email || '',
+        address: supplier.address || '',
+        city: supplier.city || '',
+        paymentTerms: supplier.paymentTerms || 'Contado',
+        deliveryDays: supplier.deliveryDays || '',
+        notes: supplier.notes || '',
         active: supplier.active !== undefined ? Boolean(supplier.active) : true,
       });
     } else {
