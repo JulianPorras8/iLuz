@@ -272,15 +272,19 @@ tr:hover td {
 
 /* Buttons */
 .btn {
-  padding: 7px 14px;
-  border-radius: 6px;
+  padding: 9px 16px;
+  border-radius: 8px;
   border: none;
   cursor: pointer;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 14px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  min-height: 42px;
+  touch-action: manipulation;
+  transition: all 0.12s ease;
 }
 
 .btn-primary {
@@ -320,8 +324,10 @@ tr:hover td {
 }
 
 .btn-sm {
-  padding: 4px 8px;
-  font-size: 11px;
+  padding: 5px 10px;
+  font-size: 12px;
+  min-height: 34px;
+  border-radius: 6px;
 }
 
 .card-active {

@@ -6,11 +6,19 @@ export function ArchiveProduct(arg1:string):Promise<void>;
 
 export function CancelInventorySession(arg1:number):Promise<void>;
 
+export function CloseCashShift(arg1:number,arg2:number,arg3:boolean,arg4:string):Promise<main.CashShift>;
+
 export function CloseInventorySession(arg1:number,arg2:Array<number>):Promise<void>;
+
+export function CompleteSale(arg1:main.SaleInput):Promise<main.Sale>;
+
+export function CreatePurchase(arg1:main.PurchaseInput):Promise<main.Purchase>;
 
 export function DeleteLocation(arg1:number):Promise<void>;
 
 export function DeleteShelf(arg1:number):Promise<void>;
+
+export function DeleteSupplier(arg1:number):Promise<void>;
 
 export function EmitScannerStatus():Promise<void>;
 
@@ -32,21 +40,45 @@ export function GetAllShelves():Promise<Array<main.Shelf>>;
 
 export function GetAvailablePorts():Promise<Array<string>>;
 
+export function GetCurrentCashShift():Promise<main.CashShift>;
+
 export function GetCurrentPort():Promise<string>;
+
+export function GetFinancialReports(arg1:string):Promise<main.ReportSummary>;
+
+export function GetLocalIPs():Promise<Array<string>>;
+
+export function GetSaleByTicket(arg1:string):Promise<main.Sale>;
 
 export function GetScannerStatus():Promise<main.ScannerStatusPayload>;
 
 export function GetShelfOccupancy(arg1:string):Promise<{[key: string]: main.ShelfOccupancyItem}>;
 
+export function GetStoreConfig():Promise<main.StoreConfig>;
+
+export function GetSyncServerStatus():Promise<{[key: string]: any}>;
+
 export function ListCompletedInventorySessions():Promise<Array<main.InventorySession>>;
+
+export function ListCreditAccounts():Promise<Array<main.CreditAccount>>;
+
+export function ListDailySales(arg1:string):Promise<Array<main.Sale>>;
 
 export function ListInventoryProducts(arg1:boolean):Promise<Array<main.Product>>;
 
 export function ListInventorySessionItems(arg1:number):Promise<Array<main.InventorySessionItem>>;
 
+export function ListPurchases(arg1:number):Promise<Array<main.Purchase>>;
+
+export function ListSuppliers(arg1:boolean):Promise<Array<main.Supplier>>;
+
+export function OpenCashShift(arg1:number,arg2:string):Promise<main.CashShift>;
+
 export function ProcessBarcode(arg1:string):Promise<main.ScanPayload>;
 
 export function RecordBatchCount(arg1:number,arg2:string,arg3:number,arg4:boolean):Promise<void>;
+
+export function RecordCreditPayment(arg1:number,arg2:number,arg3:string):Promise<void>;
 
 export function RecordInventoryScan(arg1:number,arg2:string,arg3:string):Promise<main.InventorySessionItem>;
 
@@ -57,6 +89,10 @@ export function SaveLocation(arg1:main.Location):Promise<void>;
 export function SaveProduct(arg1:main.Product):Promise<void>;
 
 export function SaveShelf(arg1:main.Shelf):Promise<void>;
+
+export function SaveStoreConfig(arg1:main.StoreConfig):Promise<void>;
+
+export function SaveSupplier(arg1:main.Supplier):Promise<main.Supplier>;
 
 export function SearchBarcode(arg1:string):Promise<main.Product>;
 
@@ -69,3 +105,5 @@ export function StartInventorySession(arg1:string,arg2:string,arg3:string,arg4:s
 export function UndoLastCount(arg1:number):Promise<void>;
 
 export function UpdateProductLocation(arg1:string,arg2:string):Promise<void>;
+
+export function UpdateSyncPairToken(arg1:string):Promise<void>;

@@ -1,21 +1,38 @@
 import React, { useState, useEffect, useRef } from 'react';
+import syncService from '../services/syncService';
 
 export default function Header({
   currentTab,
   setCurrentTab,
   scannerStatus,
-  availablePorts,
-  currentPort,
-  onPortChange,
-  onRefreshPorts,
   onProductSelect,
   activeAuditSession,
   auditStats,
+  currentShift,
+  onOpenShiftModal,
+  onOpenSettingsModal,
+  onOpenHardwareModal,
 }) {
   const [quickQuery, setQuickQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const searchContainerRef = useRef(null);
+  
+  const [syncStatus, setSyncStatus] = useState({ isConnected: false, lastSyncTime: null });
+
+  useEffect(() => {
+    const handleSyncStatus = (e) => {
+      setSyncStatus({ isConnected: e.detail.isConnected, lastSyncTime: e.detail.lastSyncTime });
+    };
+    window.addEventListener('sync-status-changed', handleSyncStatus);
+    
+    // Initial check
+    syncService.checkConnection().then(res => {
+       setSyncStatus({ isConnected: res.isOnline, lastSyncTime: syncService.lastSyncTimestamp });
+    });
+
+    return () => window.removeEventListener('sync-status-changed', handleSyncStatus);
+  }, []);
 
   useEffect(() => {
     if (!quickQuery.trim() || quickQuery.trim().length < 2) {
@@ -69,82 +86,78 @@ export default function Header({
   };
 
   const isConnected = scannerStatus?.connected;
-  const statusPort = scannerStatus?.port || currentPort || 'COM';
+  const statusPort = scannerStatus?.port || 'COM';
 
-  let badgeText = 'Buscando Orbit...';
-  let badgeTitle = 'Desconectado';
-
-  if (isConnected) {
-    badgeText = `Orbit Conectado (${statusPort})`;
-    badgeTitle = `Lector conectado en ${statusPort} (9600 baud, 8N1).`;
-  } else if (scannerStatus?.error) {
-    if (scannerStatus.error.includes('No se detectaron') || scannerStatus.error.includes('not found')) {
-      badgeText = `${statusPort} no encontrado`;
-    } else if (scannerStatus.error.includes('Access is denied') || scannerStatus.error.includes('busy')) {
-      badgeText = `${statusPort} en uso`;
-    } else {
-      badgeText = `Reconectando ${statusPort}...`;
-    }
-    badgeTitle = `${statusPort}: ${scannerStatus.error}`;
-  }
+  const navItems = [
+    { id: 'pos', label: '🛒 Caja', hotkey: 'F1' },
+    { id: 'inventory', label: '📦 Inventario', hotkey: 'F2' },
+    { id: 'positioning', label: '📍 Locaciones', hotkey: 'F3' },
+    { id: 'purchases', label: '📥 Entradas', hotkey: 'F4' },
+    { id: 'suppliers', label: '🚚 Proveedores', hotkey: 'F5' },
+    { id: 'reports', label: '📊 Reportes', hotkey: 'F6' },
+    { id: 'audit', label: '📋 Auditoría' },
+  ];
 
   return (
-    <header>
-      <div className="header-left">
-        <div className="brand-title">
+    <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 18px', background: '#0f172a', borderBottom: '1px solid #1e293b' }}>
+      <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, overflow: 'hidden' }}>
+        <div className="brand-title" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '20px', fontWeight: 800, color: '#f8fafc', whiteSpace: 'nowrap' }}>
           <span>⚡ iLuz</span>
         </div>
 
-        <nav className="nav-tabs">
-          <button
-            type="button"
-            className={`nav-tab ${currentTab === 'pos' ? 'active' : ''}`}
-            onClick={() => setCurrentTab('pos')}
-          >
-            🛒 Caja / POS
-          </button>
-          <button
-            type="button"
-            className={`nav-tab ${currentTab === 'positioning' ? 'active' : ''}`}
-            onClick={() => setCurrentTab('positioning')}
-          >
-            📍 Posicionamiento
-          </button>
-          <button
-            type="button"
-            className={`nav-tab ${currentTab === 'inventory' ? 'active' : ''}`}
-            onClick={() => setCurrentTab('inventory')}
-          >
-            📦 Inventario
-          </button>
-          <button
-            type="button"
-            className={`nav-tab ${currentTab === 'locations' ? 'active' : ''}`}
-            onClick={() => setCurrentTab('locations')}
-          >
-            🏷️ Locaciones
-          </button>
-          <button
-            type="button"
-            className={`nav-tab ${currentTab === 'audit' ? 'active' : ''}`}
-            onClick={() => setCurrentTab('audit')}
-            style={activeAuditSession ? { borderColor: '#10b981', color: '#10b981' } : {}}
-          >
-            📋 Toma de Inventario
-            {activeAuditSession && (
-              <span
+        {/* Scrollable Navigation Suite Tabs */}
+        <nav
+          className="nav-tabs"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            overflowX: 'auto',
+            scrollbarWidth: 'none',
+            padding: '2px 0',
+          }}
+        >
+          {navItems.map((item) => {
+            const isActive = currentTab === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className={`nav-tab ${isActive ? 'active' : ''}`}
+                onClick={() => setCurrentTab(item.id)}
                 style={{
-                  display: 'inline-block',
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  backgroundColor: '#22c55e',
-                  marginLeft: '4px',
+                  padding: '9px 14px',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  fontWeight: isActive ? 700 : 500,
+                  color: isActive ? '#fff' : '#94a3b8',
+                  background: isActive ? '#2563eb' : '#1e293b',
+                  border: '1px solid',
+                  borderColor: isActive ? '#3b82f6' : '#334155',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.15s ease',
                 }}
-                title="Toma de inventario en progreso"
-              />
-            )}
-          </button>
+                title={item.hotkey ? `Atajo: ${item.hotkey}` : undefined}
+              >
+                <span>{item.label}</span>
+                {item.id === 'audit' && activeAuditSession && (
+                  <span
+                    style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: '#22c55e',
+                    }}
+                    title="Toma de inventario en progreso"
+                  />
+                )}
+              </button>
+            );
+          })}
         </nav>
 
         {activeAuditSession && (
@@ -155,19 +168,19 @@ export default function Header({
               backgroundColor: '#064e3b',
               border: '1px solid #059669',
               color: '#a7f3d0',
-              padding: '4px 10px',
+              padding: '6px 12px',
               borderRadius: '6px',
               fontSize: '12px',
               fontWeight: 600,
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              marginLeft: '8px',
+              whiteSpace: 'nowrap',
             }}
             title="Clic para ir a la toma de inventario activa"
           >
-            <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#34d399' }} />
-            <span>Toma Activa: <strong>{activeAuditSession.name}</strong></span>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#34d399' }} />
+            <span>Toma: <strong>{activeAuditSession.name}</strong></span>
             {auditStats && (
               <span style={{ color: '#ecfdf5', background: '#047857', padding: '1px 6px', borderRadius: '4px', fontSize: '11px' }}>
                 {auditStats.counted}/{auditStats.total} ({auditStats.percentage}%)
@@ -177,35 +190,42 @@ export default function Header({
         )}
       </div>
 
-      <div className="header-right">
-        <div className="search-box-container" ref={searchContainerRef}>
+      <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        {/* Quick Search */}
+        <div className="search-box-container" ref={searchContainerRef} style={{ position: 'relative', width: '220px' }}>
           <input
             type="text"
             className="quick-input"
             value={quickQuery}
             onChange={(e) => setQuickQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="🔍 Buscar nombre o código..."
-            title="Escanea un código o escribe el nombre para buscar"
+            placeholder="🔍 Buscar producto..."
+            title="Escanea un código o escribe para buscar"
             autoComplete="off"
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              fontSize: '13px',
+              borderRadius: '6px',
+              background: '#1e293b',
+              border: '1px solid #334155',
+              color: '#f8fafc',
+            }}
           />
 
           {isDropdownOpen && (
-            <div className="search-dropdown" style={{ display: 'block' }}>
+            <div className="search-dropdown" style={{ display: 'block', position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, background: '#1e293b', border: '1px solid #475569', borderRadius: '6px', maxHeight: '200px', overflowY: 'auto' }}>
               {searchResults.map((p) => (
                 <div
                   key={p.id || p.barcode}
                   className="search-dropdown-item"
                   onClick={() => handleItemClick(p)}
+                  style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #334155' }}
                 >
-                  <div style={{ fontWeight: 600 }}>{p.name}</div>
-                  <div style={{ fontSize: '11px', color: '#94a3b8', display: 'flex', justifyContent: 'space-between' }}>
-                    <span>
-                      {p.barcode} {p.location ? `• 📍 ${p.location}` : ''}
-                    </span>
-                    <span style={{ color: '#38bdf8', fontWeight: 700 }}>
-                      ${(p.price || 0).toFixed(2)}
-                    </span>
+                  <div style={{ fontWeight: 600, color: '#f8fafc', fontSize: '13px' }}>{p.name}</div>
+                  <div style={{ fontSize: '11px', color: '#94a3b8', display: 'flex', justifyContent: 'space-between', marginTop: '2px' }}>
+                    <span>{p.barcode} {p.location ? `• 📍 ${p.location}` : ''}</span>
+                    <span style={{ color: '#38bdf8', fontWeight: 700 }}>${(p.price || 0).toLocaleString('es-CO')}</span>
                   </div>
                 </div>
               ))}
@@ -213,40 +233,97 @@ export default function Header({
           )}
         </div>
 
-        <div className="port-controls">
-          <select
-            className="port-select"
-            value={currentPort}
-            onChange={(e) => onPortChange(e.target.value)}
-            title="Seleccionar puerto COM del escáner"
-          >
-            {availablePorts.length > 0 ? (
-              availablePorts.map((port) => (
-                <option key={port} value={port}>
-                  {port}
-                </option>
-              ))
-            ) : (
-              <option value="">{currentPort || 'Sin puertos COM'}</option>
-            )}
-          </select>
-
-          <button
-            type="button"
-            className="btn-icon"
-            onClick={onRefreshPorts}
-            title="Refrescar puertos COM"
-          >
-            🔄
-          </button>
-        </div>
-
-        <div
-          className={`badge ${isConnected ? 'badge-on' : 'badge-off'}`}
-          title={badgeTitle}
+        {/* Sync Status Button */}
+        <button
+          type="button"
+          onClick={() => {
+            syncService.syncNow().then(success => {
+              if (success) {
+                alert('Sincronización completada');
+              } else {
+                onOpenSettingsModal();
+              }
+            });
+          }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '7px 12px',
+            borderRadius: '6px',
+            fontSize: '12px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            background: syncStatus.isConnected ? '#064e3b' : '#450a0a',
+            border: `1px solid ${syncStatus.isConnected ? '#059669' : '#dc2626'}`,
+            color: syncStatus.isConnected ? '#6ee7b7' : '#fca5a5',
+          }}
+          title={syncStatus.isConnected ? `Sincronizado: ${syncStatus.lastSyncTime ? new Date(parseInt(syncStatus.lastSyncTime)).toLocaleTimeString() : 'Reciente'}` : 'Sincronización desconectada. Clic para configurar'}
         >
-          <span>{badgeText}</span>
+          <span>{syncStatus.isConnected ? '🟢 Sync' : (syncStatus.lastSyncTime ? '🟡 Sync (Offline)' : '🔴 Sync Error')}</span>
+        </button>
+
+        {/* Hardware & Scanner Hub Button */}
+        <button
+          type="button"
+          onClick={onOpenHardwareModal}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '7px 12px',
+            borderRadius: '6px',
+            fontSize: '12px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            background: isConnected ? '#064e3b' : '#450a0a',
+            border: `1px solid ${isConnected ? '#059669' : '#dc2626'}`,
+            color: isConnected ? '#6ee7b7' : '#fca5a5',
+          }}
+          title={isConnected ? `Escáner conectado en ${statusPort}` : 'Escáner desconectado. Clic para configurar'}
+        >
+          <span>🔌 Escáner</span>
+          <span>{isConnected ? '🟢' : '🔴'}</span>
+        </button>
+
+        {/* Cash Shift Status Button */}
+        <div
+          onClick={onOpenShiftModal}
+          style={{
+            cursor: 'pointer',
+            backgroundColor: currentShift ? '#064e3b' : '#7f1d1d',
+            border: currentShift ? '1px solid #059669' : '1px solid #b91c1c',
+            color: currentShift ? '#a7f3d0' : '#fecaca',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '7px 12px',
+            borderRadius: '6px',
+            fontSize: '12px',
+            fontWeight: 600,
+          }}
+          title={currentShift ? `Efectivo en gaveta: $${Number(currentShift.expectedCash || 0).toLocaleString('es-CO')}` : 'Caja cerrada, clic para abrir turno'}
+        >
+          <span>{currentShift ? '🟢 Caja Abierta' : '🔴 Caja Cerrada'}</span>
         </div>
+
+        {/* Settings Gear Button */}
+        <button
+          type="button"
+          onClick={onOpenSettingsModal}
+          title="Configuración General"
+          style={{
+            background: '#1e293b',
+            border: '1px solid #334155',
+            borderRadius: '6px',
+            fontSize: '16px',
+            cursor: 'pointer',
+            padding: '6px 10px',
+            color: '#f8fafc',
+          }}
+        >
+          ⚙️
+        </button>
       </div>
     </header>
   );

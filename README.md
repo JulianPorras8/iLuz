@@ -1,120 +1,148 @@
-# ⚡ iLuz
+# ⚡ iLuz POS & Inventario
 
-> **Fast, offline-first desktop application for retail inventory management, multi-location physical stock audits, and barcode scanning with Go, Wails v2, SQLite, and React 18.**
-
----
-
-## 📖 Overview
-
-**iLuz** is a lightweight, local-first Windows desktop application tailored for internal store inventory management, item positioning, and multi-day physical stock audits. Built with a pure-Go backend and a responsive React frontend embedded in a single self-contained executable, it operates completely offline with zero cloud dependency.
+> **Sistema punto de venta (POS), auditoría física de inventario y sincronización distribuida híbrida para minimercados y tiendas de abarrotes en Colombia.**
+>
+> Arquitectura *Local-First* con dos plataformas unificadas:
+> - **🖥️ Windows PC (`iLuz.exe`):** Servidor maestro LAN, archivo central, compras administrativas y reportería financiera pesada / DIAN 3.500 UVT.
+> - **📱 Sunmi D2 Android (`iLuz.apk`):** Terminal táctil en mostrador, único autor de ventas y caja (*Single-Writer*), escaneo continuo e impresora térmica integrada de tiques.
 
 ---
 
-## ✨ Key Features
+## 📖 Arquitectura del Sistema
 
-### 1. Catalog & Location Management (Mode A)
-- **First-time Product Onboarding**: Register products with barcode, name, unit price, stock, unit of measure, dimensions, color, and location.
-- **Internal Barcode Autogeneration**: Products without physical barcodes automatically receive unique `INT-XXXXXX` identifiers.
-- **Physical Positioning**: Assign and re-assign items to physical store shelves or storage zones (`EST-A1`, `BOD-01`, etc.).
-- **Non-destructive Archiving**: Toggle products between active and archived states without data loss.
-
-### 2. Physical Stock Audits (Mode B - Toma de Inventario)
-- **Multi-Day Session Persistence**: Sessions survive PC reboots and app closures. Store owners can count over days at their own pace.
-- **Snapshot Pre-population**: At audit start, system stock is frozen as a baseline to accurately compute variances.
-- **Multi-Location Counting (Rule 1 & 2)**: Counts across multiple locations (shelf + bodega) accumulate cleanly without overwriting.
-- **Uncounted Item Safety (Rule 4)**: Products that were not counted (`is_counted = 0`) are never zeroed out on session close.
-- **Catalog Stock Freeze (Rule 6)**: While an audit is in progress, direct catalog stock modifications are locked to prevent concurrency anomalies.
-- **Selective Reconciliation**: Side-by-side comparison table with variance metrics, financial impact estimation, and selective checkbox updates before committing changes.
-- **Audit Reports**: Instant export of detailed CSV audit reports with Microsoft Excel UTF-8 BOM compatibility.
-
-### 3. Hardware Barcode Scanner Integration
-- **Honeywell Orbit MS7120 Support**: Background Go worker automatically detects, opens, and auto-reconnects to the scanner's COM serial port (9600 baud, 8N1).
-- **USB Keyboard Wedge Fallback**: Global keystroke buffer handles standard USB HID barcode scanners seamlessly.
-- **Scanner Ergonomics**: Synthesizer audio chime via Web Audio API, quick batch count (`F2`), and undo (`↺`) for accidental scans.
-- **Configuration Barcode Sheets**: Includes printable HTML reset sheets (`orbit_usb_serial_setup.html` and `orbit_usb_keyboard_reset.html`) to configure Honeywell Orbit scanners.
-
-### 4. POS Checkout Integration & Colombian Retail Compliance (Phase 2 Blueprint)
-- **Architectural Blueprint**: Detailed specification in [`tienda-pos/TODO_CHECKOUT_INTEGRATION.md`](tienda-pos/TODO_CHECKOUT_INTEGRATION.md) for transactional sales, cash shifts, and live sales variance reconciliation during open audits.
-- **Colombian Regulatory Framework**: Full legal, fiscal, and accounting analysis in [`docs/LEGAL_AND_POS_FRAMEWORK_COLOMBIA.md`](docs/LEGAL_AND_POS_FRAMEWORK_COLOMBIA.md) tailored for grocery stores (*Persona Natural No Responsable de IVA - Art. 437 E.T.*), internal sales receipts, non-recoverable VAT capitalization, perishable shrinkage (Art. 64 E.T.), and accounts receivable (*el fiao*).
-
----
-
-## 🛠️ Tech Stack
-
-- **Backend**: [Go 1.21+](https://go.dev/) with [Wails v2](https://wails.io/)
-- **Storage**: SQLite 3 in WAL mode via [`modernc.org/sqlite`](https://gitlab.com/cznic/sqlite) (100% pure Go, CGO-free)
-- **Frontend**: [React 18](https://react.dev/) + [Vite](https://vitejs.dev/) (pure JavaScript and JSX)
-- **Hardware Communication**: [`go.bug.st/serial`](https://github.com/bugst/go-serial) for RS-232 / USB Serial COM ports
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       Sunmi D2 (Android - Mostrador)                        │
+│  • Caja / Ventas / Cobro (F12) - Único escritor (Single-Writer)            │
+│  • Turnos de caja y arqueo ciego con asimilación de sobrantes (Art. 616)    │
+│  • Lector de código de barras USB (detección de ráfaga HID sin perder foco) │
+│  • Impresora térmica integrada de tiques (AIDL Sunmi / ESC-POS)             │
+│  • Entradas de mercancía de camiones en mostrador                           │
+│  • Toma física de inventario cercano                                        │
+│  • 100% Autónomo y Offline-First                                           │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │
+                      Sincronización Silenciosa LAN (WiFi)
+                      (Push de ventas / Pull de catálogo)
+                                       │
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         PC Windows (Servidor & Oficina)                     │
+│  • Servidor HTTP LAN en segundo plano (Puerto :8085) con token de enlace    │
+│  • Base de datos SQLite maestra (modo WAL)                                  │
+│  • Reportería Financiera: Ventas, compras y margen bruto (Semanal/Mes/Año)  │
+│  • Semáforo fiscal: Monitoreo de tope 3.500 UVT de la DIAN                  │
+│  • Catálogo maestro y configuración de tienda                               │
+│  • Archivo histórico centralizado y respaldo                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## 🚀 Getting Started
+## ✨ Módulos y Características
 
-### Prerequisites
-- [Go 1.21+](https://go.dev/dl/)
-- [Node.js 18+](https://nodejs.org/) & `npm`
-- [Wails CLI v2](https://wails.io/docs/gettingstarted/installation):
-  ```bash
-  go install github.com/wailsapp/wails/v2/cmd/wails@latest
-  ```
+### 1. Punto de Venta y Cobro Rápido (POS)
+- **Cobro Rápido (<kbd>F12</kbd>):** Formas de pago en Efectivo, Transferencia (Nequi/Daviplata/Bancolombia) y Crédito (*Fiao*).
+- **Ventas con Stock Negativo Controlado:** Permite registrar ventas de productos con stock en 0 o negativo con advertencia visual sutil, evitando detener el despacho al cliente.
+- **Productos de Acceso Rápido:** Botones táctiles directos en barra superior para menudeo sin código de barras (pan, huevos, cilantro) y modal expandida con buscador.
+- **Pausar Venta / Carritos en Espera:** Permite atender al siguiente cliente sin perder la venta en curso.
+- **Tiquete Térmico:** Formateo automático de comprobantes internos para impresora Sunmi de 80mm/58mm.
 
-### Development Mode (Live Reload)
+### 2. Gestión de Turnos de Caja (Arqueo Fiscal)
+- **Apertura de Turno:** Registro de base inicial de efectivo en gaveta.
+- **Arqueo Ciego al Cierre:** El cajero cuenta el dinero físico sin ver el acumulado del sistema.
+- **Asimilación de Sobrantes (Art. 616-2 E.T.):** Si el conteo supera el valor esperado por ventas no marcadas, un botón especial cuadra la diferencia a cero registrándola como venta rápida asimilada.
+
+### 3. Entradas de Mercancía por Pedido / Factura de Proveedor
+- **Recepción en Vivo:** Escaneo de los productos del pedido a medida que se descargan del camión.
+- **Márgenes y Precios Sugeridos:** Si el costo del distribuidor subió, el sistema sugiere automáticamente el nuevo precio de venta para mantener la rentabilidad.
+- **Adjuntos:** Soporte para adjuntar fotografía o PDF de la factura física.
+- **Historial de Compras:** Liquidación total de compras por proveedor y estado de pago.
+
+### 4. Proveedores y Distribuidores (CRUD)
+- Directorio de proveedores con NIT, contacto comercial, teléfono con enlace directo a llamada o WhatsApp, plazo de pago (contado o crédito) y días de visita.
+
+### 5. Auditoría Física de Inventario (Toma de Inventario)
+- **Restricción por Estantería:** Conteo restringido exclusivamente a estanterías completas o toda la tienda.
+- **Escaneo Inteligente:** Si se escanea un producto existente, abre la modal de edición directa; si no existe, lo matricula en caliente.
+- **Conciliación Temporal Inmune a Ventas:** Si se registran ventas o compras durante el conteo, el sistema las compensa automáticamente (`final = contado - ventas + compras`).
+- **Exportación CSV Blindada:** Generación de reportes CSV con fallback automático para evitar bloqueos del sistema.
+
+### 6. Reportería Financiera & Monitoreo DIAN
+- Métricas comparativas (Esta Semana, Este Mes, Este Año) de ventas brutas, compras a proveedores, número de transacciones y ticket promedio.
+- **Medidor de Tope 3.500 UVT:** Monitoreo porcentual acumulado frente al límite legal de la DIAN para personas naturales no responsables de IVA (con alertas verde, ámbar y roja).
+
+### 7. Sincronización en Red Local (LAN)
+- **Servidor HTTP Go (`sync_server.go`):** Escucha en el puerto `8085` de la red local del PC.
+- **Emparejamiento Seguro:** Autenticación por cabecera `X-Sync-Token` con código configurable en pantalla.
+- **Cero Conflictos (Single-Writer):** Las ventas se originan únicamente en el Sunmi D2 y se ingieren de forma idempotente en el PC (`device_id`).
+
+---
+
+## 🛠️ Stack Tecnológico
+
+| Capa | Tecnologías |
+|---|---|
+| **Backend PC** | Go 1.22, Wails v2, SQLite WAL (`modernc.org/sqlite` - 100% pure Go) |
+| **Frontend UI** | React 18, Vite, Lucide Icons, CSS responsivo y táctil |
+| **Móvil Android** | Capacitor 7, Gradle, Android SDK (`minSdkVersion = 24`) |
+| **Hardware** | Honeywell Orbit MS7120 (Serial COM), Escáner USB (HID burst), Sunmi Thermal Printer (AIDL) |
+
+---
+
+## 🚀 Compilación y Despliegue
+
+### Requisitos
+- **Go 1.22+**
+- **Node.js 18+** y `npm`
+- **Wails CLI v2:** `go install github.com/wailsapp/wails/v2/cmd/wails@latest`
+- **JDK 17** y Android SDK (para compilar el APK)
+
+### 1. Ejecutar en Modo Desarrollo (PC)
 ```bash
 cd tienda-pos
 wails dev
 ```
 
-### Run Automated Tests
+### 2. Ejecutar Pruebas Automatizadas (>90% Cobertura)
 ```bash
 cd tienda-pos
-go test -count=1 -v ./...
+go test -timeout 35s -coverprofile=coverage.out ./...
+go tool cover -func=coverage.out | tail -n 1
 ```
 
-### Build Single Windows Executable
-Cross-compile a standalone Windows x64 `.exe` directly from macOS/Linux:
+### 3. Compilar Ejecutable para Windows (`.exe`)
 ```bash
 cd tienda-pos
 wails build -platform windows/amd64 -clean
 ```
-The compiled output is generated at `tienda-pos/build/bin/iLuz.exe`.
+Salida generada: **`tienda-pos/build/bin/iLuz.exe`** (14 MB).
 
----
-
-## 📂 Project Structure
-
-```text
-iLuz/
-├── README.md                           # Main documentation
-├── SPEC.md                             # Initial architectural specification
-├── tienda-pos/
-│   ├── main.go                         # Wails v2 entrypoint & asset embed
-│   ├── app.go                          # Backend controller methods exposed to UI
-│   ├── db.go                           # SQLite schema, pragmas & atomic queries
-│   ├── scanner.go                      # Honeywell Orbit serial COM port worker
-│   ├── db_test.go                      # Comprehensive automated test suite
-│   ├── SPECIFICATIONS_INVENTORY_AUDIT.md # Mode A & Mode B audit specifications
-│   ├── TODO_CHECKOUT_INTEGRATION.md    # POS integration blueprint
-│   ├── orbit_usb_serial_setup.html     # Printable Honeywell barcode setup guide
-│   ├── orbit_usb_keyboard_reset.html   # Printable keyboard wedge reset guide
-│   └── frontend/
-│       ├── package.json                # React 18 + Vite dependencies
-│       └── src/
-│           ├── App.jsx                 # Top-level state coordinator
-│           └── components/
-│               ├── Header.jsx          # Top navigation & active audit banner
-│               ├── InventoryView.jsx   # Catalog management & product search
-│               ├── PositioningView.jsx # Physical location assignment
-│               ├── LocationsView.jsx   # Store zones & shelves manager
-│               ├── StockAuditView.jsx  # Physical inventory audit dashboard
-│               ├── StartAuditModal.jsx # Audit session creation
-│               ├── AuditReconciliationModal.jsx # Reconciliation & adjustments
-│               ├── ProductModal.jsx    # Product creator / editor with stock freeze
-│               ├── LocationModal.jsx   # Location creator / editor
-│               └── ConfirmModal.jsx    # In-app confirmation dialog
+### 4. Compilar APK para Android / Sunmi D2 (`.apk`)
+```bash
+cd tienda-pos/frontend
+npm run build
+npx cap sync android
+cd android
+./gradlew assembleDebug
 ```
+Salida generada: **`tienda-pos/build/bin/iLuz.apk`** (4.0 MB).
 
 ---
 
-## 📄 License
+## 🔌 Puesta en Marcha en la Tienda
 
-Internal store and inventory operations software developed by Julian Porras.
+1. **En el PC:**
+   - Inicia `iLuz.exe`.
+   - Abre **Configuración ⚙️ ➔ Sincronización en Red Local**.
+   - Toma nota de la IP (ej. `http://192.168.1.50:8085`) y el token de emparejamiento.
+2. **En el Sunmi D2:**
+   - Instala `iLuz.apk` desde una memoria USB.
+   - En **Configuración ⚙️**, escribe la IP del PC y el token, y pulsa **"Probar Conexión"**.
+   - La caja quedará enlazada: todas las ventas se guardan en el Sunmi y se replican silenciosamente al PC.
+
+---
+
+## 📄 Licencia
+
+Software de punto de venta e inventario desarrollado por Julian Porras para iLuz.

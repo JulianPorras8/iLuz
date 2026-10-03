@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 
 function getMeasurementConfig(unit) {
   switch (unit) {
@@ -62,7 +62,7 @@ function getMeasurementConfig(unit) {
   }
 }
 
-export default function ProductModal({ isOpen, product, locations, onSave, onClose, isStockLocked }) {
+export default function ProductModal({ isOpen, product, locations = [], onSave, onClose, isStockLocked }) {
   const [formData, setFormData] = useState({
     id: 0,
     barcode: '',
@@ -76,12 +76,25 @@ export default function ProductModal({ isOpen, product, locations, onSave, onClo
     color: '',
     location: '',
     active: true,
+    isQuickAccess: false,
   });
+
+  const [locationSearch, setLocationSearch] = useState('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [lastLocation, setLastLocation] = useState('');
+  const comboboxRef = useRef(null);
 
   useEffect(() => {
     if (!isOpen) return;
 
+    try {
+      const savedLast = localStorage.getItem('iLuz_last_product_location') || '';
+      setLastLocation(savedLast);
+    } catch (err) {}
+
     if (product) {
+      const loc = product.location || '';
+      setLocationSearch(loc);
       setFormData({
         id: product.id || 0,
         barcode: product.barcode || '',
@@ -93,10 +106,12 @@ export default function ProductModal({ isOpen, product, locations, onSave, onClo
         weight: product.weight || '',
         size: product.size || '',
         color: product.color || '',
-        location: product.location || '',
+        location: loc,
         active: product.active ?? true,
+        isQuickAccess: product.isQuickAccess || false,
       });
     } else {
+      setLocationSearch('');
       setFormData({
         id: 0,
         barcode: '',
@@ -110,6 +125,7 @@ export default function ProductModal({ isOpen, product, locations, onSave, onClo
         color: '',
         location: '',
         active: true,
+        isQuickAccess: false,
       });
     }
 
@@ -119,6 +135,87 @@ export default function ProductModal({ isOpen, product, locations, onSave, onClo
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, product, onClose]);
+
+  // Click outside to close combobox dropdown
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (comboboxRef.current && !comboboxRef.current.contains(e.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Unique shelf prefixes (e.g. EST01, EST02)
+  const uniqueShelves = useMemo(() => {
+    const list = [];
+    const seen = new Set();
+    (locations || []).forEach((loc) => {
+      if (loc.code && loc.code.includes('-')) {
+        const prefix = loc.code.split('-')[0];
+        if (!seen.has(prefix)) {
+          seen.add(prefix);
+          list.push(prefix);
+        }
+      }
+    });
+    return list;
+  }, [locations]);
+
+  // Filtered locations for typeahead
+  const filteredLocations = useMemo(() => {
+    const term = (locationSearch || '').trim().toLowerCase();
+    const all = locations || [];
+    if (!term) {
+      return all.slice(0, 15);
+    }
+    return all
+      .filter((loc) => {
+        const code = (loc.code || '').toLowerCase();
+        const name = (loc.name || '').toLowerCase();
+        return code.includes(term) || name.includes(term);
+      })
+      .slice(0, 20);
+  }, [locations, locationSearch]);
+
+  const handleSelectLocation = (loc) => {
+    setFormData((prev) => ({ ...prev, location: loc.code }));
+    setLocationSearch(loc.code);
+    setIsDropdownOpen(false);
+  };
+
+  const handleLocationInputChange = (e) => {
+    const val = e.target.value;
+    setLocationSearch(val);
+    setFormData((prev) => ({ ...prev, location: val }));
+    setIsDropdownOpen(true);
+  };
+
+  const handleClearLocation = () => {
+    setFormData((prev) => ({ ...prev, location: '' }));
+    setLocationSearch('');
+    setIsDropdownOpen(false);
+  };
+
+  const handleUseLastLocation = () => {
+    if (!lastLocation) return;
+    setFormData((prev) => ({ ...prev, location: lastLocation }));
+    setLocationSearch(lastLocation);
+    setIsDropdownOpen(false);
+  };
+
+  const handleShelfChipClick = (shPrefix) => {
+    setLocationSearch(shPrefix);
+    setFormData((prev) => ({ ...prev, location: shPrefix }));
+    setIsDropdownOpen(true);
+  };
+
+  const handleZoneChipClick = (zoneName) => {
+    setFormData((prev) => ({ ...prev, location: zoneName }));
+    setLocationSearch(zoneName);
+    setIsDropdownOpen(false);
+  };
 
   if (!isOpen) return null;
 
@@ -132,6 +229,12 @@ export default function ProductModal({ isOpen, product, locations, onSave, onClo
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const locTrimmed = (formData.location || '').trim();
+    if (locTrimmed) {
+      try {
+        localStorage.setItem('iLuz_last_product_location', locTrimmed);
+      } catch (err) {}
+    }
     onSave({
       id: parseInt(formData.id, 10) || 0,
       barcode: formData.barcode.trim(),
@@ -143,8 +246,9 @@ export default function ProductModal({ isOpen, product, locations, onSave, onClo
       weight: parseFloat(formData.weight) || 0,
       size: formData.size.trim(),
       color: formData.color.trim(),
-      location: formData.location.trim(),
+      location: locTrimmed,
       active: Boolean(formData.active),
+      isQuickAccess: Boolean(formData.isQuickAccess),
     });
   };
 
@@ -321,42 +425,234 @@ export default function ProductModal({ isOpen, product, locations, onSave, onClo
               </div>
             </div>
 
-            {/* Row 5: Physical Location */}
-            <div className="form-group">
-              <label>Ubicación / Posición Física:</label>
-              <div className="grid-2">
-                <select
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                >
-                  <option value="">-- Seleccionar locación --</option>
-                  {locations.map((loc) => (
-                    <option key={loc.id} value={`${loc.code} - ${loc.name}`}>
-                      {loc.code} - {loc.name}
-                    </option>
-                  ))}
-                </select>
+            {/* Row 5: Physical Location Combobox & Quick Presets */}
+            <div className="form-group" ref={comboboxRef} style={{ position: 'relative' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <label style={{ margin: 0, fontWeight: 600, fontSize: '13px' }}>
+                  📍 Ubicación / Posición Física:
+                </label>
+                {lastLocation && lastLocation !== formData.location && (
+                  <button
+                    type="button"
+                    onClick={handleUseLastLocation}
+                    className="btn btn-sm"
+                    title={`Usar última ubicación guardada: ${lastLocation}`}
+                    style={{
+                      background: '#ecfdf5',
+                      color: '#065f46',
+                      border: '1px solid #a7f3d0',
+                      fontSize: '11px',
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <span>⚡ Usar última:</span>
+                    <strong style={{ fontFamily: 'monospace' }}>{lastLocation}</strong>
+                  </button>
+                )}
+              </div>
+
+              {/* Combobox Input with Clear button */}
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                 <input
                   type="text"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  placeholder="O escribir ubicación libre..."
+                  value={locationSearch}
+                  onChange={handleLocationInputChange}
+                  onFocus={() => setIsDropdownOpen(true)}
+                  placeholder="Escribe para buscar (ej: EST01, Nivel 1) o digita libre..."
+                  style={{
+                    width: '100%',
+                    padding: '8px 30px 8px 10px',
+                    fontSize: '13px',
+                    fontFamily: locationSearch && locationSearch.includes('-') ? 'monospace' : 'inherit',
+                    borderRadius: '6px',
+                    border: isDropdownOpen ? '1px solid #3b82f6' : '1px solid #cbd5e1',
+                    background: formData.location ? '#f8fafc' : 'white',
+                  }}
                 />
+                {locationSearch && (
+                  <button
+                    type="button"
+                    onClick={handleClearLocation}
+                    title="Limpiar ubicación"
+                    style={{
+                      position: 'absolute',
+                      right: '8px',
+                      background: 'none',
+                      border: 'none',
+                      color: '#94a3b8',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      padding: '2px 4px',
+                    }}
+                  >
+                    ✕
+                  </button>
+                )}
               </div>
+
+              {/* Quick Filter / Shortcut Pills */}
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px', alignItems: 'center' }}>
+                <span style={{ fontSize: '11px', color: '#64748b' }}>Accesos rápidos:</span>
+                {['Mostrador', 'Nevera', 'Bodega'].map((zone) => (
+                  <button
+                    key={zone}
+                    type="button"
+                    onClick={() => handleZoneChipClick(zone)}
+                    style={{
+                      border: '1px solid #e2e8f0',
+                      background: formData.location === zone ? '#eff6ff' : '#f8fafc',
+                      color: formData.location === zone ? '#1d4ed8' : '#475569',
+                      fontWeight: formData.location === zone ? 700 : 500,
+                      borderRadius: '12px',
+                      fontSize: '11px',
+                      padding: '1px 8px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {zone}
+                  </button>
+                ))}
+                {uniqueShelves.slice(0, 4).map((shPrefix) => (
+                  <button
+                    key={shPrefix}
+                    type="button"
+                    onClick={() => handleShelfChipClick(shPrefix)}
+                    style={{
+                      border: '1px solid #e2e8f0',
+                      background: '#f8fafc',
+                      color: '#0f766e',
+                      fontFamily: 'monospace',
+                      fontWeight: 600,
+                      borderRadius: '12px',
+                      fontSize: '11px',
+                      padding: '1px 8px',
+                      cursor: 'pointer',
+                    }}
+                    title={`Filtrar por estante ${shPrefix}`}
+                  >
+                    🔍 {shPrefix}
+                  </button>
+                ))}
+              </div>
+
+              {/* Autocomplete Dropdown Menu */}
+              {isDropdownOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    zIndex: 60,
+                    maxHeight: '210px',
+                    overflowY: 'auto',
+                    background: 'white',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '6px',
+                    boxShadow: '0 8px 16px rgba(0,0,0,0.12)',
+                    marginTop: '2px',
+                  }}
+                >
+                  {filteredLocations.length > 0 ? (
+                    filteredLocations.map((loc) => {
+                      const isSelected = formData.location === loc.code;
+                      return (
+                        <div
+                          key={loc.id || loc.code}
+                          onClick={() => handleSelectLocation(loc)}
+                          style={{
+                            padding: '7px 10px',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            cursor: 'pointer',
+                            background: isSelected ? '#eff6ff' : 'white',
+                            borderBottom: '1px solid #f1f5f9',
+                            fontSize: '12px',
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isSelected) e.currentTarget.style.background = '#f8fafc';
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isSelected) e.currentTarget.style.background = 'white';
+                          }}
+                        >
+                          <div>
+                            <span
+                              style={{
+                                fontFamily: 'monospace',
+                                fontWeight: 700,
+                                color: '#1e40af',
+                                background: '#eff6ff',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                marginRight: '8px',
+                              }}
+                            >
+                              {loc.code}
+                            </span>
+                            <span style={{ color: '#334155' }}>{loc.name}</span>
+                          </div>
+                          {isSelected && (
+                            <span style={{ color: '#2563eb', fontWeight: 700 }}>✓</span>
+                          )}
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div style={{ padding: '10px', fontSize: '12px', color: '#64748b', textAlign: 'center' }}>
+                      No se encontraron casillas con "{locationSearch}". Se guardará como ubicación libre.
+                    </div>
+                  )}
+                  {locations && locations.length > filteredLocations.length && (
+                    <div
+                      style={{
+                        padding: '4px 10px',
+                        background: '#f8fafc',
+                        fontSize: '10px',
+                        color: '#94a3b8',
+                        textAlign: 'right',
+                        borderTop: '1px solid #f1f5f9',
+                      }}
+                    >
+                      Mostrando {filteredLocations.length} de {locations.length} ubicaciones
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Row 6: Active Status */}
-            <div className="form-group" style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <input
-                type="checkbox"
-                id="prod-active"
-                checked={formData.active}
-                onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                style={{ width: 'auto' }}
-              />
-              <label htmlFor="prod-active" style={{ margin: 0, cursor: 'pointer' }}>
-                Producto activo (disponible en inventario y venta)
-              </label>
+            {/* Row 6: Active Status & Quick Access */}
+            <div className="grid-2" style={{ marginTop: '10px' }}>
+              <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <input
+                  type="checkbox"
+                  id="prod-active"
+                  checked={formData.active}
+                  onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
+                  style={{ width: 'auto' }}
+                />
+                <label htmlFor="prod-active" style={{ margin: 0, cursor: 'pointer' }}>
+                  Producto activo
+                </label>
+              </div>
+              <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <input
+                  type="checkbox"
+                  id="prod-quick-access"
+                  checked={formData.isQuickAccess}
+                  onChange={(e) => setFormData({ ...formData, isQuickAccess: e.target.checked })}
+                  style={{ width: 'auto' }}
+                />
+                <label htmlFor="prod-quick-access" style={{ margin: 0, cursor: 'pointer' }}>
+                  ☑ Producto de acceso rápido (Mostrar botón directo en Caja)
+                </label>
+              </div>
             </div>
           </div>
 

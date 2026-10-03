@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func setupTestDB(t *testing.T) (*sql.DB, func()) {
@@ -1324,6 +1325,312 @@ func TestShelvesCRUD_AndOccupancy(t *testing.T) {
 	}
 }
 
+func TestPOS_StoreConfig(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
 
+	cfg, err := getStoreConfigDB(db)
+	if err != nil {
+		t.Fatalf("failed getting config: %v", err)
+	}
+	if !cfg.AllowNegativeStock {
+		t.Errorf("expected default allow negative stock to be true")
+	}
 
+	cfg.StoreName = "Super Store"
+	cfg.AllowNegativeStock = false
+	err = saveStoreConfigDB(db, *cfg)
+	if err != nil {
+		t.Fatalf("failed saving config: %v", err)
+	}
 
+	cfg2, _ := getStoreConfigDB(db)
+	if cfg2.StoreName != "Super Store" || cfg2.AllowNegativeStock {
+		t.Errorf("config not saved correctly")
+	}
+}
+
+func TestPOS_CashShift(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	// 1. Open shift
+	shift, err := openCashShiftDB(db, 100.0, "Morning shift")
+	if err != nil {
+		t.Fatalf("failed opening shift: %v", err)
+	}
+	if shift.ExpectedCash != 100.0 {
+		t.Errorf("expected 100, got %f", shift.ExpectedCash)
+	}
+
+	// 2. Try to open another
+	_, err = openCashShiftDB(db, 50.0, "Another")
+	if err == nil {
+		t.Errorf("expected error when opening second shift")
+	}
+
+	// 3. Current shift
+	curr, err := getCurrentCashShiftDB(db)
+	if err != nil || curr.ID != shift.ID {
+		t.Errorf("failed getting current shift")
+	}
+
+	// 4. Accumulate cash via sale
+	_ = saveOrUpdateProduct(db, Product{Barcode: "111", Name: "Prod", Price: 10.0, Stock: 10, Active: true})
+	p, _ := getProductByBarcode(db, "111")
+	_, err = completeSaleTx(db, SaleInput{
+		PaymentMethod: "cash",
+		AmountPaid:    20.0,
+		Items:         []SaleItemInput{{ProductID: p.ID, Qty: 2}}, // total 20
+	})
+	if err != nil {
+		t.Fatalf("failed complete sale: %v", err)
+	}
+
+	curr2, _ := getCurrentCashShiftDB(db)
+	if curr2.ExpectedCash != 120.0 {
+		t.Errorf("expected 120 expected cash, got %f", curr2.ExpectedCash)
+	}
+
+	// 5. Close with difference assimilation
+	closed, err := closeCashShiftDB(db, shift.ID, 130.0, true, "Closed")
+	if err != nil {
+		t.Fatalf("failed closing shift: %v", err)
+	}
+	if closed.Status != "closed" {
+		t.Errorf("expected closed status")
+	}
+	if closed.UnrecordedSalesAdjust != 10.0 {
+		t.Errorf("expected 10.0 adjust, got %f", closed.UnrecordedSalesAdjust)
+	}
+	if closed.ExpectedCash != 130.0 {
+		t.Errorf("expected expected_cash to assimilate actual, got %f", closed.ExpectedCash)
+	}
+
+	// 6. Close without assimilation (new shift)
+	shift3, _ := openCashShiftDB(db, 50.0, "")
+	closed3, _ := closeCashShiftDB(db, shift3.ID, 60.0, false, "")
+	if closed3.UnrecordedSalesAdjust != 0.0 {
+		t.Errorf("expected 0 adjust without assimilation")
+	}
+	if closed3.ExpectedCash != 50.0 {
+		t.Errorf("expected expected cash to remain 50.0")
+	}
+}
+
+func TestPOS_CompleteSale(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	_ = saveOrUpdateProduct(db, Product{Barcode: "111", Name: "Prod1", Price: 10.0, CostPrice: 5.0, Stock: 2, Active: true})
+	p, _ := getProductByBarcode(db, "111")
+
+	// Sale with negative stock (allow_negative_stock is 1 by default)
+	sale, err := completeSaleTx(db, SaleInput{
+		PaymentMethod: "cash",
+		AmountPaid:    30.0,
+		Items:         []SaleItemInput{{ProductID: p.ID, Qty: 3}},
+	})
+	if err != nil {
+		t.Fatalf("sale failed: %v", err)
+	}
+	if !strings.HasPrefix(sale.TicketNumber, "REM-") {
+		t.Errorf("invalid ticket number: %s", sale.TicketNumber)
+	}
+
+	p2, _ := getProductByBarcode(db, "111")
+	if p2.Stock != -1 {
+		t.Errorf("expected stock -1, got %d", p2.Stock)
+	}
+
+	// Check movements
+	var movQty int
+	err = db.QueryRow("SELECT qty FROM stock_movements WHERE product_id = ?", p.ID).Scan(&movQty)
+	if err != nil || movQty != -3 {
+		t.Errorf("expected movement of -3")
+	}
+
+	// Disallow negative stock
+	cfg, _ := getStoreConfigDB(db)
+	cfg.AllowNegativeStock = false
+	_ = saveStoreConfigDB(db, *cfg)
+
+	_, err = completeSaleTx(db, SaleInput{
+		PaymentMethod: "cash",
+		AmountPaid:    30.0,
+		Items:         []SaleItemInput{{ProductID: p.ID, Qty: 1}},
+	})
+	if err == nil {
+		t.Errorf("expected error when negative stock disallowed")
+	}
+}
+
+func TestPOS_CreditAccount(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	_ = saveOrUpdateProduct(db, Product{Barcode: "222", Name: "Prod2", Price: 15.0, Stock: 10, Active: true})
+	p, _ := getProductByBarcode(db, "222")
+
+	_, err := completeSaleTx(db, SaleInput{
+		PaymentMethod: "fiao",
+		CustomerName:  "Juan",
+		Items:         []SaleItemInput{{ProductID: p.ID, Qty: 2}}, // 30
+	})
+	if err != nil {
+		t.Fatalf("fiao sale failed: %v", err)
+	}
+
+	accs, _ := listCreditAccountsDB(db)
+	if len(accs) != 1 || accs[0].CurrentDebt != 30.0 {
+		t.Errorf("expected 1 account with debt 30, got %+v", accs)
+	}
+
+	err = recordCreditPaymentDB(db, accs[0].ID, 10.0, "abono")
+	if err != nil {
+		t.Fatalf("payment failed: %v", err)
+	}
+
+	accs2, _ := listCreditAccountsDB(db)
+	if accs2[0].CurrentDebt != 20.0 {
+		t.Errorf("expected debt 20, got %f", accs2[0].CurrentDebt)
+	}
+}
+
+func TestPOS_TemporalReconciliation(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	_ = saveOrUpdateProduct(db, Product{Barcode: "333", Name: "Recon", Price: 10.0, Stock: 10, Active: true})
+	p, _ := getProductByBarcode(db, "333")
+
+	// 1. Start inventory
+	sess, _ := startInventorySession(db, "Test Recon", "", "ALL", "")
+	items, _ := listInventorySessionItems(db, sess.ID)
+	var itemID int64
+	for _, it := range items {
+		if it.ProductID == p.ID {
+			itemID = it.ID
+		}
+	}
+
+	// 2. Count 15 items
+	err := recordInventoryCountEntry(db, itemID, "A", 15, true)
+	if err != nil {
+		t.Fatalf("failed count: %v", err)
+	}
+
+	time.Sleep(1500 * time.Millisecond)
+
+	// 3. Make a sale (decrements physical 15 -> should end up at 13 after reconciliation)
+	_, err = completeSaleTx(db, SaleInput{
+		PaymentMethod: "cash",
+		Items:         []SaleItemInput{{ProductID: p.ID, Qty: 2}},
+	})
+	if err != nil {
+		t.Fatalf("failed sale: %v", err)
+	}
+
+	// 4. Close inventory
+	err = closeInventorySession(db, sess.ID, []int64{p.ID})
+	if err != nil {
+		t.Fatalf("failed close inventory: %v", err)
+	}
+
+	// 5. Verify final stock is 13 (15 - 2)
+	p2, _ := getProductByBarcode(db, "333")
+	if p2.Stock != 13 {
+		t.Errorf("expected stock 13 after reconciliation, got %d", p2.Stock)
+	}
+}
+
+func TestPOS_SuppliersAndPurchases(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	// 1. Supplier CRUD
+	supplier, err := saveSupplierDB(db, Supplier{
+		NitOrCedula: "123456789",
+		Name:        "Distribuidor XYZ",
+		Active:      true,
+	})
+	if err != nil {
+		t.Fatalf("failed saving supplier: %v", err)
+	}
+
+	suppliers, _ := listSuppliersDB(db, true)
+	if len(suppliers) != 1 || suppliers[0].Name != "Distribuidor XYZ" {
+		t.Errorf("expected 1 supplier 'Distribuidor XYZ', got %+v", suppliers)
+	}
+
+	_ = deleteSupplierDB(db, supplier.ID)
+	suppliersActive, _ := listSuppliersDB(db, true)
+	if len(suppliersActive) != 0 {
+		t.Errorf("expected 0 active suppliers after delete")
+	}
+
+	// 2. Purchases and Stock increment
+	_, _ = saveSupplierDB(db, Supplier{ID: supplier.ID, Name: "Distribuidor XYZ", Active: true})
+	_ = saveOrUpdateProduct(db, Product{Barcode: "PUR-1", Name: "Prod to buy", CostPrice: 10, Price: 20, Stock: 5, Active: true})
+	p, _ := getProductByBarcode(db, "PUR-1")
+
+	purchase, err := createPurchaseTx(db, PurchaseInput{
+		SupplierID:    supplier.ID,
+		InvoiceNumber: "INV-1001",
+		InvoiceDate:   "2026-10-02",
+		PaymentStatus: "paid",
+		TotalCost:     100.0,
+		Items: []PurchaseItemInput{
+			{ProductID: p.ID, Barcode: "PUR-1", ProductName: "Prod to buy", Qty: 10, UnitCost: 8.0, SuggestedPrice: 22.0},
+		},
+	})
+	if err != nil {
+		t.Fatalf("failed creating purchase: %v", err)
+	}
+
+	if purchase.InvoiceNumber != "INV-1001" || len(purchase.Items) != 1 {
+		t.Errorf("invalid purchase saved")
+	}
+
+	p2, _ := getProductByBarcode(db, "PUR-1")
+	if p2.Stock != 15 { // 5 initial + 10 bought
+		t.Errorf("expected stock 15, got %d", p2.Stock)
+	}
+	if p2.CostPrice != 8.0 {
+		t.Errorf("expected cost price 8.0, got %f", p2.CostPrice)
+	}
+	if p2.Price != 22.0 {
+		t.Errorf("expected suggested price 22.0, got %f", p2.Price)
+	}
+
+	purchases, _ := listPurchasesDB(db, 10)
+	if len(purchases) != 1 {
+		t.Errorf("expected 1 purchase in list")
+	}
+
+	// 3. Financial Reports
+	// Add a sale to have sales data
+	_, err = completeSaleTx(db, SaleInput{
+		PaymentMethod: "cash",
+		AmountPaid:    44.0,
+		Items:         []SaleItemInput{{ProductID: p.ID, Qty: 2}}, // 2 * 22.0
+	})
+	if err != nil {
+		t.Fatalf("sale failed: %v", err)
+	}
+
+	report, err := getFinancialReportsDB(db, "month")
+	if err != nil {
+		t.Fatalf("reports failed: %v", err)
+	}
+	if report.TotalSales != 44.0 {
+		t.Errorf("expected 44.0 total sales, got %f", report.TotalSales)
+	}
+	if report.TotalPurchases != 100.0 {
+		t.Errorf("expected 100.0 total purchases, got %f", report.TotalPurchases)
+	}
+	// Gross margin: 44.0 - (2 qty * 8.0 cost) = 44.0 - 16.0 = 28.0
+	if report.GrossMargin != 28.0 {
+		t.Errorf("expected 28.0 margin, got %f", report.GrossMargin)
+	}
+}

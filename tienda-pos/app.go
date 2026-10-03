@@ -7,6 +7,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -24,6 +25,11 @@ type App struct {
 
 	statusMu   sync.RWMutex
 	lastStatus ScannerStatusPayload
+
+	saveDialogFn  func(ctx context.Context, options runtime.SaveDialogOptions) (string, error)
+	windowFocusFn func(ctx context.Context)
+
+	syncServer *SyncServer
 }
 
 func NewApp() *App {
@@ -40,6 +46,8 @@ func NewApp() *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.db = initDB("inventario.db")
+	a.syncServer = NewSyncServer(a.db, 8085, "1234")
+	a.syncServer.Start()
 	a.startScanner(a.currentPort)
 }
 
@@ -52,6 +60,9 @@ func (a *App) shutdown(ctx context.Context) {
 	if a.scannerCancel != nil {
 		a.scannerCancel()
 	}
+	if a.syncServer != nil {
+		a.syncServer.Stop()
+	}
 	a.mu.Unlock()
 
 	if a.db != nil {
@@ -60,6 +71,9 @@ func (a *App) shutdown(ctx context.Context) {
 }
 
 func safeEmit(ctx context.Context, eventName string, data ...interface{}) {
+	defer func() {
+		_ = recover()
+	}()
 	if ctx == nil || ctx.Value("events") == nil {
 		return
 	}
@@ -134,6 +148,14 @@ func (a *App) SearchProducts(query string) ([]Product, error) {
 }
 
 func (a *App) SaveProduct(p Product) error {
+	p.Barcode = strings.TrimSpace(p.Barcode)
+	if p.Barcode == "" {
+		sku, err := generateInternalSKU(a.db)
+		if err != nil {
+			return err
+		}
+		p.Barcode = sku
+	}
 	err := saveOrUpdateProduct(a.db, p)
 	if err != nil {
 		return err
@@ -274,18 +296,42 @@ func (a *App) ExportInventoryCSV() (string, error) {
 	return buf.String(), nil
 }
 
-func (a *App) ExportInventoryCSVFile() (string, error) {
+func (a *App) ExportInventoryCSVFile() (path string, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("error inesperado guardando inventario: %v", r)
+		}
+	}()
+
 	csvData, err := a.ExportInventoryCSV()
 	if err != nil {
 		return "", err
 	}
 
-	if a.ctx == nil || a.ctx.Value("frontend") == nil {
-		return "", fmt.Errorf("contexto de frontend no disponible para diálogo de archivo")
+	defaultName := fmt.Sprintf("inventario_%s.csv", time.Now().Format("2006-01-02"))
+
+	saveFallback := func() (string, error) {
+		home, _ := os.UserHomeDir()
+		fallbackDir := filepath.Join(home, "Documents", "iLuz_Reportes")
+		_ = os.MkdirAll(fallbackDir, 0755)
+		fallbackPath := filepath.Join(fallbackDir, defaultName)
+		errWrite := os.WriteFile(fallbackPath, []byte(csvData), 0644)
+		if errWrite != nil {
+			return "", fmt.Errorf("error guardando fallback: %w", errWrite)
+		}
+		return fallbackPath, nil
 	}
 
-	defaultName := fmt.Sprintf("inventario_%s.csv", time.Now().Format("2006-01-02"))
-	selectedPath, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+	if a.ctx == nil || a.ctx.Value("frontend") == nil {
+		return saveFallback()
+	}
+
+	saveDialog := a.saveDialogFn
+	if saveDialog == nil {
+		saveDialog = runtime.SaveFileDialog
+	}
+
+	selectedPath, errDialog := saveDialog(a.ctx, runtime.SaveDialogOptions{
 		DefaultFilename: defaultName,
 		Title:           "Exportar Inventario a CSV",
 		Filters: []runtime.FileFilter{
@@ -295,12 +341,13 @@ func (a *App) ExportInventoryCSVFile() (string, error) {
 			},
 		},
 	})
-	// Restore focus to WebView2 window after common item dialog closes
-	if a.ctx != nil && a.ctx.Value("frontend") != nil {
+	if a.windowFocusFn != nil {
+		a.windowFocusFn(a.ctx)
+	} else if a.ctx != nil && a.ctx.Value("frontend") != nil {
 		runtime.WindowExecJS(a.ctx, "window.focus()")
 	}
-	if err != nil {
-		return "", err
+	if errDialog != nil {
+		return saveFallback()
 	}
 	if selectedPath == "" {
 		return "", nil // User cancelled
@@ -446,18 +493,49 @@ func (a *App) ExportInventorySessionCSV(sessionId int64) (string, error) {
 	return exportSessionReportCSV(a.db, sessionId)
 }
 
-func (a *App) ExportInventorySessionCSVFile(sessionId int64) (string, error) {
+func (a *App) ExportInventorySessionCSVFile(sessionId int64) (path string, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("error inesperado guardando archivo: %v", r)
+		}
+	}()
+
+	if sessionId <= 0 {
+		errQuery := a.db.QueryRow("SELECT id FROM inventory_sessions WHERE status IN ('completed', 'closed') ORDER BY id DESC LIMIT 1").Scan(&sessionId)
+		if errQuery != nil {
+			return "", fmt.Errorf("no hay sesiones cerradas disponibles: %w", errQuery)
+		}
+	}
+
 	csvData, err := a.ExportInventorySessionCSV(sessionId)
 	if err != nil {
 		return "", err
 	}
 
-	if a.ctx == nil || a.ctx.Value("frontend") == nil {
-		return "", fmt.Errorf("contexto de frontend no disponible para diálogo de archivo")
+	defaultName := fmt.Sprintf("reporte_inventario_%s_%d.csv", time.Now().Format("2006-01-02"), sessionId)
+	
+	saveFallback := func() (string, error) {
+		home, _ := os.UserHomeDir()
+		fallbackDir := filepath.Join(home, "Documents", "iLuz_Reportes")
+		_ = os.MkdirAll(fallbackDir, 0755)
+		fallbackPath := filepath.Join(fallbackDir, defaultName)
+		errWrite := os.WriteFile(fallbackPath, []byte(csvData), 0644)
+		if errWrite != nil {
+			return "", fmt.Errorf("error guardando fallback: %w", errWrite)
+		}
+		return fallbackPath, nil
 	}
 
-	defaultName := fmt.Sprintf("reporte_inventario_%s_%d.csv", time.Now().Format("2006-01-02"), sessionId)
-	selectedPath, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+	if a.ctx == nil || a.ctx.Value("frontend") == nil {
+		return saveFallback()
+	}
+
+	saveDialog := a.saveDialogFn
+	if saveDialog == nil {
+		saveDialog = runtime.SaveFileDialog
+	}
+
+	selectedPath, errDialog := saveDialog(a.ctx, runtime.SaveDialogOptions{
 		DefaultFilename: defaultName,
 		Title:           "Exportar Reporte de Auditoría a CSV",
 		Filters: []runtime.FileFilter{
@@ -467,11 +545,14 @@ func (a *App) ExportInventorySessionCSVFile(sessionId int64) (string, error) {
 			},
 		},
 	})
-	if a.ctx != nil && a.ctx.Value("frontend") != nil {
+	if a.windowFocusFn != nil {
+		a.windowFocusFn(a.ctx)
+	} else if a.ctx != nil && a.ctx.Value("frontend") != nil {
 		runtime.WindowExecJS(a.ctx, "window.focus()")
 	}
-	if err != nil {
-		return "", err
+	
+	if errDialog != nil {
+		return saveFallback()
 	}
 	if selectedPath == "" {
 		return "", nil // User cancelled
@@ -484,3 +565,97 @@ func (a *App) ExportInventorySessionCSVFile(sessionId int64) (string, error) {
 	return selectedPath, nil
 }
 
+// --- POS Methods ---
+
+func (a *App) GetStoreConfig() (*StoreConfig, error) {
+	return getStoreConfigDB(a.db)
+}
+
+func (a *App) SaveStoreConfig(cfg StoreConfig) error {
+	return saveStoreConfigDB(a.db, cfg)
+}
+
+func (a *App) CompleteSale(input SaleInput) (*Sale, error) {
+	return completeSaleTx(a.db, input)
+}
+
+func (a *App) OpenCashShift(initialCash float64, notes string) (*CashShift, error) {
+	return openCashShiftDB(a.db, initialCash, notes)
+}
+
+func (a *App) GetCurrentCashShift() (*CashShift, error) {
+	return getCurrentCashShiftDB(a.db)
+}
+
+func (a *App) CloseCashShift(shiftID int64, actualCash float64, assimilateDifference bool, notes string) (*CashShift, error) {
+	return closeCashShiftDB(a.db, shiftID, actualCash, assimilateDifference, notes)
+}
+
+func (a *App) ListDailySales(dateStr string) ([]Sale, error) {
+	return listDailySalesDB(a.db, dateStr)
+}
+
+func (a *App) GetSaleByTicket(ticket string) (*Sale, error) {
+	return getSaleByTicketDB(a.db, ticket)
+}
+
+func (a *App) ListCreditAccounts() ([]CreditAccount, error) {
+	return listCreditAccountsDB(a.db)
+}
+
+func (a *App) RecordCreditPayment(accountID int64, amount float64, notes string) error {
+	return recordCreditPaymentDB(a.db, accountID, amount, notes)
+}
+
+func (a *App) ListSuppliers(activeOnly bool) ([]Supplier, error) {
+	return listSuppliersDB(a.db, activeOnly)
+}
+
+func (a *App) SaveSupplier(s Supplier) (*Supplier, error) {
+	return saveSupplierDB(a.db, s)
+}
+
+func (a *App) DeleteSupplier(id int64) error {
+	return deleteSupplierDB(a.db, id)
+}
+
+func (a *App) CreatePurchase(input PurchaseInput) (*Purchase, error) {
+	return createPurchaseTx(a.db, input)
+}
+
+func (a *App) ListPurchases(limit int) ([]Purchase, error) {
+	return listPurchasesDB(a.db, limit)
+}
+
+func (a *App) GetFinancialReports(period string) (*ReportSummary, error) {
+	return getFinancialReportsDB(a.db, period)
+}
+
+func (a *App) GetSyncServerStatus() (map[string]interface{}, error) {
+	if a.syncServer == nil {
+		return nil, fmt.Errorf("sync server not initialized")
+	}
+	a.syncServer.mu.RLock()
+	defer a.syncServer.mu.RUnlock()
+
+	return map[string]interface{}{
+		"running": a.syncServer.isRunning,
+		"port":    a.syncServer.port,
+		"token":   a.syncServer.pairToken,
+		"ips":     GetLocalIPAddresses(),
+	}, nil
+}
+
+func (a *App) GetLocalIPs() ([]string, error) {
+	return GetLocalIPAddresses(), nil
+}
+
+func (a *App) UpdateSyncPairToken(token string) error {
+	if a.syncServer == nil {
+		return fmt.Errorf("sync server not initialized")
+	}
+	a.syncServer.mu.Lock()
+	a.syncServer.pairToken = token
+	a.syncServer.mu.Unlock()
+	return nil
+}

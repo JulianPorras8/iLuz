@@ -325,14 +325,21 @@ func TestApp_InventorySessionsAndAuditFlow(t *testing.T) {
 	}
 
 	// 11. Test Export file dialog fallbacks (headless context)
-	_, err = app.ExportInventoryCSVFile()
-	if err == nil || !strings.Contains(err.Error(), "contexto de frontend no disponible") {
-		t.Errorf("expected headless context error from ExportInventoryCSVFile, got: %v", err)
+	invPath, err := app.ExportInventoryCSVFile()
+	if err != nil {
+		t.Errorf("expected fallback success for ExportInventoryCSVFile without frontend context, got error: %v", err)
 	}
+	if !strings.Contains(invPath, "iLuz_Reportes") {
+		t.Errorf("expected fallback path to contain iLuz_Reportes, got: %s", invPath)
+	}
+	_ = os.Remove(invPath)
 
-	_, err = app.ExportInventorySessionCSVFile(sess.ID)
-	if err == nil || !strings.Contains(err.Error(), "contexto de frontend no disponible") {
-		t.Errorf("expected headless context error from ExportInventorySessionCSVFile, got: %v", err)
+	path, err := app.ExportInventorySessionCSVFile(sess.ID)
+	if err != nil {
+		t.Errorf("expected fallback success for ExportInventorySessionCSVFile without frontend context, got error: %v", err)
+	}
+	if !strings.Contains(path, "iLuz_Reportes") {
+		t.Errorf("expected fallback path to contain iLuz_Reportes, got: %s", path)
 	}
 
 	// 12. Test CloseInventorySession via App
@@ -495,4 +502,132 @@ func TestApp_ShelvesMethods(t *testing.T) {
 	}
 }
 
+func TestApp_POSMethods(t *testing.T) {
+	app := NewApp()
+	tmpDir := t.TempDir()
+	dbPath := filepath.Join(tmpDir, "app_pos_test.db")
+	db := initDB(dbPath)
+	defer db.Close()
+	app.ctx = context.Background()
+	app.db = db
 
+	// Config
+	cfg, err := app.GetStoreConfig()
+	if err != nil || !cfg.AllowNegativeStock {
+		t.Fatalf("failed getting config via app")
+	}
+
+	cfg.StoreName = "App Store"
+	err = app.SaveStoreConfig(*cfg)
+	if err != nil {
+		t.Fatalf("failed saving config via app: %v", err)
+	}
+
+	// Cash Shift
+	shift, err := app.OpenCashShift(200.0, "App Shift")
+	if err != nil || shift.ExpectedCash != 200.0 {
+		t.Fatalf("failed opening shift via app")
+	}
+	curr, err := app.GetCurrentCashShift()
+	if err != nil || curr.ID != shift.ID {
+		t.Fatalf("failed getting current shift via app")
+	}
+
+	// Sale
+	_ = app.SaveProduct(Product{Barcode: "APP-1", Name: "AppProd", Price: 50.0, Stock: 10, Active: true})
+	p, _ := app.SearchBarcode("APP-1")
+
+	sale, err := app.CompleteSale(SaleInput{
+		PaymentMethod: "cash",
+		AmountPaid:    100.0,
+		Items:         []SaleItemInput{{ProductID: p.ID, Qty: 2}}, // 100 total
+	})
+	if err != nil || sale.TotalAmount != 100.0 {
+		t.Fatalf("failed complete sale via app")
+	}
+
+	sale2, err := app.GetSaleByTicket(sale.TicketNumber)
+	if err != nil || sale2.ID != sale.ID {
+		t.Fatalf("failed get sale by ticket via app")
+	}
+
+	daily, err := app.ListDailySales(sale.CreatedAt[:10]) // "YYYY-MM-DD"
+	if err != nil || len(daily) == 0 {
+		t.Fatalf("failed list daily sales via app")
+	}
+
+	// Close shift
+	closed, err := app.CloseCashShift(shift.ID, 300.0, true, "End")
+	if err != nil || closed.Status != "closed" {
+		t.Fatalf("failed closing shift via app")
+	}
+
+	// Fiao
+	_, _ = app.CompleteSale(SaleInput{
+		PaymentMethod: "fiao",
+		CustomerName:  "AppCust",
+		Items:         []SaleItemInput{{ProductID: p.ID, Qty: 1}}, // 50 total
+	})
+
+	accs, err := app.ListCreditAccounts()
+	if err != nil || len(accs) == 0 {
+		t.Fatalf("failed listing credit accounts via app")
+	}
+
+	err = app.RecordCreditPayment(accs[0].ID, 10.0, "pay")
+	if err != nil {
+		t.Fatalf("failed record credit payment via app")
+	}
+}
+
+func TestApp_Phase3Methods(t *testing.T) {
+	app := NewApp()
+	tmpDir := t.TempDir()
+	dbPath := filepath.Join(tmpDir, "app_p3_test.db")
+	db := initDB(dbPath)
+	defer db.Close()
+	app.db = db
+
+	// Supplier
+	sup, err := app.SaveSupplier(Supplier{Name: "App Supplier", Active: true})
+	if err != nil {
+		t.Fatalf("failed save supplier: %v", err)
+	}
+
+	sups, _ := app.ListSuppliers(true)
+	if len(sups) != 1 {
+		t.Errorf("expected 1 supplier")
+	}
+
+	_ = app.DeleteSupplier(sup.ID)
+
+	// Purchases
+	_ = app.SaveProduct(Product{Barcode: "APP-P3", Name: "App Prod", Active: true})
+	p, _ := getProductByBarcode(app.db, "APP-P3")
+
+	// Must activate supplier to use in purchase logically, but DB doesn't strictly prevent it if exists
+	sup, _ = app.SaveSupplier(Supplier{ID: sup.ID, Name: "App Supplier", Active: true})
+
+	_, err = app.CreatePurchase(PurchaseInput{
+		SupplierID:    sup.ID,
+		InvoiceNumber: "INV-APP",
+		Items:         []PurchaseItemInput{{ProductID: p.ID, Qty: 5, UnitCost: 10.0}},
+	})
+	if err != nil {
+		t.Fatalf("failed create purchase: %v", err)
+	}
+
+	purchases, _ := app.ListPurchases(10)
+	if len(purchases) != 1 {
+		t.Errorf("expected 1 purchase via app")
+	}
+
+	// Financial
+	rep, err := app.GetFinancialReports("year")
+	if err != nil {
+		t.Fatalf("failed financial reports: %v", err)
+	}
+	if rep.Period != "year" {
+		t.Errorf("expected period year")
+	}
+}

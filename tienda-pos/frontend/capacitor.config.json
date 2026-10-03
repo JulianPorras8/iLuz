@@ -1,0 +1,9 @@
+{
+  "appId": "com.iluz.pos",
+  "appName": "iLuz POS",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "http",
+    "cleartext": true
+  }
+}

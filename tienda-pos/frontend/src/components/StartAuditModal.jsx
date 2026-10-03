@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
 
-export default function StartAuditModal({ isOpen, locations, onStart, onClose }) {
+export default function StartAuditModal({ isOpen, locations, shelves, onStart, onClose }) {
   const [name, setName] = useState('');
   const [responsible, setResponsible] = useState('');
-  const [scope, setScope] = useState('ALL');
+  const [scopeType, setScopeType] = useState('ALL');
+  const [selectedShelves, setSelectedShelves] = useState([]);
   const [notes, setNotes] = useState('');
+
+  const availableShelves = (shelves && shelves.length > 0)
+    ? shelves
+    : Array.from(new Set((locations || []).map(l => l.code.split('-')[0]))).filter(Boolean).map(code => ({ code, name: `Estantería ${code}` }));
 
   useEffect(() => {
     if (!isOpen) return;
 
-    // Suggest a default name with current date
     const today = new Date().toLocaleDateString('es-CO', {
       year: 'numeric',
       month: 'long',
@@ -17,7 +21,8 @@ export default function StartAuditModal({ isOpen, locations, onStart, onClose })
     });
     setName(`Toma de Inventario - ${today}`);
     setResponsible('');
-    setScope('ALL');
+    setScopeType('ALL');
+    setSelectedShelves([]);
     setNotes('');
 
     const handleKeyDown = (e) => {
@@ -33,12 +38,25 @@ export default function StartAuditModal({ isOpen, locations, onStart, onClose })
     e.preventDefault();
     if (!name.trim()) return;
 
+    if (scopeType === 'SHELVES' && selectedShelves.length === 0) {
+      alert('Por favor, selecciona al menos una estantería.');
+      return;
+    }
+
+    const finalScope = scopeType === 'ALL' ? 'ALL' : selectedShelves.join(',');
+
     onStart({
       name: name.trim(),
       responsible: responsible.trim(),
-      scope,
+      scope: finalScope,
       notes: notes.trim(),
     });
+  };
+
+  const toggleShelf = (code) => {
+    setSelectedShelves(prev => 
+      prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]
+    );
   };
 
   return (
@@ -114,16 +132,36 @@ export default function StartAuditModal({ isOpen, locations, onStart, onClose })
               </label>
               <select
                 className="form-control"
-                value={scope}
-                onChange={(e) => setScope(e.target.value)}
+                value={scopeType}
+                onChange={(e) => {
+                  setScopeType(e.target.value);
+                  if (e.target.value === 'ALL') setSelectedShelves([]);
+                }}
               >
                 <option value="ALL">🏢 Toda la Tienda (Todos los productos activos)</option>
-                {locations && locations.map((loc) => (
-                  <option key={loc.id} value={loc.code}>
-                    📍 Zona: {loc.code} - {loc.name}
-                  </option>
-                ))}
+                <option value="SHELVES">🗄️ Por Estantería(s) Específica(s)</option>
               </select>
+
+              {scopeType === 'SHELVES' && (
+                <div style={{ marginTop: '10px', padding: '10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', maxHeight: '150px', overflowY: 'auto' }}>
+                  {availableShelves.map((shelf) => (
+                    <label key={shelf.code} style={{ display: 'flex', alignItems: 'center', marginBottom: '6px', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedShelves.includes(shelf.code)}
+                        onChange={() => toggleShelf(shelf.code)}
+                        style={{ marginRight: '8px' }}
+                      />
+                      <span style={{ fontSize: '13px', color: '#334155' }}>
+                        {shelf.code} {shelf.name ? `- ${shelf.name}` : ''}
+                      </span>
+                    </label>
+                  ))}
+                  {availableShelves.length === 0 && (
+                    <span style={{ fontSize: '12px', color: '#64748b' }}>No hay estanterías disponibles.</span>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="form-group">

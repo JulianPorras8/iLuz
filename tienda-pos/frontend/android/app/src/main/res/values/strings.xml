@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">iLuz POS</string>
+    <string name="title_activity_main">iLuz POS</string>
+    <string name="package_name">com.iluz.pos</string>
+    <string name="custom_url_scheme">com.iluz.pos</string>
+</resources>

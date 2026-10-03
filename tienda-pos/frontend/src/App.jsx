@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import apiAdapter from './services/apiAdapter';
+import syncService from './services/syncService';
+import sunmiHardware from './services/sunmiHardware';
 import Header from './components/Header.jsx';
 import POSView from './components/POSView.jsx';
 import PositioningView from './components/PositioningView.jsx';
@@ -11,7 +14,16 @@ import ShelfModal from './components/ShelfModal.jsx';
 import ConfirmModal from './components/ConfirmModal.jsx';
 import StartAuditModal from './components/StartAuditModal.jsx';
 import AuditReconciliationModal from './components/AuditReconciliationModal.jsx';
+import CheckoutModal from './components/CheckoutModal.jsx';
+import ReceiptModal from './components/ReceiptModal.jsx';
+import CashShiftModal from './components/CashShiftModal.jsx';
+import SettingsModal from './components/SettingsModal.jsx';
 import Toast from './components/Toast.jsx';
+import SuppliersView from './components/SuppliersView.jsx';
+import SupplierModal from './components/SupplierModal.jsx';
+import PurchaseIntakeView from './components/PurchaseIntakeView.jsx';
+import ReportsView from './components/ReportsView.jsx';
+import HardwareModal from './components/HardwareModal.jsx';
 
 // Shared singleton AudioContext for responsive audio feedback without leaking contexts
 let audioCtxSingleton = null;
@@ -99,6 +111,24 @@ export default function App() {
     isDanger: false,
   });
 
+  // POS Checkout, Shifts & Settings
+  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+  const [isCashShiftModalOpen, setIsCashShiftModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [currentShift, setCurrentShift] = useState(null);
+  const [storeConfig, setStoreConfig] = useState(null);
+  const [lastCompletedSale, setLastCompletedSale] = useState(null);
+
+  // Phase 3 Modules: Suppliers, Purchases, Reports, Hardware
+  const [suppliers, setSuppliers] = useState([]);
+  const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
+  const [editingSupplier, setEditingSupplier] = useState(null);
+  const [isHardwareModalOpen, setIsHardwareModalOpen] = useState(false);
+  const [activePurchase, setActivePurchase] = useState(null);
+  const [reportData, setReportData] = useState(null);
+  const [currentReportPeriod, setCurrentReportPeriod] = useState('month');
+
   // Toast
   const [toast, setToast] = useState(null);
   const toastTimeoutRef = useRef(null);
@@ -114,7 +144,7 @@ export default function App() {
     if (!window.go?.main?.App) return;
 
     try {
-      const [status, ports, port, locs, shs, prods, activeSess, completedSess] = await Promise.all([
+      const [status, ports, port, locs, shs, prods, activeSess, completedSess, shift, cfg, sups, rep] = await Promise.all([
         window.go.main.App.GetScannerStatus ? window.go.main.App.GetScannerStatus() : null,
         window.go.main.App.GetAvailablePorts ? window.go.main.App.GetAvailablePorts() : [],
         window.go.main.App.GetCurrentPort ? window.go.main.App.GetCurrentPort() : 'COM3',
@@ -123,6 +153,10 @@ export default function App() {
         window.go.main.App.ListInventoryProducts ? window.go.main.App.ListInventoryProducts(true) : [],
         window.go.main.App.GetActiveInventorySession ? window.go.main.App.GetActiveInventorySession() : null,
         window.go.main.App.ListCompletedInventorySessions ? window.go.main.App.ListCompletedInventorySessions() : [],
+        window.go.main.App.GetCurrentCashShift ? window.go.main.App.GetCurrentCashShift() : null,
+        window.go.main.App.GetStoreConfig ? window.go.main.App.GetStoreConfig() : null,
+        window.go.main.App.ListSuppliers ? window.go.main.App.ListSuppliers(false) : [],
+        window.go.main.App.GetFinancialReports ? window.go.main.App.GetFinancialReports('month') : null,
       ]);
 
       if (status) setScannerStatus(status);
@@ -133,6 +167,10 @@ export default function App() {
       setProducts(prods || []);
       setActiveAuditSession(activeSess || null);
       setCompletedAuditSessions(completedSess || []);
+      setCurrentShift(shift || null);
+      setStoreConfig(cfg || null);
+      setSuppliers(sups || []);
+      if (rep) setReportData(rep);
 
       if (activeSess && window.go?.main?.App?.ListInventorySessionItems) {
         const items = await window.go.main.App.ListInventorySessionItems(activeSess.id);
@@ -168,6 +206,7 @@ export default function App() {
 
       if (currentTab === 'pos') {
         if (found && product) {
+          playSoundChime(true);
           setUnregisteredBarcode(null);
           setLastScannedProduct(product);
           // Add to cart
@@ -183,6 +222,7 @@ export default function App() {
             return [...prev, { ...product, qty: 1 }];
           });
         } else {
+          playSoundChime(false);
           setUnregisteredBarcode(barcode);
           setLastScannedProduct(null);
         }
@@ -195,7 +235,9 @@ export default function App() {
         }
       } else if (currentTab === 'inventory') {
         if (found && product) {
-          showToast(`Producto encontrado: ${product.name}`, 'success');
+          showToast(`✏️ Editando: ${product.name}`, 'info');
+          setEditingProduct(product);
+          setIsProductModalOpen(true);
         } else {
           showToast(`Código no registrado: ${barcode}`, 'warning');
           setEditingProduct({ barcode, active: true });
@@ -239,9 +281,50 @@ export default function App() {
         } else {
           showToast('Inicia una toma de inventario para registrar conteos', 'info');
         }
+      } else if (currentTab === 'purchases') {
+        if (!activePurchase) {
+          showToast('Inicia un ingreso de factura a la izquierda para comenzar a escanear', 'info');
+          return;
+        }
+        if (found && product) {
+          setActivePurchase((prev) => {
+            if (!prev) return prev;
+            const items = prev.items || [];
+            const existingIdx = items.findIndex(
+              (it) => it.barcode === product.barcode || it.productId === product.id
+            );
+            if (existingIdx >= 0) {
+              const updated = [...items];
+              updated[existingIdx] = {
+                ...updated[existingIdx],
+                qty: (updated[existingIdx].qty || 1) + 1,
+              };
+              return { ...prev, items: updated };
+            }
+            const newItem = {
+              id: product.id,
+              productId: product.id,
+              barcode: product.barcode,
+              name: product.name,
+              unitCost: product.costPrice || 0,
+              previousCost: product.costPrice || 0,
+              suggestedPrice: product.price || 0,
+              qty: 1,
+            };
+            return { ...prev, items: [newItem, ...items] };
+          });
+          playSoundChime(true);
+          showToast(`+1 en factura: ${product.name}`, 'success');
+        } else {
+          playSoundChime(false);
+          showToast(`Código ${barcode} no registrado. Abriendo catálogo para crearlo...`, 'warning');
+          setUnregisteredBarcode(barcode);
+          setEditingProduct({ barcode, active: true });
+          setIsProductModalOpen(true);
+        }
       }
     },
-    [currentTab, activeAuditSession, auditLocationCode, isReconciliationModalOpen, showToast]
+    [currentTab, activeAuditSession, auditLocationCode, isReconciliationModalOpen, activePurchase, showToast]
   );
 
   useEffect(() => {
@@ -300,7 +383,34 @@ export default function App() {
       if (isInput && activeId !== 'quick-barcode') {
         return;
       }
-      if (isProductModalOpen || isLocationModalOpen || confirmDialog.isOpen) {
+      if (isProductModalOpen || isLocationModalOpen || confirmDialog.isOpen || isSupplierModalOpen || isHardwareModalOpen || isCheckoutModalOpen) {
+        return;
+      }
+
+      // Global Navigation Hotkeys F1 - F6
+      if (e.key === 'F1') {
+        e.preventDefault();
+        setCurrentTab('pos');
+        return;
+      } else if (e.key === 'F2') {
+        e.preventDefault();
+        setCurrentTab('inventory');
+        return;
+      } else if (e.key === 'F3') {
+        e.preventDefault();
+        setCurrentTab('positioning');
+        return;
+      } else if (e.key === 'F4') {
+        e.preventDefault();
+        setCurrentTab('purchases');
+        return;
+      } else if (e.key === 'F5') {
+        e.preventDefault();
+        setCurrentTab('suppliers');
+        return;
+      } else if (e.key === 'F6') {
+        e.preventDefault();
+        setCurrentTab('reports');
         return;
       }
 
@@ -320,6 +430,22 @@ export default function App() {
           keyBuffer = '';
           if (window.go?.main?.App?.ProcessBarcode) {
             window.go.main.App.ProcessBarcode(scannedCode);
+          } else {
+            (async () => {
+              try {
+                let product = null;
+                let found = false;
+                try {
+                  product = await apiAdapter.searchBarcode(scannedCode);
+                  if (product && product.id) found = true;
+                } catch {
+                  found = false;
+                }
+                handleIncomingScan({ barcode: scannedCode, found, product });
+              } catch (err) {
+                console.error('Scan handling error:', err);
+              }
+            })();
           }
         }
       } else if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
@@ -329,7 +455,7 @@ export default function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isProductModalOpen, isLocationModalOpen, confirmDialog.isOpen]);
+  }, [isProductModalOpen, isLocationModalOpen, confirmDialog.isOpen, isSupplierModalOpen, isHardwareModalOpen, isCheckoutModalOpen]);
 
   // --- Port Switching ---
   const handlePortChange = async (newPort) => {
@@ -399,6 +525,28 @@ export default function App() {
             console.error('Error auto-recording scan for new product in audit:', scanErr);
           }
           setUnregisteredBarcode(null);
+        } else if (currentTab === 'purchases' && activePurchase) {
+          const fresh = (updated || []).find((p) => p.barcode === prodData.barcode);
+          if (fresh) {
+            setActivePurchase((prev) => {
+              if (!prev) return prev;
+              const items = prev.items || [];
+              const newItem = {
+                id: fresh.id,
+                productId: fresh.id,
+                barcode: fresh.barcode,
+                name: fresh.name,
+                unitCost: fresh.costPrice || 0,
+                previousCost: fresh.costPrice || 0,
+                suggestedPrice: fresh.price || 0,
+                qty: 1,
+              };
+              return { ...prev, items: [newItem, ...items] };
+            });
+            playSoundChime(true);
+            showToast(`✅ ${fresh.name} creado y agregado a la factura (+1)`, 'success');
+            setUnregisteredBarcode(null);
+          }
         }
       }
 
@@ -700,7 +848,8 @@ export default function App() {
   };
 
   const handleExportSessionCSV = async (sessionId) => {
-    const idToExport = sessionId || activeAuditSession?.id;
+    const actualSessionId = (typeof sessionId === 'object') ? null : sessionId;
+    const idToExport = actualSessionId || activeAuditSession?.id || completedAuditSessions[0]?.id;
     if (!idToExport) return;
     try {
       const savedPath = await window.go?.main?.App?.ExportInventorySessionCSVFile(idToExport).catch(() => null);
@@ -721,10 +870,256 @@ export default function App() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      showToast('💾 Reporte CSV descargado', 'success');
+      showToast('💾 Reporte CSV generado exitosamente', 'success');
     } catch (err) {
       console.error('Error exporting session CSV:', err);
       showToast('❌ Error al exportar reporte', 'error');
+    }
+  };
+
+  // --- POS, Cash Shift and Settings Handlers ---
+  const handleCompleteSale = async (saleInput, printReceipt) => {
+    try {
+      // Use apiAdapter to complete sale
+      const sale = await apiAdapter.completeSale(saleInput);
+      setLastCompletedSale(sale);
+      setCart([]);
+      playSoundChime(true);
+      showToast(`✓ Venta #${sale.ticketNumber} registrada ($${sale.totalAmount?.toLocaleString()})`, 'success');
+
+      // Refresh products to show updated live stock
+      if (window.go?.main?.App?.ListInventoryProducts) {
+        const prods = await window.go.main.App.ListInventoryProducts(true);
+        setProducts(prods || []);
+      }
+      // Refresh current shift
+      if (apiAdapter.getCurrentCashShift) {
+        const shift = await apiAdapter.getCurrentCashShift();
+        setCurrentShift(shift || null);
+      }
+
+      setIsCheckoutModalOpen(false);
+      
+      // Print Receipt
+      if (printReceipt) {
+        sunmiHardware.printReceipt(sale, storeConfig).catch(err => console.error(err));
+        // Also keep receipt modal for UI feedback if needed
+        setIsReceiptModalOpen(true);
+      }
+
+      // Background sync
+      syncService.syncSales([sale]).catch(console.error);
+
+    } catch (err) {
+      playSoundChime(false);
+      showToast(`❌ Error al cobrar: ${err}`, 'error');
+      throw err;
+    }
+  };
+
+  const handleOpenShift = async (initialCash, notes) => {
+    try {
+      const shift = await window.go.main.App.OpenCashShift(parseFloat(initialCash) || 0, notes || '');
+      setCurrentShift(shift);
+      playSoundChime(true);
+      showToast(`🟢 Turno #${shift.id} abierto con base de $${shift.initialCash?.toLocaleString()}`, 'success');
+      setIsCashShiftModalOpen(false);
+    } catch (err) {
+      playSoundChime(false);
+      showToast(`❌ Error abriendo turno: ${err}`, 'error');
+    }
+  };
+
+  const handleCloseShift = async (shiftId, actualCash, assimilateDifference, notes) => {
+    try {
+      const closed = await window.go.main.App.CloseCashShift(shiftId, parseFloat(actualCash) || 0, Boolean(assimilateDifference), notes || '');
+      setCurrentShift(null);
+      playSoundChime(true);
+      showToast(`🔴 Turno #${closed.id} cerrado exitosamente`, 'success');
+      setIsCashShiftModalOpen(false);
+    } catch (err) {
+      playSoundChime(false);
+      showToast(`❌ Error cerrando turno: ${err}`, 'error');
+    }
+  };
+
+  const handleSaveStoreConfig = async (cfg) => {
+    try {
+      await window.go.main.App.SaveStoreConfig(cfg);
+      setStoreConfig(cfg);
+      playSoundChime(true);
+      showToast('✓ Configuración de la tienda guardada', 'success');
+      setIsSettingsModalOpen(false);
+    } catch (err) {
+      playSoundChime(false);
+      showToast(`❌ Error guardando configuración: ${err}`, 'error');
+    }
+  };
+
+  // --- Suppliers Operations ---
+  const handleSaveSupplier = async (supData) => {
+    try {
+      await window.go.main.App.SaveSupplier(supData);
+      setIsSupplierModalOpen(false);
+      setEditingSupplier(null);
+      showToast('✅ Proveedor guardado exitosamente', 'success');
+      const updated = await window.go.main.App.ListSuppliers(false);
+      setSuppliers(updated || []);
+    } catch (err) {
+      console.error('Error saving supplier:', err);
+      showToast(`❌ Error al guardar proveedor: ${err}`, 'error');
+    }
+  };
+
+  const handleDeleteSupplier = (supplierId) => {
+    const target = suppliers.find((s) => s.id === supplierId);
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Desactivar Proveedor',
+      message: `¿Estás seguro de que deseas desactivar al proveedor "${target?.name || ''}"?`,
+      isDanger: true,
+      onConfirm: async () => {
+        setConfirmDialog({ isOpen: false });
+        try {
+          await window.go.main.App.DeleteSupplier(supplierId);
+          showToast('🗑️ Proveedor desactivado', 'info');
+          const updated = await window.go.main.App.ListSuppliers(false);
+          setSuppliers(updated || []);
+        } catch (err) {
+          console.error('Error deleting supplier:', err);
+          showToast(`❌ Error al desactivar proveedor: ${err}`, 'error');
+        }
+      },
+    });
+  };
+
+  // --- Purchase Intake Operations ---
+  const handleStartPurchase = (headerData) => {
+    setActivePurchase({
+      ...headerData,
+      items: [],
+    });
+    showToast(`📥 Ingreso de factura #${headerData.invoiceNumber} iniciado`, 'info');
+  };
+
+  const handleAddItemToPurchase = (item) => {
+    setActivePurchase((prev) => {
+      if (!prev) return prev;
+      const items = prev.items || [];
+      const existingIdx = items.findIndex(
+        (it) => it.barcode === item.barcode || (it.productId && it.productId === item.productId)
+      );
+      if (existingIdx >= 0) {
+        const updated = [...items];
+        updated[existingIdx] = {
+          ...updated[existingIdx],
+          qty: (updated[existingIdx].qty || 1) + 1,
+        };
+        return { ...prev, items: updated };
+      }
+      return { ...prev, items: [item, ...items] };
+    });
+  };
+
+  const handleUpdateItemInPurchase = (index, field, value) => {
+    setActivePurchase((prev) => {
+      if (!prev) return prev;
+      const updated = [...(prev.items || [])];
+      updated[index] = { ...updated[index], [field]: value };
+      return { ...prev, items: updated };
+    });
+  };
+
+  const handleRemoveItemFromPurchase = (index) => {
+    setActivePurchase((prev) => {
+      if (!prev) return prev;
+      return { ...prev, items: (prev.items || []).filter((_, idx) => idx !== index) };
+    });
+  };
+
+  const handleFinalizePurchase = async (purchaseData) => {
+    try {
+      const res = await window.go.main.App.CreatePurchase({
+        supplierId: parseInt(purchaseData.supplierId, 10),
+        invoiceNumber: purchaseData.invoiceNumber,
+        invoiceDate: purchaseData.invoiceDate,
+        paymentStatus: purchaseData.paymentMethod || 'Contado',
+        totalCost: parseFloat(purchaseData.totalCost) || 0,
+        attachmentPath: purchaseData.attachmentPath || '',
+        notes: purchaseData.notes || '',
+        items: (purchaseData.items || []).map((it) => ({
+          productId: it.productId,
+          barcode: it.barcode,
+          productName: it.productName || it.name,
+          qty: it.qty,
+          unitCost: it.unitCost,
+          suggestedPrice: it.suggestedPrice || 0,
+        })),
+      });
+      setActivePurchase(null);
+      playSoundChime(true);
+      showToast(`✅ Factura #${res.invoiceNumber} ingresada a inventario`, 'success');
+
+      // Refresh products and reports
+      const prods = await window.go.main.App.ListInventoryProducts(true);
+      setProducts(prods || []);
+      if (window.go.main.App.GetFinancialReports) {
+        const rep = await window.go.main.App.GetFinancialReports(currentReportPeriod);
+        setReportData(rep);
+      }
+    } catch (err) {
+      playSoundChime(false);
+      console.error('Error finalizing purchase:', err);
+      showToast(`❌ Error al ingresar factura: ${err}`, 'error');
+    }
+  };
+
+  const handleCancelPurchase = () => {
+    setActivePurchase(null);
+    showToast('ℹ️ Ingreso de factura cancelado', 'info');
+  };
+
+  // --- Reports Operations ---
+  const handleFetchReports = async (period) => {
+    setCurrentReportPeriod(period);
+    if (window.go?.main?.App?.GetFinancialReports) {
+      try {
+        const rep = await window.go.main.App.GetFinancialReports(period);
+        setReportData(rep);
+      } catch (err) {
+        console.error('Error fetching reports:', err);
+      }
+    }
+  };
+
+  const handleExportReportCSV = async (period) => {
+    try {
+      if (!reportData) return;
+      const csvLines = [
+        `REPORTE FINANCIERO - PERIODO: ${period.toUpperCase()}`,
+        `Fecha de generacion,${new Date().toLocaleString('es-CO')}`,
+        `Total Ventas,$${reportData.totalSales || 0}`,
+        `Numero de Ventas,${reportData.salesCount || 0}`,
+        `Ticket Promedio,$${reportData.averageTicket || 0}`,
+        `Total Compras,$${reportData.totalPurchases || 0}`,
+        `Facturas de Compra,${reportData.purchasesCount || 0}`,
+        `Margen Bruto,$${reportData.grossMargin || 0} (${(reportData.grossMarginPct || 0).toFixed(1)}%)`,
+        `Tope DIAN 3500 UVT,$${reportData.dianUvtThreshold || 0}`,
+        `Porcentaje Consumido,${(reportData.dianCurrentPct || 0).toFixed(1)}%`,
+      ];
+      const blob = new Blob([csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `reporte_financiero_${period}_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('💾 Reporte financiero exportado en CSV', 'success');
+    } catch (err) {
+      console.error('Error exporting report CSV:', err);
+      showToast('❌ Error exportando reporte', 'error');
     }
   };
 
@@ -756,18 +1151,28 @@ export default function App() {
         }}
         activeAuditSession={activeAuditSession}
         auditStats={auditStats}
+        currentShift={currentShift}
+        onOpenShiftModal={() => setIsCashShiftModalOpen(true)}
+        onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
+        onOpenHardwareModal={() => setIsHardwareModalOpen(true)}
       />
 
       {/* Main Content Views */}
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '18px' }}>
         {currentTab === 'pos' && (
           <POSView
+            products={products}
             cart={cart}
             setCart={setCart}
             lastScannedProduct={lastScannedProduct}
             unregisteredBarcode={unregisteredBarcode}
             onRegisterProduct={handleSaveProduct}
             onClearCart={() => setCart([])}
+            onOpenCheckout={() => setIsCheckoutModalOpen(true)}
+            onClearLastScanned={() => {
+              setLastScannedProduct(null);
+              setUnregisteredBarcode(null);
+            }}
           />
         )}
 
@@ -822,6 +1227,43 @@ export default function App() {
               setIsLocationModalOpen(true);
             }}
             onRequestDeleteLocation={handleRequestDeleteLocation}
+          />
+        )}
+
+        {currentTab === 'purchases' && (
+          <PurchaseIntakeView
+            suppliers={suppliers.filter((s) => s.active)}
+            products={products}
+            activePurchase={activePurchase}
+            onStartPurchase={handleStartPurchase}
+            onAddItemToPurchase={handleAddItemToPurchase}
+            onUpdateItemInPurchase={handleUpdateItemInPurchase}
+            onRemoveItemFromPurchase={handleRemoveItemFromPurchase}
+            onFinalizePurchase={handleFinalizePurchase}
+            onCancelPurchase={handleCancelPurchase}
+          />
+        )}
+
+        {currentTab === 'suppliers' && (
+          <SuppliersView
+            suppliers={suppliers}
+            onOpenNewSupplier={() => {
+              setEditingSupplier(null);
+              setIsSupplierModalOpen(true);
+            }}
+            onEditSupplier={(sup) => {
+              setEditingSupplier(sup);
+              setIsSupplierModalOpen(true);
+            }}
+            onDeleteSupplier={handleDeleteSupplier}
+          />
+        )}
+
+        {currentTab === 'reports' && (
+          <ReportsView
+            reportData={reportData}
+            onFetchReport={handleFetchReports}
+            onExportReportCSV={handleExportReportCSV}
           />
         )}
 
@@ -898,6 +1340,7 @@ export default function App() {
         <StartAuditModal
           isOpen={isStartAuditModalOpen}
           locations={locations}
+          shelves={shelves}
           onStart={handleStartAuditSession}
           onClose={() => {
             setIsStartAuditModalOpen(false);
@@ -912,7 +1355,7 @@ export default function App() {
           session={activeAuditSession}
           items={auditItems}
           onConfirmClose={handleConfirmCloseAudit}
-          onExportCSV={() => handleExportSessionCSV(activeAuditSession?.id)}
+          onExportCSV={(id) => handleExportSessionCSV(id || activeAuditSession?.id)}
           onClose={() => {
             setIsReconciliationModalOpen(false);
             window.focus();
@@ -931,6 +1374,90 @@ export default function App() {
             setConfirmDialog({ isOpen: false });
             window.focus();
           }}
+        />
+      )}
+
+      {/* POS Checkout & Sale Modals */}
+      {isCheckoutModalOpen && (
+        <CheckoutModal
+          isOpen={isCheckoutModalOpen}
+          onClose={() => {
+            setIsCheckoutModalOpen(false);
+            window.focus();
+          }}
+          cart={cart}
+          totalAmount={cart.reduce((sum, item) => sum + (item.price || 0) * (item.qty || 1), 0)}
+          storeConfig={storeConfig}
+          currentShift={currentShift}
+          onCompleteSale={handleCompleteSale}
+        />
+      )}
+
+      {isReceiptModalOpen && lastCompletedSale && (
+        <ReceiptModal
+          isOpen={isReceiptModalOpen}
+          onClose={() => {
+            setIsReceiptModalOpen(false);
+            window.focus();
+          }}
+          sale={lastCompletedSale}
+          storeConfig={storeConfig}
+        />
+      )}
+
+      {isCashShiftModalOpen && (
+        <CashShiftModal
+          isOpen={isCashShiftModalOpen}
+          onClose={() => {
+            setIsCashShiftModalOpen(false);
+            window.focus();
+          }}
+          currentShift={currentShift}
+          storeConfig={storeConfig}
+          onOpenShift={handleOpenShift}
+          onCloseShift={handleCloseShift}
+        />
+      )}
+
+      {isSettingsModalOpen && (
+        <SettingsModal
+          isOpen={isSettingsModalOpen}
+          onClose={() => {
+            setIsSettingsModalOpen(false);
+            window.focus();
+          }}
+          currentConfig={storeConfig}
+          onSaveConfig={handleSaveStoreConfig}
+        />
+      )}
+
+      {/* Supplier Modal */}
+      {isSupplierModalOpen && (
+        <SupplierModal
+          isOpen={isSupplierModalOpen}
+          supplier={editingSupplier}
+          onSave={handleSaveSupplier}
+          onClose={() => {
+            setIsSupplierModalOpen(false);
+            setEditingSupplier(null);
+            window.focus();
+          }}
+        />
+      )}
+
+      {/* Hardware / Scanner Hub Modal */}
+      {isHardwareModalOpen && (
+        <HardwareModal
+          isOpen={isHardwareModalOpen}
+          onClose={() => {
+            setIsHardwareModalOpen(false);
+            window.focus();
+          }}
+          scannerStatus={scannerStatus}
+          availablePorts={availablePorts}
+          currentPort={currentPort}
+          onPortChange={handlePortChange}
+          onRefreshPorts={handleRefreshPorts}
         />
       )}
 

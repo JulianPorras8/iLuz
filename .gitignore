@@ -2,6 +2,8 @@
 build/bin/
 **/build/bin/
 *.exe
+*.apk
+*.aab
 *.dll
 *.so
 *.dylib

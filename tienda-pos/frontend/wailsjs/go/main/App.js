@@ -10,8 +10,20 @@ export function CancelInventorySession(arg1) {
   return window['go']['main']['App']['CancelInventorySession'](arg1);
 }
 
+export function CloseCashShift(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['CloseCashShift'](arg1, arg2, arg3, arg4);
+}
+
 export function CloseInventorySession(arg1, arg2) {
   return window['go']['main']['App']['CloseInventorySession'](arg1, arg2);
+}
+
+export function CompleteSale(arg1) {
+  return window['go']['main']['App']['CompleteSale'](arg1);
+}
+
+export function CreatePurchase(arg1) {
+  return window['go']['main']['App']['CreatePurchase'](arg1);
 }
 
 export function DeleteLocation(arg1) {
@@ -20,6 +32,10 @@ export function DeleteLocation(arg1) {
 
 export function DeleteShelf(arg1) {
   return window['go']['main']['App']['DeleteShelf'](arg1);
+}
+
+export function DeleteSupplier(arg1) {
+  return window['go']['main']['App']['DeleteSupplier'](arg1);
 }
 
 export function EmitScannerStatus() {
@@ -62,8 +78,24 @@ export function GetAvailablePorts() {
   return window['go']['main']['App']['GetAvailablePorts']();
 }
 
+export function GetCurrentCashShift() {
+  return window['go']['main']['App']['GetCurrentCashShift']();
+}
+
 export function GetCurrentPort() {
   return window['go']['main']['App']['GetCurrentPort']();
+}
+
+export function GetFinancialReports(arg1) {
+  return window['go']['main']['App']['GetFinancialReports'](arg1);
+}
+
+export function GetLocalIPs() {
+  return window['go']['main']['App']['GetLocalIPs']();
+}
+
+export function GetSaleByTicket(arg1) {
+  return window['go']['main']['App']['GetSaleByTicket'](arg1);
 }
 
 export function GetScannerStatus() {
@@ -74,8 +106,24 @@ export function GetShelfOccupancy(arg1) {
   return window['go']['main']['App']['GetShelfOccupancy'](arg1);
 }
 
+export function GetStoreConfig() {
+  return window['go']['main']['App']['GetStoreConfig']();
+}
+
+export function GetSyncServerStatus() {
+  return window['go']['main']['App']['GetSyncServerStatus']();
+}
+
 export function ListCompletedInventorySessions() {
   return window['go']['main']['App']['ListCompletedInventorySessions']();
+}
+
+export function ListCreditAccounts() {
+  return window['go']['main']['App']['ListCreditAccounts']();
+}
+
+export function ListDailySales(arg1) {
+  return window['go']['main']['App']['ListDailySales'](arg1);
 }
 
 export function ListInventoryProducts(arg1) {
@@ -86,12 +134,28 @@ export function ListInventorySessionItems(arg1) {
   return window['go']['main']['App']['ListInventorySessionItems'](arg1);
 }
 
+export function ListPurchases(arg1) {
+  return window['go']['main']['App']['ListPurchases'](arg1);
+}
+
+export function ListSuppliers(arg1) {
+  return window['go']['main']['App']['ListSuppliers'](arg1);
+}
+
+export function OpenCashShift(arg1, arg2) {
+  return window['go']['main']['App']['OpenCashShift'](arg1, arg2);
+}
+
 export function ProcessBarcode(arg1) {
   return window['go']['main']['App']['ProcessBarcode'](arg1);
 }
 
 export function RecordBatchCount(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['RecordBatchCount'](arg1, arg2, arg3, arg4);
+}
+
+export function RecordCreditPayment(arg1, arg2, arg3) {
+  return window['go']['main']['App']['RecordCreditPayment'](arg1, arg2, arg3);
 }
 
 export function RecordInventoryScan(arg1, arg2, arg3) {
@@ -112,6 +176,14 @@ export function SaveProduct(arg1) {
 
 export function SaveShelf(arg1) {
   return window['go']['main']['App']['SaveShelf'](arg1);
+}
+
+export function SaveStoreConfig(arg1) {
+  return window['go']['main']['App']['SaveStoreConfig'](arg1);
+}
+
+export function SaveSupplier(arg1) {
+  return window['go']['main']['App']['SaveSupplier'](arg1);
 }
 
 export function SearchBarcode(arg1) {
@@ -136,4 +208,8 @@ export function UndoLastCount(arg1) {
 
 export function UpdateProductLocation(arg1, arg2) {
   return window['go']['main']['App']['UpdateProductLocation'](arg1, arg2);
+}
+
+export function UpdateSyncPairToken(arg1) {
+  return window['go']['main']['App']['UpdateSyncPairToken'](arg1);
 }

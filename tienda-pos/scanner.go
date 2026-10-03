@@ -149,7 +149,11 @@ func startScannerWorker(ctx context.Context, db *sql.DB, comPort string, onStatu
 						processScannedBarcode(ctx, db, code)
 					}
 				} else {
-					accumulator.WriteByte(b)
+					if accumulator.Len() < 128 {
+						accumulator.WriteByte(b)
+					} else {
+						accumulator.Reset()
+					}
 				}
 			}
 		}

@@ -338,7 +338,7 @@ export default function AuditReconciliationModal({
 
         {/* Modal Footer */}
         <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <button type="button" className="btn btn-secondary" onClick={onExportCSV}>
+          <button type="button" className="btn btn-secondary" onClick={() => onExportCSV(session?.id)}>
             💾 Exportar CSV
           </button>
 
