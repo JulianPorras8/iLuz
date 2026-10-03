@@ -141,22 +141,22 @@ export default function App() {
 
   // --- Initial Data Load ---
   const loadInitialData = useCallback(async () => {
-    if (!window.go?.main?.App) return;
-
     try {
+      const isWailsApp = typeof window !== 'undefined' && !!window.go?.main?.App;
+
       const [status, ports, port, locs, shs, prods, activeSess, completedSess, shift, cfg, sups, rep] = await Promise.all([
-        window.go.main.App.GetScannerStatus ? window.go.main.App.GetScannerStatus() : null,
-        window.go.main.App.GetAvailablePorts ? window.go.main.App.GetAvailablePorts() : [],
-        window.go.main.App.GetCurrentPort ? window.go.main.App.GetCurrentPort() : 'COM3',
-        window.go.main.App.GetAllLocations ? window.go.main.App.GetAllLocations() : [],
-        window.go.main.App.GetAllShelves ? window.go.main.App.GetAllShelves() : [],
-        window.go.main.App.ListInventoryProducts ? window.go.main.App.ListInventoryProducts(true) : [],
-        window.go.main.App.GetActiveInventorySession ? window.go.main.App.GetActiveInventorySession() : null,
-        window.go.main.App.ListCompletedInventorySessions ? window.go.main.App.ListCompletedInventorySessions() : [],
-        window.go.main.App.GetCurrentCashShift ? window.go.main.App.GetCurrentCashShift() : null,
-        window.go.main.App.GetStoreConfig ? window.go.main.App.GetStoreConfig() : null,
-        window.go.main.App.ListSuppliers ? window.go.main.App.ListSuppliers(false) : [],
-        window.go.main.App.GetFinancialReports ? window.go.main.App.GetFinancialReports('month') : null,
+        isWailsApp && window.go.main.App.GetScannerStatus ? window.go.main.App.GetScannerStatus() : Promise.resolve(null),
+        isWailsApp && window.go.main.App.GetAvailablePorts ? window.go.main.App.GetAvailablePorts() : Promise.resolve([]),
+        isWailsApp && window.go.main.App.GetCurrentPort ? window.go.main.App.GetCurrentPort() : Promise.resolve('COM3'),
+        apiAdapter.getAllLocations(),
+        apiAdapter.getAllShelves(),
+        apiAdapter.listProducts(true),
+        isWailsApp && window.go.main.App.GetActiveInventorySession ? window.go.main.App.GetActiveInventorySession() : Promise.resolve(null),
+        isWailsApp && window.go.main.App.ListCompletedInventorySessions ? window.go.main.App.ListCompletedInventorySessions() : Promise.resolve([]),
+        apiAdapter.getCurrentCashShift(),
+        apiAdapter.getStoreConfig(),
+        apiAdapter.listSuppliers(false),
+        apiAdapter.getFinancialReports('month'),
       ]);
 
       if (status) setScannerStatus(status);
@@ -172,27 +172,33 @@ export default function App() {
       setSuppliers(sups || []);
       if (rep) setReportData(rep);
 
-      if (activeSess && window.go?.main?.App?.ListInventorySessionItems) {
+      if (activeSess && isWailsApp && window.go.main.App.ListInventorySessionItems) {
         const items = await window.go.main.App.ListInventorySessionItems(activeSess.id);
         setAuditItems(items || []);
       }
     } catch (err) {
-      console.error('Error loading initial data from Wails:', err);
+      console.error('Error loading initial data:', err);
       showToast('Error cargando datos de inicio', 'error');
     }
   }, [showToast]);
 
   useEffect(() => {
-    let retries = 15;
+    if (window.go?.main?.App) {
+      loadInitialData();
+      return;
+    }
+
+    let retries = 5;
     const interval = setInterval(() => {
       if (window.go?.main?.App) {
         clearInterval(interval);
         loadInitialData();
       } else if (retries <= 0) {
         clearInterval(interval);
+        loadInitialData();
       }
       retries--;
-    }, 150);
+    }, 100);
 
     return () => clearInterval(interval);
   }, [loadInitialData]);
@@ -490,13 +496,13 @@ export default function App() {
   // --- Product Operations ---
   const handleSaveProduct = async (prodData) => {
     try {
-      await window.go.main.App.SaveProduct(prodData);
+      await apiAdapter.saveProduct(prodData);
       setIsProductModalOpen(false);
       setEditingProduct(null);
       showToast('✅ Producto guardado exitosamente', 'success');
 
-      // Refresh products from SQLite
-      const updated = await window.go.main.App.ListInventoryProducts(true);
+      // Refresh products
+      const updated = await apiAdapter.listProducts(true);
       setProducts(updated || []);
 
       // If registered from POS or Audit unregistered prompt
@@ -576,15 +582,15 @@ export default function App() {
 
     try {
       if (targetActive) {
-        await window.go.main.App.RestoreProduct(product.barcode);
+        await apiAdapter.restoreProduct(product.barcode);
         showToast('♻️ Producto reactivado', 'success');
       } else {
-        await window.go.main.App.ArchiveProduct(product.barcode);
+        await apiAdapter.archiveProduct(product.barcode);
         showToast('📦 Producto archivado', 'info');
       }
 
-      // Refresh to ensure absolute consistency with SQLite
-      const updated = await window.go.main.App.ListInventoryProducts(true);
+      // Refresh to ensure absolute consistency
+      const updated = await apiAdapter.listProducts(true);
       setProducts(updated || []);
     } catch (err) {
       console.error('Error toggling product status:', err);
@@ -598,7 +604,7 @@ export default function App() {
 
   const handleUpdateProductLocation = async (barcode, newLoc) => {
     try {
-      await window.go.main.App.UpdateProductLocation(barcode, newLoc);
+      await apiAdapter.updateProductLocation(barcode, newLoc);
       showToast(newLoc ? `✅ Posición asignada: ${newLoc}` : 'ℹ️ Posición eliminada', 'success');
 
       // Update state
@@ -617,12 +623,12 @@ export default function App() {
   // --- Location Operations ---
   const handleSaveLocation = async (locData) => {
     try {
-      await window.go.main.App.SaveLocation(locData);
+      await apiAdapter.saveLocation(locData);
       setIsLocationModalOpen(false);
       setEditingLocation(null);
       showToast('✅ Locación guardada', 'success');
 
-      const locs = await window.go.main.App.GetAllLocations();
+      const locs = await apiAdapter.getAllLocations();
       setLocations(locs || []);
     } catch (err) {
       console.error('Error saving location:', err);
@@ -639,9 +645,9 @@ export default function App() {
       onConfirm: async () => {
         setConfirmDialog({ isOpen: false });
         try {
-          await window.go.main.App.DeleteLocation(loc.id);
+          await apiAdapter.deleteLocation(loc.id);
           showToast('🗑️ Locación eliminada', 'info');
-          const locs = await window.go.main.App.GetAllLocations();
+          const locs = await apiAdapter.getAllLocations();
           setLocations(locs || []);
         } catch (err) {
           console.error('Error deleting location:', err);
@@ -654,14 +660,14 @@ export default function App() {
   // --- Shelf Operations ---
   const handleSaveShelf = async (shelfData) => {
     try {
-      await window.go.main.App.SaveShelf(shelfData);
+      await apiAdapter.saveShelf(shelfData);
       setIsShelfModalOpen(false);
       setEditingShelf(null);
       showToast('✅ Estante guardado y posiciones generadas', 'success');
 
       const [shs, locs] = await Promise.all([
-        window.go.main.App.GetAllShelves(),
-        window.go.main.App.GetAllLocations(),
+        apiAdapter.getAllShelves(),
+        apiAdapter.getAllLocations(),
       ]);
       setShelves(shs || []);
       setLocations(locs || []);
@@ -680,17 +686,17 @@ export default function App() {
       onConfirm: async () => {
         setConfirmDialog({ isOpen: false });
         try {
-          await window.go.main.App.DeleteShelf(shelf.id);
+          await apiAdapter.deleteShelf(shelf.id);
           showToast('🗑️ Estante eliminado', 'info');
           const [shs, locs] = await Promise.all([
-            window.go.main.App.GetAllShelves(),
-            window.go.main.App.GetAllLocations(),
+            apiAdapter.getAllShelves(),
+            apiAdapter.getAllLocations(),
           ]);
           setShelves(shs || []);
           setLocations(locs || []);
         } catch (err) {
           console.error('Error deleting shelf:', err);
-          showToast('❌ Error al eliminar estante', 'error');
+          showToast('❌ Error al eliminar estante: ' + (err.message || err), 'error');
         }
       },
     });
@@ -919,7 +925,7 @@ export default function App() {
 
   const handleOpenShift = async (initialCash, notes) => {
     try {
-      const shift = await window.go.main.App.OpenCashShift(parseFloat(initialCash) || 0, notes || '');
+      const shift = await apiAdapter.openCashShift(parseFloat(initialCash) || 0, notes || '');
       setCurrentShift(shift);
       playSoundChime(true);
       showToast(`🟢 Turno #${shift.id} abierto con base de $${shift.initialCash?.toLocaleString()}`, 'success');
@@ -932,10 +938,10 @@ export default function App() {
 
   const handleCloseShift = async (shiftId, actualCash, assimilateDifference, notes) => {
     try {
-      const closed = await window.go.main.App.CloseCashShift(shiftId, parseFloat(actualCash) || 0, Boolean(assimilateDifference), notes || '');
+      const closed = await apiAdapter.closeCashShift(shiftId, parseFloat(actualCash) || 0, Boolean(assimilateDifference), notes || '');
       setCurrentShift(null);
       playSoundChime(true);
-      showToast(`🔴 Turno #${closed.id} cerrado exitosamente`, 'success');
+      showToast(`🔴 Turno cerrado exitosamente`, 'success');
       setIsCashShiftModalOpen(false);
     } catch (err) {
       playSoundChime(false);
@@ -945,7 +951,7 @@ export default function App() {
 
   const handleSaveStoreConfig = async (cfg) => {
     try {
-      await window.go.main.App.SaveStoreConfig(cfg);
+      await apiAdapter.saveStoreConfig(cfg);
       setStoreConfig(cfg);
       playSoundChime(true);
       showToast('✓ Configuración de la tienda guardada', 'success');
@@ -959,11 +965,11 @@ export default function App() {
   // --- Suppliers Operations ---
   const handleSaveSupplier = async (supData) => {
     try {
-      await window.go.main.App.SaveSupplier(supData);
+      await apiAdapter.saveSupplier(supData);
       setIsSupplierModalOpen(false);
       setEditingSupplier(null);
       showToast('✅ Proveedor guardado exitosamente', 'success');
-      const updated = await window.go.main.App.ListSuppliers(false);
+      const updated = await apiAdapter.listSuppliers(false);
       setSuppliers(updated || []);
     } catch (err) {
       console.error('Error saving supplier:', err);
@@ -981,9 +987,9 @@ export default function App() {
       onConfirm: async () => {
         setConfirmDialog({ isOpen: false });
         try {
-          await window.go.main.App.DeleteSupplier(supplierId);
+          await apiAdapter.deleteSupplier(supplierId);
           showToast('🗑️ Proveedor desactivado', 'info');
-          const updated = await window.go.main.App.ListSuppliers(false);
+          const updated = await apiAdapter.listSuppliers(false);
           setSuppliers(updated || []);
         } catch (err) {
           console.error('Error deleting supplier:', err);
