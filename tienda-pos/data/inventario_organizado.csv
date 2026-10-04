@@ -1,0 +1,632 @@
+﻿ID,CATEGORIA,ARTICULO,CANTIDAD_STOCK,PRECIO_COSTO_COP,PRECIO_VENTA_SUGERIDO_COP,MARGEN_ESTIMADO,ESTADO_COSTO,ESTANTE_ORIGINAL
+1,Abarrotes y Despensa,ACEITE FRITÓN 1000 ML,0,6700,8100,17.3%,Costeado,Estante 1
+2,Abarrotes y Despensa,ACEITE FRITÓN 120 ML,0,1300,1600,18.8%,Costeado,Estante 1
+3,Abarrotes y Despensa,ACEITE FRITÓN 250 ML,0,1850,2300,19.6%,Costeado,Estante 1
+4,Abarrotes y Despensa,ACEITE FRITÓN 3000 ML,0,17700,21500,17.7%,Costeado,Estante 1
+5,Abarrotes y Despensa,ACEITE FRITÓN 330 ML,0,2800,3400,17.6%,Costeado,Estante 1
+6,Abarrotes y Despensa,ACEITE FRITÓN 500 ML,0,3600,4400,18.2%,Costeado,Estante 1
+7,Abarrotes y Despensa,ACEITE FRITÓN 680 ML,0,5600,6800,17.6%,Costeado,Estante 1
+8,Abarrotes y Despensa,ACEITE FRITÓN TETERO,0,750,900,16.7%,Costeado,Estante 1
+9,Abarrotes y Despensa,AJO EN PASTA / LISTO TARRO,0,4000,4800,16.7%,Costeado,Estante 3
+10,Abarrotes y Despensa,AJO LISTO EN SOBRE,0,200,250,20.0%,Costeado,Estante 3
+11,Abarrotes y Despensa,ARROZ BLANQUITA 1 LIBRA (500G),0,1700,2100,19.0%,Costeado,Estante 1
+12,Abarrotes y Despensa,ARROZ DIANA 1 LIBRA (500G),0,1700,2100,19.0%,Costeado,Estante 1
+13,Abarrotes y Despensa,ARROZ FLORHUILA / BOLUGA 1 LIBRA (500G),0,1800,2200,18.2%,Costeado,Estante 1
+14,Abarrotes y Despensa,ARROZ SELETTY PREMIUM 1 LIBRA (500G),0,2600,3200,18.8%,Costeado,Estante 1
+15,Abarrotes y Despensa,ARVEJA CON ZANAHORIA EN LATA,0,3800,4600,17.4%,Costeado,Estante 1
+16,Abarrotes y Despensa,ARVEJA VERDE EN LATA,0,3600,4400,18.2%,Costeado,Estante 1
+17,Abarrotes y Despensa,ATÚN CON VERDURAS EN LATA,0,5100,6200,17.7%,Costeado,Estante 1
+18,Abarrotes y Despensa,ATÚN ECONÓMICO EN LATA,0,3500,4200,16.7%,Costeado,Estante 1
+19,Abarrotes y Despensa,ATÚN ISABEL EN LATA,0,5000,6000,16.7%,Costeado,Estante 1
+20,Abarrotes y Despensa,AVENA INSTANTÁNEA DIANA SOBRE,0,1000,1200,16.7%,Costeado,Estante 3
+21,Abarrotes y Despensa,AVENA QUAKER HOJUELAS 115G,0,1200,1500,20.0%,Costeado,Estante 1
+22,Abarrotes y Despensa,AZÚCAR BLANCA 1 LIBRA (500G),0,1900,2300,17.4%,Costeado,Estante 1
+23,Abarrotes y Despensa,BICARBONATO DE SODIO CAJA,0,800,1000,20.0%,Costeado,Estante 3
+24,Abarrotes y Despensa,CAFÉ AROMA 1 LIBRA (500G),0,14000,16800,16.7%,Costeado,Estante 1
+25,Abarrotes y Despensa,CAFÉ AROMA 1/2 LIBRA (250G),0,9000,10800,16.7%,Costeado,Estante 1
+26,Abarrotes y Despensa,CAFÉ AROMA PAPELETA / SACHET,0,1700,2100,19.0%,Costeado,Estante 1
+27,Abarrotes y Despensa,CAFÉ INSTANTÁNEO JUAN VALDEZ SOBRE,0,1500,1800,16.7%,Costeado,Estante 3
+28,Abarrotes y Despensa,CAFÉ ÁGUILA ROJA 1 LIBRA (500G),0,18000,22000,18.2%,Costeado,Estante 1
+29,Abarrotes y Despensa,CAFÉ ÁGUILA ROJA 1/2 LIBRA (250G),0,10000,12000,16.7%,Costeado,Estante 1
+30,Abarrotes y Despensa,CAFÉ ÁGUILA ROJA PAPELETA / SACHET,0,2200,2700,18.5%,Costeado,Estante 1
+31,Abarrotes y Despensa,CALDO DE POLLO MAGGI EN PASTA,0,2000,2400,16.7%,Costeado,Estante 3
+32,Abarrotes y Despensa,CALDO RICOSTILLA PASTAS / SOBRES,0,400,500,20.0%,Costeado,Estante 3
+33,Abarrotes y Despensa,CEREAL INFANTIL NESTUM SOBRE,0,1500,1800,16.7%,Costeado,Estante 3
+34,Abarrotes y Despensa,CEREAL ZUCARITAS CAJA GRANDE,0,4500,5400,16.7%,Costeado,Estante 3
+35,Abarrotes y Despensa,CEREAL ZUCARITAS PERSONAL,0,1200,1500,20.0%,Costeado,Estante 3
+36,Abarrotes y Despensa,CHOCOLATE CORAZÓN PASTILLA,0,3500,4200,16.7%,Costeado,Estante 3
+37,Abarrotes y Despensa,CHOCOLATE DE MESA CORONA PASTILLA,0,1000,1200,16.7%,Costeado,Estante 3
+38,Abarrotes y Despensa,CHOCOLATE DE MESA PASTILLA LUKER,0,1000,1200,16.7%,Costeado,Estante 3
+39,Abarrotes y Despensa,CHOCOLATE DE MESA TESALIA PASTILLA,0,1000,1200,16.7%,Costeado,Estante 3
+40,Abarrotes y Despensa,CHOCOLISTO EN POLVO SOBRE,0,800,1000,20.0%,Costeado,Estante 3
+41,Abarrotes y Despensa,COMPOTA SAN JORGE FRASCO,0,2500,3000,16.7%,Costeado,Estante 3
+42,Abarrotes y Despensa,CONDIMENTO GUISAMAC CAJA,0,800,1000,20.0%,Costeado,Estante 3
+43,Abarrotes y Despensa,ESENCIAS DE COCINA (VAINILLA/CANELA),0,3500,4200,16.7%,Costeado,Estante 3
+44,Abarrotes y Despensa,ESPAGUETI LA MUÑECA 1 LIBRA (500G),0,4000,4800,16.7%,Costeado,Estante 1
+45,Abarrotes y Despensa,ESPAGUETI LA MUÑECA 200G,0,1550,1900,18.4%,Costeado,Estante 1
+46,Abarrotes y Despensa,FARINA / HARINA DE TRIGO ESPECIAL,0,1800,2200,18.2%,Costeado,Estante 3
+47,Abarrotes y Despensa,FRÍJOL BLANQUILLO 1/2 LIBRA (250G),0,2200,2700,18.5%,Costeado,Estante 1
+48,Abarrotes y Despensa,FRÍJOL CARGAMANTO 1 LIBRA (500G),0,4200,5100,17.6%,Costeado,Estante 1
+49,Abarrotes y Despensa,FRÍJOL CARGAMANTO 1/2 LIBRA (250G),0,2700,3300,18.2%,Costeado,Estante 1
+50,Abarrotes y Despensa,GELATINA ROYAL / FRUTIÑO PARA PREPARAR,0,1500,1800,16.7%,Costeado,Estante 3
+51,Abarrotes y Despensa,HARINA DE TRIGO 1 LIBRA,0,1550,1900,18.4%,Costeado,Estante 1
+52,Abarrotes y Despensa,HARINA PAN BLANCA 1 KILO (1000G),0,3800,4600,17.4%,Costeado,Estante 1
+53,Abarrotes y Despensa,HARINA PAN BLANCA 1 LIBRA (500G),0,2000,2400,16.7%,Costeado,Estante 1
+54,Abarrotes y Despensa,HARINA PARA APANAR 200G,0,1700,2100,19.0%,Costeado,Estante 3
+55,Abarrotes y Despensa,LENTEJAS 1 LIBRA (500G),0,3200,3900,17.9%,Costeado,Estante 1
+56,Abarrotes y Despensa,LENTEJAS 1/2 LIBRA (250G),0,2100,2600,19.2%,Costeado,Estante 1
+57,Abarrotes y Despensa,LEVADURA EN POLVO SOBRE,0,1000,1200,16.7%,Costeado,Estante 3
+58,Abarrotes y Despensa,MAIZENA SABORES SOBRE,0,1600,2000,20.0%,Costeado,Estante 3
+59,Abarrotes y Despensa,MAIZENA TRADICIONAL CAJA PEQUEÑA,0,3600,4400,18.2%,Costeado,Estante 3
+60,Abarrotes y Despensa,MAYONESA FRUCO DOYPACK 120G,0,2000,2400,16.7%,Costeado,Estante 3
+61,Abarrotes y Despensa,MAYONESA FRUCO SOBRE PEQUEÑO,0,1400,1700,17.6%,Costeado,Estante 3
+62,Abarrotes y Despensa,MAYONESA SAN JORGE DOYPACK 120G,0,1400,1700,17.6%,Costeado,Estante 3
+63,Abarrotes y Despensa,MAYONESA SAN JORGE SOBRE PEQUEÑO,0,1400,1700,17.6%,Costeado,Estante 3
+64,Abarrotes y Despensa,MAÍZ PIRA 1 LIBRA (500G),0,1300,1600,18.8%,Costeado,Estante 3
+65,Abarrotes y Despensa,MAÍZ TIERNO EN LATA,0,4900,5900,16.9%,Costeado,Estante 1
+66,Abarrotes y Despensa,MERMELADA EN SOBRE / DOYPACK,0,1500,1800,16.7%,Costeado,Estante 3
+67,Abarrotes y Despensa,MIEL DE ABEJAS TARRO,0,2200,2700,18.5%,Costeado,Estante 3
+68,Abarrotes y Despensa,MILO EN POLVO SOBRE GRANDE,0,3500,4200,16.7%,Costeado,Estante 3
+69,Abarrotes y Despensa,MILO EN POLVO SOBRE PEQUEÑO,0,800,1000,20.0%,Costeado,Estante 3
+70,Abarrotes y Despensa,MOSTAZA DOYPACK 200G,0,5000,6000,16.7%,Costeado,Estante 3
+71,Abarrotes y Despensa,MOSTAZA SOBRE PEQUEÑO,0,200,250,20.0%,Costeado,Estante 3
+72,Abarrotes y Despensa,PANELA REDONDA GRANDE,0,2300,2800,17.9%,Costeado,Estante 1
+73,Abarrotes y Despensa,PANELA REDONDA PEQUEÑA,0,800,1000,20.0%,Costeado,Estante 1
+74,Abarrotes y Despensa,PASTA DE TOMATE 200G,0,4000,4800,16.7%,Costeado,Estante 3
+75,Abarrotes y Despensa,PASTA LA MUÑECA PARA SOPA 250G,0,1550,1900,18.4%,Costeado,Estante 1
+76,Abarrotes y Despensa,POLVO PARA HORNEAR POLVO ROYAL SOBRE,0,1500,1800,16.7%,Costeado,Estante 3
+77,Abarrotes y Despensa,REFRESCO FRUTIÑO SOBRE,0,840,1100,23.6%,Costeado,Estante 1
+78,Abarrotes y Despensa,REFRESCO PANELADA SOBRE,0,1250,1500,16.7%,Costeado,Estante 1
+79,Abarrotes y Despensa,REFRESCO SUNTI SOBRE,0,1250,1500,16.7%,Costeado,Estante 1
+80,Abarrotes y Despensa,SAL EN TARRO 500G,0,1200,1500,20.0%,Costeado,Estante 1
+81,Abarrotes y Despensa,SAL REFISAL BOLSA 1000G,0,1250,1500,16.7%,Costeado,Estante 1
+82,Abarrotes y Despensa,SALSA BBQ DOYPACK 200G,0,5000,6000,16.7%,Costeado,Estante 3
+83,Abarrotes y Despensa,SALSA DE SOYA DOYPACK 200G,0,2000,2400,16.7%,Costeado,Estante 3
+84,Abarrotes y Despensa,SALSA DE TOMATE FRUCO 120G,0,2000,2400,16.7%,Costeado,Estante 3
+85,Abarrotes y Despensa,SALSA DE TOMATE FRUCO SOBRE PEQUEÑO,0,1400,1700,17.6%,Costeado,Estante 3
+86,Abarrotes y Despensa,SALSA DE TOMATE SAN JORGE 200G,0,2000,2400,16.7%,Costeado,Estante 3
+87,Abarrotes y Despensa,SALSA NEGRA DOYPACK 200G,0,1600,2000,20.0%,Costeado,Estante 3
+88,Abarrotes y Despensa,SALSA NEGRA SOBRE PEQUEÑO,0,200,250,20.0%,Costeado,Estante 3
+89,Abarrotes y Despensa,SALSA ROSADA DOYPACK / SOBRE,0,1600,2000,20.0%,Costeado,Estante 3
+90,Abarrotes y Despensa,SARDINAS EN LATA CILÍNDRICA,0,3000,3600,16.7%,Costeado,Estante 1
+91,Abarrotes y Despensa,SARDINAS EN LATA ECONÓMICA,0,5500,6600,16.7%,Costeado,Estante 1
+92,Abarrotes y Despensa,SARDINAS VAN CAMP'S GRANDE,0,7000,8400,16.7%,Costeado,Estante 1
+93,Abarrotes y Despensa,SARDINAS VAN CAMP'S MEDIANA,0,4000,4800,16.7%,Costeado,Estante 1
+94,Abarrotes y Despensa,SOPA EN SOBRE LA SOPERA,0,1500,1800,16.7%,Costeado,Estante 3
+95,Abarrotes y Despensa,SOPA INSTANTÁNEA AJI-NO-MEN,0,2600,3200,18.8%,Costeado,Estante 3
+96,Abarrotes y Despensa,TAMPONES NOSOTRAS PAQUETE X 3,0,800,1000,20.0%,Costeado,Estante 9
+97,Abarrotes y Despensa,TAMPONES O.B. PAQUETE,0,900,1100,18.2%,Costeado,Estante 9
+98,Abarrotes y Despensa,VINAGRE BLANCO LA CONSTANCIA,0,1500,1800,16.7%,Costeado,Estante 3
+99,Abarrotes y Despensa,VINAGRETA LA CONSTANCIA 200G,0,4500,5400,16.7%,Costeado,Estante 3
+100,"Lácteos, Huevos y Refrigerados",AVENA ALPINA EN VASO 250G,0,2900,3500,17.1%,Costeado,Estante 2
+101,"Lácteos, Huevos y Refrigerados",AVENA EN BOLSA GRANDE 900ML,0,6300,7600,17.1%,Costeado,Estante 2
+102,"Lácteos, Huevos y Refrigerados",AVENA EN BOLSA PEQUEÑA 200ML,0,1600,2000,20.0%,Costeado,Estante 2
+103,"Lácteos, Huevos y Refrigerados",BON YURT ALPINA,0,3900,4700,17.0%,Costeado,Estante 2
+104,"Lácteos, Huevos y Refrigerados",BON YURT ALQUERÍA,0,3000,3600,16.7%,Costeado,Estante 2
+105,"Lácteos, Huevos y Refrigerados",BON YURT CON M&M,0,2500,3000,16.7%,Costeado,Estante 2
+106,"Lácteos, Huevos y Refrigerados",CREMA DE LECHE ALQUERÍA 400G,0,8500,10200,16.7%,Costeado,Estante 3
+107,"Lácteos, Huevos y Refrigerados",CREMA DE LECHE ALQUERÍA DOYPACK 200G,0,4000,4800,16.7%,Costeado,Estante 3
+108,"Lácteos, Huevos y Refrigerados",CREMA DE LECHE ALQUERÍA PEQUEÑA 90G,0,2500,3000,16.7%,Costeado,Estante 3
+109,"Lácteos, Huevos y Refrigerados",GELATINA EN VASO REFRIGERADA,0,1600,2000,20.0%,Costeado,Estante 2
+110,"Lácteos, Huevos y Refrigerados",HUEVO ROJO TIPO AA UNIDAD,0,400,500,20.0%,Costeado,Estante 9
+111,"Lácteos, Huevos y Refrigerados",HUEVO ROJO TIPO AAA KIKES UNIDAD,0,500,600,16.7%,Costeado,Estante 9
+112,"Lácteos, Huevos y Refrigerados",HUEVO ROJO TIPO JUMBO UNIDAD,0,750,900,16.7%,Costeado,Estante 9
+113,"Lácteos, Huevos y Refrigerados",LECHE CONDENSADA LA LECHERA SOBRE,0,800,1000,20.0%,Costeado,Estante 1
+114,"Lácteos, Huevos y Refrigerados",LECHE DESLACTOSADA ALQUERÍA 1L,0,4850,5900,17.8%,Costeado,Estante 1
+115,"Lácteos, Huevos y Refrigerados",LECHE DESLACTOSADA SAN FERNANDO 1L,0,4500,5400,16.7%,Costeado,Estante 1
+116,"Lácteos, Huevos y Refrigerados",LECHE EN BOLSA MEDIANA 900ML,0,1900,2300,17.4%,Costeado,Estante 1
+117,"Lácteos, Huevos y Refrigerados",LECHE EN BOLSA PEQUEÑA 400ML,0,1100,1400,21.4%,Costeado,Estante 1
+118,"Lácteos, Huevos y Refrigerados",LECHE EN POLVO KLIM 100G,0,4000,4800,16.7%,Costeado,Estante 3
+119,"Lácteos, Huevos y Refrigerados",LECHE EN POLVO KLIM PERSONAL SOBRE,0,1200,1500,20.0%,Costeado,Estante 3
+120,"Lácteos, Huevos y Refrigerados",LECHE EN POLVO RODEO 187G,0,7000,8400,16.7%,Costeado,Estante 3
+121,"Lácteos, Huevos y Refrigerados",LECHE EN POLVO RODEO 75G,0,2500,3000,16.7%,Costeado,Estante 3
+122,"Lácteos, Huevos y Refrigerados",LECHE ENTERA ALQUERÍA 1L,0,4850,5900,17.8%,Costeado,Estante 1
+123,"Lácteos, Huevos y Refrigerados",LECHE ENTERA SAN FERNANDO 1L,0,4000,4800,16.7%,Costeado,"Estante 1,8"
+124,"Lácteos, Huevos y Refrigerados",MANTEQUILLA CAMPI 1/4 LB (125G),0,1600,2000,20.0%,Costeado,Estante 1
+125,"Lácteos, Huevos y Refrigerados",MANTEQUILLA CAMPI 500G,0,4100,5000,18.0%,Costeado,Estante 1
+126,"Lácteos, Huevos y Refrigerados",MANTEQUILLA CUADRITO INDIVIDUAL,0,800,1000,20.0%,Costeado,Estante 1
+127,"Lácteos, Huevos y Refrigerados",PULPA DE FRUTA CONGELADA 500G,0,1800,2200,18.2%,Costeado,Estante 12
+128,"Lácteos, Huevos y Refrigerados",QUESO COSTEÑO FRESCO (LIBRA),0,16000,19200,16.7%,Costeado,Estante 12
+129,"Lácteos, Huevos y Refrigerados",QUESO CUAJADA FRESCA 500G,0,6000,7200,16.7%,Costeado,Estante 8
+130,"Lácteos, Huevos y Refrigerados",QUESO PARMESANO SOBRE 40G,0,4000,4800,16.7%,Costeado,Estante 2
+131,"Lácteos, Huevos y Refrigerados",YOGO YOGO ALPINA GRANDE 1L,0,6500,7800,16.7%,Costeado,Estante 2
+132,"Lácteos, Huevos y Refrigerados",YOGURT SAN FERNANDO VASO,0,1300,1600,18.8%,Costeado,Estante 2
+133,Carnes y Embutidos,BANDEJA DE POLLO BUCANERO,0,,,,Pendiente por Costear,Estante 12
+134,Carnes y Embutidos,BANDEJA DE POLLO SANTIPOLLO,0,3900,4900,20.4%,Costeado,Estante 12
+135,Carnes y Embutidos,CARNE DE CERDO PULPA (LIBRA),0,10050,12600,20.2%,Costeado,Estante 12
+136,Carnes y Embutidos,CARNE DE RES PARA ASAR / GUISAR (LIBRA),0,16300,20500,20.5%,Costeado,Estante 12
+137,Carnes y Embutidos,CARNE MOLIDA DE RES DE PRIMERA (LIBRA),0,8300,10400,20.2%,Costeado,Estante 12
+138,Carnes y Embutidos,CHORIZO CASERO COCTELERO PAQUETE,0,,,,Pendiente por Costear,Estante 12
+139,Carnes y Embutidos,CHORIZO RICA PAQUETE X 3,0,4889,6200,21.1%,Costeado,Estante 12
+140,Carnes y Embutidos,CHORIZO SANTARROSANO PAQUETE X 2,0,3870,4900,21.0%,Costeado,Estante 12
+141,Carnes y Embutidos,CHULETÓN DE CERDO FRESCO (LIBRA),0,6800,8500,20.0%,Costeado,Estante 12
+142,Carnes y Embutidos,COSTILLA AHUMADA FERNY BANDEJA,0,9010,11300,20.3%,Costeado,Estante 12
+143,Carnes y Embutidos,FILETES DE PECHUGA DE POLLO BANDEJA X 10,0,26000,32500,20.0%,Costeado,Estante 12
+144,Carnes y Embutidos,JAMÓN SÁNDWICH CALIMA PAQUETE,0,,,,Pendiente por Costear,Estante 12
+145,Carnes y Embutidos,MORTADELA CALIMA PAQUETE,0,,,,Pendiente por Costear,Estante 12
+146,Carnes y Embutidos,PECHUGA DE POLLO FRESCA (KILO),0,,,,Pendiente por Costear,Estante 12
+147,Carnes y Embutidos,PERNIL DE POLLO CAMPESINO (KILO),0,,,,Pendiente por Costear,Estante 12
+148,Carnes y Embutidos,SALCHICHA COLANTA PAQUETE X 6,0,,,,Pendiente por Costear,Estante 12
+149,Carnes y Embutidos,SALCHICHA MANGUERA A GRANEL 1 LIBRA,0,2667,3400,21.6%,Costeado,Estante 12
+150,Carnes y Embutidos,SALCHICHA MANGUERA RICA X UNIDAD,20,2672,3400,21.4%,Costeado,Estante 12
+151,Carnes y Embutidos,SALCHICHA RICA PAQUETE X 3,0,4389,5500,20.2%,Costeado,Estante 12
+152,Carnes y Embutidos,SALCHICHA RICA PAQUETE X 5,0,5848,7400,21.0%,Costeado,Estante 12
+153,Carnes y Embutidos,SALCHICHAS RICA PAQUETE,0,4100,5200,21.2%,Costeado,Estante 1
+154,Carnes y Embutidos,SALCHICHÓN CALIMA UNIDAD,0,5810,7300,20.4%,Costeado,Estante 12
+155,Carnes y Embutidos,SALCHICHÓN CERVECERO TRADICIONAL,0,17850,22500,20.7%,Costeado,Estante 12
+156,Carnes y Embutidos,SALCHICHÓN COLANTA EN RODAJAS PAQUETE,0,,,,Pendiente por Costear,Estante 12
+157,Carnes y Embutidos,SALCHICHÓN MIXTO COLANTA BARRA,0,,,,Pendiente por Costear,Estante 12
+158,Carnes y Embutidos,SALCHICHÓN ZENÚ CERVECERO TRADICIONAL,0,30587,38500,20.6%,Costeado,Estante 12
+159,Carnes y Embutidos,VÍSCERAS SANTIPOLLO BANDEJA,0,1800,2300,21.7%,Costeado,Estante 12
+160,Carnes y Embutidos,YUCA FRESCA O CONGELADA (LIBRA),0,2500,3200,21.9%,Costeado,Estante 12
+161,Bebidas y Refrescos,AGUA CLARITY 1.5 LITROS,0,1700,2200,22.7%,Costeado,Estante 8
+162,Bebidas y Refrescos,AGUA CON GAS PERSONAL 300ML,0,800,1000,20.0%,Costeado,Estante 2
+163,Bebidas y Refrescos,AGUA CRISTAL MINI 250ML,0,600,800,25.0%,Costeado,Estante 8
+164,Bebidas y Refrescos,AGUA CRISTAL PERSONAL 300ML,0,800,1000,20.0%,Costeado,Estante 2
+165,Bebidas y Refrescos,AGUA MÍA 1 LITRO,0,1200,1500,20.0%,Costeado,Estante 8
+166,Bebidas y Refrescos,AGUA SABORIZADA H2OH! POSTOBÓN 600ML,0,2200,2800,21.4%,Costeado,Estante 8
+167,Bebidas y Refrescos,BEBIDA ENERGIZANTE AMPER,0,2500,3200,21.9%,Costeado,Estante 8
+168,Bebidas y Refrescos,BEBIDA ENERGIZANTE ESPARTA,0,1600,2000,20.0%,Costeado,Estante 8
+169,Bebidas y Refrescos,BEBIDA ENERGIZANTE SPEED MAX / SPIK,0,1600,2000,20.0%,Costeado,Estante 8
+170,Bebidas y Refrescos,BEBIDA HIDRATANTE GATORADE 500ML,0,3100,3900,20.5%,Costeado,Estante 8
+171,Bebidas y Refrescos,BEBIDA HIDRATANTE SPORADE 500ML,0,2200,2800,21.4%,Costeado,Estante 8
+172,Bebidas y Refrescos,ENERGIZANTE VIVE 100 PERSONAL 240ML,0,2200,2800,21.4%,Costeado,Estante 2
+173,Bebidas y Refrescos,GASEOSA BIG COLA 3 LITROS,0,3900,4900,20.4%,Costeado,Estante 2
+174,Bebidas y Refrescos,GASEOSA BIG COLA PERSONAL 400ML,0,1150,1500,23.3%,Costeado,Estante 8
+175,Bebidas y Refrescos,GASEOSA COCA-COLA 1 LITRO,0,3750,4700,20.2%,Costeado,Estante 2
+176,Bebidas y Refrescos,GASEOSA COCA-COLA 1.5 LITROS,0,5400,6800,20.6%,Costeado,Estante 2
+177,Bebidas y Refrescos,GASEOSA COCA-COLA 2.5 LITROS,0,6250,7900,20.9%,Costeado,Estante 2
+178,Bebidas y Refrescos,GASEOSA COCA-COLA 2L RETORNABLE,0,5000,6300,20.6%,Costeado,Estante 2
+179,Bebidas y Refrescos,GASEOSA COCA-COLA 3 LITROS,0,9000,11300,20.4%,Costeado,Estante 2
+180,Bebidas y Refrescos,GASEOSA COCA-COLA PERSONAL 400ML,0,2500,3200,21.9%,Costeado,Estante 2
+181,Bebidas y Refrescos,GASEOSA CUATRO 1.5 LITROS,0,3750,4700,20.2%,Costeado,Estante 2
+182,Bebidas y Refrescos,GASEOSA CUATRO 3 LITROS,0,4600,5800,20.7%,Costeado,Estante 2
+183,Bebidas y Refrescos,GASEOSA CUATRO PERSONAL 400ML,0,2300,2900,20.7%,Costeado,Estante 2
+184,Bebidas y Refrescos,GASEOSA LITRÓN GLACIAL 1.5L,0,2200,2800,21.4%,Costeado,Estante 8
+185,Bebidas y Refrescos,GASEOSA LITRÓN POSTOBÓN 1.5L,0,2900,3700,21.6%,Costeado,Estante 8
+186,Bebidas y Refrescos,GASEOSA MINI SURTIDA 200ML,0,800,1000,20.0%,Costeado,Estante 8
+187,Bebidas y Refrescos,GASEOSA PEPSI 2 LITROS,0,4600,5800,20.7%,Costeado,Estante 8
+188,Bebidas y Refrescos,GASEOSA POSTOBÓN 3 LITROS,0,6000,7500,20.0%,Costeado,Estante 8
+189,Bebidas y Refrescos,GASEOSA PREMIO 1.5 LITROS,0,3750,4700,20.2%,Costeado,Estante 2
+190,Bebidas y Refrescos,GASEOSA PREMIO PERSONAL 250ML,0,2300,2900,20.7%,Costeado,Estante 2
+191,Bebidas y Refrescos,GASEOSA SPRITE 1.5 LITROS,0,3750,4700,20.2%,Costeado,Estante 2
+192,Bebidas y Refrescos,GASEOSA SPRITE PERSONAL 400ML,0,2300,2900,20.7%,Costeado,Estante 2
+193,Bebidas y Refrescos,GATORLYTE SUERO HIDRATANTE,0,4000,5000,20.0%,Costeado,Estante 3
+194,Bebidas y Refrescos,JUGO CIFRUT 1.5 LITROS,0,3000,3800,21.1%,Costeado,Estante 8
+195,Bebidas y Refrescos,JUGO CIFRUT 1000ML,0,3100,3900,20.5%,Costeado,Estante 2
+196,Bebidas y Refrescos,JUGO CIFRUT PEQUEÑO 190ML,0,1000,1300,23.1%,Costeado,Estante 2
+197,Bebidas y Refrescos,JUGO CIFRUT PERSONAL 350ML,0,1200,1500,20.0%,Costeado,Estante 2
+198,Bebidas y Refrescos,JUGO EN CAJA TETRAPAK 200ML,0,1000,1300,23.1%,Costeado,Estante 2
+199,Bebidas y Refrescos,JUGO HIT BOTELLA 1 LITRO,0,3800,4800,20.8%,Costeado,Estante 8
+200,Bebidas y Refrescos,JUGO HIT PERSONAL BOTELLA 250ML,0,2200,2800,21.4%,Costeado,Estante 8
+201,Bebidas y Refrescos,PONY MALTA 1 LITRO,0,3600,4500,20.0%,Costeado,Estante 8
+202,Bebidas y Refrescos,PONY MALTA 1.5 LITROS,0,4500,5700,21.1%,Costeado,Estante 8
+203,Bebidas y Refrescos,PONY MALTA 2 LITROS,0,5500,6900,20.3%,Costeado,Estante 8
+204,Bebidas y Refrescos,PONY MALTA MINI 200ML,0,1200,1500,20.0%,Costeado,Estante 8
+205,Bebidas y Refrescos,PONY MALTA PERSONAL 330ML,0,2200,2800,21.4%,Costeado,Estante 8
+206,Bebidas y Refrescos,SODA BRETAÑA 1.5 LITROS,0,3800,4800,20.8%,Costeado,Estante 8
+207,Bebidas y Refrescos,SODA BRETAÑA PERSONAL 300ML,0,2200,2800,21.4%,Costeado,Estante 8
+208,Bebidas y Refrescos,SUERO ELECTROLIT 625ML,0,7000,8800,20.5%,Costeado,Estante 2
+209,Bebidas y Refrescos,SUERO ORAL PEDIALYTE 500ML,0,9000,11300,20.4%,Costeado,Estante 3
+210,Licores y Cervezas,CERVEZA ANDINA LATA 330ML,0,2500,3200,21.9%,Costeado,Estante 8
+211,Licores y Cervezas,CERVEZA HEINEKEN LATA 330ML,0,3200,4000,20.0%,Costeado,Estante 8
+212,Licores y Cervezas,CERVEZA PÓKER LATA 330ML,0,3200,4000,20.0%,Costeado,Estante 8
+213,Licores y Cervezas,CERVEZA ÁGUILA LATA 330ML,0,3200,4000,20.0%,Costeado,Estante 8
+214,Licores y Cervezas,REFAJO ANDINA BOTELLA,0,4100,5200,21.2%,Costeado,Estante 8
+215,Licores y Cervezas,REFAJO COLA & POLA LATA 330ML,0,2200,2800,21.4%,Costeado,Estante 8
+216,Licores y Cervezas,TEQUILA / BEBIDA LOS CUATES,0,3300,4200,21.4%,Costeado,Estante 8
+217,Snacks y Pasabocas,AREPAS DOÑA ALEJA PAQUETE,0,,,,Pendiente por Costear,Estante 11
+218,Snacks y Pasabocas,CHEETOS MEGAPAQ 140G,0,,,,Pendiente por Costear,Estante 11
+219,Snacks y Pasabocas,CHEETOS PERSONAL 35G,0,,,,Pendiente por Costear,Estante 11
+220,Snacks y Pasabocas,CHEEZ TRIS BOLSAZA EXTRA GRANDE,0,,,,Pendiente por Costear,Estante 11
+221,Snacks y Pasabocas,CHEEZ TRIS GRANDE 130G,0,,,,Pendiente por Costear,Estante 11
+222,Snacks y Pasabocas,CHEEZ TRIS PERSONAL 35G,0,,,,Pendiente por Costear,Estante 11
+223,Snacks y Pasabocas,CHOCLITOS BOLSAZA EXTRA GRANDE,0,,,,Pendiente por Costear,Estante 11
+224,Snacks y Pasabocas,CHOCLITOS FAMILIAR 160G,0,,,,Pendiente por Costear,Estante 11
+225,Snacks y Pasabocas,CHOCLITOS PERSONAL 35G,0,,,,Pendiente por Costear,Estante 11
+226,Snacks y Pasabocas,DE TODITO MIX FAMILIAR 160G,0,,,,Pendiente por Costear,Estante 11
+227,Snacks y Pasabocas,DE TODITO PERSONAL 45G,0,,,,Pendiente por Costear,Estante 11
+228,Snacks y Pasabocas,DORITOS BOLSAZA EXTRA GRANDE,0,,,,Pendiente por Costear,Estante 11
+229,Snacks y Pasabocas,DORITOS MEGAPAQ 150G,0,,,,Pendiente por Costear,Estante 11
+230,Snacks y Pasabocas,DORITOS PERSONAL 45G,0,,,,Pendiente por Costear,Estante 11
+231,Snacks y Pasabocas,MANÍ MIX BOLSA,0,800,1000,20.0%,Costeado,Estante 3
+232,Snacks y Pasabocas,MANÍ MOTO CROCANTE 40G,0,,,,Pendiente por Costear,Estante 11
+233,Snacks y Pasabocas,NATUCHIPS PLÁTANO VERDE / MADURO 40G,0,,,,Pendiente por Costear,Estante 11
+234,Snacks y Pasabocas,PALOMITAS DE MAÍZ EMPACADAS,0,,,,Pendiente por Costear,Estante 11
+235,Snacks y Pasabocas,PAPAS MARGARITA NATURAL GRANDE,0,,,,Pendiente por Costear,Estante 11
+236,Snacks y Pasabocas,PAPAS MARGARITA PERSONAL 35G,0,,,,Pendiente por Costear,Estante 11
+237,Snacks y Pasabocas,PAPAS RIZADAS FAMILIAR 140G,0,,,,Pendiente por Costear,Estante 11
+238,Snacks y Pasabocas,PAPAS RIZADAS PERSONAL 35G,0,,,,Pendiente por Costear,Estante 11
+239,Snacks y Pasabocas,PASABOCAS PICADAS PAQUETE,0,1000,1300,23.1%,Costeado,Estante 9
+240,Snacks y Pasabocas,PLATANITOS CON SAL PAQUETE,0,,,,Pendiente por Costear,Estante 11
+241,Snacks y Pasabocas,ROSQUILLAS CALEÑAS PAQUETE,0,1100,1400,21.4%,Costeado,Estante 9
+242,Snacks y Pasabocas,TAKIS FUEGO / CHOCOLATE PAQUETE,0,,,,Pendiente por Costear,Estante 11
+243,Snacks y Pasabocas,TAKIS FUEGO PICANTE PAQUETE,0,,,,Pendiente por Costear,Estante 11
+244,Snacks y Pasabocas,TOCINETAS CROCANTES YUPI PAQUETE,0,,,,Pendiente por Costear,Estante 11
+245,Snacks y Pasabocas,TOSTI EMPANADAS PASABOCAS,0,,,,Pendiente por Costear,Estante 11
+246,Snacks y Pasabocas,YUPI FRITOS PERSONAL,0,,,,Pendiente por Costear,Estante 11
+247,"Panadería, Repostería y Dulcería",AREQUIPE ALPINA VASITO 220G,0,,,,Pendiente por Costear,Estante 11
+248,"Panadería, Repostería y Dulcería",AREQUIPE ALQUERÍA VASITO 220G,0,,,,Pendiente por Costear,Estante 11
+249,"Panadería, Repostería y Dulcería",BOCADILLO VELEÑO HOJA UNIDAD,0,,,,Pendiente por Costear,Estante 11
+250,"Panadería, Repostería y Dulcería",BOMBÓN BUM SURTIDO UNIDAD,0,,,,Pendiente por Costear,Estante 11
+251,"Panadería, Repostería y Dulcería",BROWNIE CHOCOLATE CON AREQUIPE,0,,,,Pendiente por Costear,Estante 11
+252,"Panadería, Repostería y Dulcería",CHICLISTRIDENT 18S GRANDE,0,,,,Pendiente por Costear,Estante 11
+253,"Panadería, Repostería y Dulcería",CHICLISTRIDENT 4S MEDIANO,0,,,,Pendiente por Costear,Estante 11
+254,"Panadería, Repostería y Dulcería",CHICLISTRIDENT INDIVIDUAL PEQUEÑO,0,,,,Pendiente por Costear,Estante 11
+255,"Panadería, Repostería y Dulcería",CHOCOLATINA BIANCHI RELLENA,0,,,,Pendiente por Costear,Estante 11
+256,"Panadería, Repostería y Dulcería",CHOCOLATINA JET LECHE GRANDE 50G,0,,,,Pendiente por Costear,Estante 11
+257,"Panadería, Repostería y Dulcería",CHOCOLATINA JET LECHE MEDIANA 24G,0,,,,Pendiente por Costear,Estante 11
+258,"Panadería, Repostería y Dulcería",CHOCOLATINA JET LECHE PEQUEÑA 12G,0,,,,Pendiente por Costear,Estante 11
+259,"Panadería, Repostería y Dulcería",CHOCOLATINA JUMBO MANÍ GRANDE 100G,0,,,,Pendiente por Costear,Estante 11
+260,"Panadería, Repostería y Dulcería",CHOCOLATINA JUMBO MANÍ MEDIANA 40G,0,,,,Pendiente por Costear,Estante 11
+261,"Panadería, Repostería y Dulcería",CHOCOLATINA JUMBO MANÍ PEQUEÑA 20G,0,,,,Pendiente por Costear,Estante 11
+262,"Panadería, Repostería y Dulcería",CHOCORRAMO PONQUÉ INDIVIDUAL 65G,0,,,,Pendiente por Costear,Estante 11
+263,"Panadería, Repostería y Dulcería",CHOCOSO PONQUÉ INDIVIDUAL,0,,,,Pendiente por Costear,Estante 11
+264,"Panadería, Repostería y Dulcería",DULCES DE PERA / CONFITERÍA,0,,,,Pendiente por Costear,Estante 11
+265,"Panadería, Repostería y Dulcería",DULCES HALLS CAJA SURTIDA,0,,,,Pendiente por Costear,Estante 11
+266,"Panadería, Repostería y Dulcería",DULCES HALLS EN BARRA X 9,0,,,,Pendiente por Costear,Estante 11
+267,"Panadería, Repostería y Dulcería",DULCES HALLS PASTILLA INDIVIDUAL,0,,,,Pendiente por Costear,Estante 11
+268,"Panadería, Repostería y Dulcería",GALLETAS BRITE / WAFER PAQUETE,0,,,,Pendiente por Costear,Estante 11
+269,"Panadería, Repostería y Dulcería",GALLETAS CHOKIS CHISPAS CHOCOLATE,0,,,,Pendiente por Costear,Estante 11
+270,"Panadería, Repostería y Dulcería",GALLETAS CLUB SOCIAL PAQUETE,0,,,,Pendiente por Costear,Estante 11
+271,"Panadería, Repostería y Dulcería",GALLETAS CON PEPITAS / CHISPITAS,0,,,,Pendiente por Costear,Estante 11
+272,"Panadería, Repostería y Dulcería",GALLETAS CRAQUEÑAS PAQUETE,4,1450,1900,23.7%,Costeado,Estante 1
+273,"Panadería, Repostería y Dulcería",GALLETAS CUCAS NEGRAS ARTESANALES,0,,,,Pendiente por Costear,Estante 11
+274,"Panadería, Repostería y Dulcería",GALLETAS DORADITAS PAQUETE,0,2300,2900,20.7%,Costeado,Estante 1
+275,"Panadería, Repostería y Dulcería",GALLETAS DUCALES PAQUETE,0,2500,3200,21.9%,Costeado,Estante 1
+276,"Panadería, Repostería y Dulcería",GALLETAS DUX INTEGRALES PAQUETE,0,,,,Pendiente por Costear,Estante 11
+277,"Panadería, Repostería y Dulcería",GALLETAS FESTIVAL SURTIDAS 4 TACOS,0,,,,Pendiente por Costear,Estante 11
+278,"Panadería, Repostería y Dulcería",GALLETAS MAMUT CHOCOLATE,0,,,,Pendiente por Costear,Estante 11
+279,"Panadería, Repostería y Dulcería",GALLETAS MILO SÁNDWICH PAQUETE,0,,,,Pendiente por Costear,Estante 11
+280,"Panadería, Repostería y Dulcería",GALLETAS OREO PAQUETE X 4,0,,,,Pendiente por Costear,Estante 11
+281,"Panadería, Repostería y Dulcería",GALLETAS OREO TACO FAMILIAR,0,,,,Pendiente por Costear,Estante 11
+282,"Panadería, Repostería y Dulcería",GALLETAS RONDALLA PAQUETE,0,,,,Pendiente por Costear,Estante 11
+283,"Panadería, Repostería y Dulcería",GALLETAS SALTÍN MANTEQUILLA PAQUETE,0,2500,3200,21.9%,Costeado,Estante 1
+284,"Panadería, Repostería y Dulcería",GALLETAS SALTÍN NOEL 3 TACOS,0,4800,6000,20.0%,Costeado,Estante 1
+285,"Panadería, Repostería y Dulcería",GELATINA DE PATA BLANCA,0,,,,Pendiente por Costear,Estante 11
+286,"Panadería, Repostería y Dulcería",GOMITA INDIVIDUAL,0,,,,Pendiente por Costear,Estante 11
+287,"Panadería, Repostería y Dulcería",GOMITAS BANANITAS SUELTAS UNIDAD,0,,,,Pendiente por Costear,Estante 11
+288,"Panadería, Repostería y Dulcería",GOMITAS TRULULU PAQUETE,0,,,,Pendiente por Costear,Estante 11
+289,"Panadería, Repostería y Dulcería",MASMELOS MILLOWS PAQUETE,0,,,,Pendiente por Costear,Estante 11
+290,"Panadería, Repostería y Dulcería",PAN ARTESANAL DE TIENDA UNIDAD,0,,,,Pendiente por Costear,Estante 11
+291,"Panadería, Repostería y Dulcería",PAN ROLLO / BLANDO PAQUETE X 6,0,,,,Pendiente por Costear,Estante 11
+292,"Panadería, Repostería y Dulcería",PAN TAJADO BIMBO BLANCO GRANDE,0,,,,Pendiente por Costear,Estante 11
+293,"Panadería, Repostería y Dulcería",PAN TAJADO BIMBO BLANCO MEDIANO,0,,,,Pendiente por Costear,Estante 11
+294,"Panadería, Repostería y Dulcería",PAN TAJADO BLANCO ECONÓMICO,0,,,,Pendiente por Costear,Estante 11
+295,"Panadería, Repostería y Dulcería",PONQUÉ GALA / RAMITO X 2,0,,,,Pendiente por Costear,Estante 11
+296,"Panadería, Repostería y Dulcería",PONQUÉ SUBMARINO AREQUIPE/CHOCOLATE,0,,,,Pendiente por Costear,Estante 11
+297,"Panadería, Repostería y Dulcería",TORTA BIMBO VAINILLA / CHOCOLATE,0,,,,Pendiente por Costear,Estante 11
+298,"Panadería, Repostería y Dulcería",TORTA RAMO TRADICIONAL TAJADA,0,,,,Pendiente por Costear,Estante 11
+299,"Panadería, Repostería y Dulcería",TOSTADOS BIMBO PAQUETE,0,,,,Pendiente por Costear,Estante 11
+300,"Panadería, Repostería y Dulcería",TOSTADOS LA GITANA PAQUETE,0,,,,Pendiente por Costear,Estante 11
+301,"Panadería, Repostería y Dulcería",TOSTADOS SANÍN INTEGRAL PAQUETE,0,,,,Pendiente por Costear,Estante 11
+302,"Panadería, Repostería y Dulcería",TOSTADOS SANÍN TRADICIONAL PAQUETE,0,,,,Pendiente por Costear,Estante 11
+303,Aseo del Hogar y Lavandería,BLANQUEADOR BLANKOS LÍQUIDO 1000ML,0,,,,Pendiente por Costear,Estante 6
+304,Aseo del Hogar y Lavandería,BLANQUEADOR LÍMPIDO PATOJITO,0,,,,Pendiente por Costear,Estante 6
+305,Aseo del Hogar y Lavandería,BLANQUEADOR MI DÍA TARRO GRANDE,0,,,,Pendiente por Costear,Estante 6
+306,Aseo del Hogar y Lavandería,CERA LÍQUIDA AUTOBRILLO MANSIÓN,0,,,,Pendiente por Costear,Estante 6
+307,Aseo del Hogar y Lavandería,CREOLINA DESINFECTANTE FRASCO,0,2500,3200,21.9%,Costeado,Estante 9
+308,Aseo del Hogar y Lavandería,DESINFECTANTE SANPIC SOBRE,0,,,,Pendiente por Costear,Estante 6
+309,Aseo del Hogar y Lavandería,DETERGENTE EN POLVO 3D MULTIUSOS,0,,,,Pendiente por Costear,Estante 6
+310,Aseo del Hogar y Lavandería,DETERGENTE EN POLVO ARIEL 1 KILO,0,,,,Pendiente por Costear,Estante 6
+311,Aseo del Hogar y Lavandería,DETERGENTE EN POLVO ARIEL 1 LIBRA (500G),0,,,,Pendiente por Costear,Estante 6
+312,Aseo del Hogar y Lavandería,DETERGENTE EN POLVO ARIEL 1/2 LIBRA (250G),0,,,,Pendiente por Costear,Estante 6
+313,Aseo del Hogar y Lavandería,DETERGENTE EN POLVO ARIEL 1/4 (125G),0,,,,Pendiente por Costear,Estante 6
+314,Aseo del Hogar y Lavandería,DETERGENTE EN POLVO ARIEL 700G,0,,,,Pendiente por Costear,Estante 6
+315,Aseo del Hogar y Lavandería,DETERGENTE EN POLVO DERSA 1 KILO,0,,,,Pendiente por Costear,Estante 6
+316,Aseo del Hogar y Lavandería,DETERGENTE EN POLVO FAB 1 LIBRA,0,,,,Pendiente por Costear,Estante 6
+317,Aseo del Hogar y Lavandería,DETERGENTE EN POLVO FAB 1/2 LIBRA,0,,,,Pendiente por Costear,Estante 6
+318,Aseo del Hogar y Lavandería,DETERGENTE EN POLVO RINDEX,0,,,,Pendiente por Costear,Estante 6
+319,Aseo del Hogar y Lavandería,DETERGENTE LÍQUIDO WOOLITE 500ML,0,,,,Pendiente por Costear,Estante 6
+320,Aseo del Hogar y Lavandería,ESPONJA DE ALAMBRE SABRA / BRILLO,0,,,,Pendiente por Costear,Estante 6
+321,Aseo del Hogar y Lavandería,ESPONJA DE ESPUMA COLIBRÍ,0,,,,Pendiente por Costear,Estante 6
+322,Aseo del Hogar y Lavandería,ESPONJA SABRA ACOLCHONADA,0,,,,Pendiente por Costear,Estante 6
+323,Aseo del Hogar y Lavandería,ESPONJILLA DE BRILLO BOMBRIL / SABRA,0,,,,Pendiente por Costear,Estante 6
+324,Aseo del Hogar y Lavandería,GUANTES DE CAUCHO PARA ASEO PAR,0,3900,4900,20.4%,Costeado,Estante 9
+325,Aseo del Hogar y Lavandería,INSECTICIDA RAID AEROSOL,0,,,,Pendiente por Costear,Estante 6
+326,Aseo del Hogar y Lavandería,JABÓN DE LAVAR DERSA BARRA AZUL,0,,,,Pendiente por Costear,Estante 6
+327,Aseo del Hogar y Lavandería,JABÓN DE LAVAR FAMA BARRA,0,,,,Pendiente por Costear,Estante 6
+328,Aseo del Hogar y Lavandería,JABÓN DE LAVAR REY BARRA,0,,,,Pendiente por Costear,Estante 6
+329,Aseo del Hogar y Lavandería,JABÓN DE LAVAR SUPREMO BARRA,0,,,,Pendiente por Costear,Estante 6
+330,Aseo del Hogar y Lavandería,JABÓN DE LAVAR VEL ROSITA BARRA,0,,,,Pendiente por Costear,Estante 6
+331,Aseo del Hogar y Lavandería,JABÓN DERSA CON BICARBONATO BARRA,0,,,,Pendiente por Costear,Estante 6
+332,Aseo del Hogar y Lavandería,JABÓN LÍQUIDO DERSA,0,,,,Pendiente por Costear,Estante 6
+333,Aseo del Hogar y Lavandería,JABÓN LÍQUIDO MULTIUSOS MI DÍA,0,,,,Pendiente por Costear,Estante 6
+334,Aseo del Hogar y Lavandería,LAVALOZA AXION EN PASTA / DISCO,0,,,,Pendiente por Costear,Estante 6
+335,Aseo del Hogar y Lavandería,LAVALOZA EN CREMA AXION PEQUEÑA,0,,,,Pendiente por Costear,Estante 6
+336,Aseo del Hogar y Lavandería,LAVALOZA EN CREMA MI DÍA,0,,,,Pendiente por Costear,Estante 6
+337,Aseo del Hogar y Lavandería,LAVALOZA EN CREMA TARRO LA JOYA,0,,,,Pendiente por Costear,Estante 6
+338,Aseo del Hogar y Lavandería,LAVALOZA LÍQUIDO LA JOYA,0,,,,Pendiente por Costear,Estante 6
+339,Aseo del Hogar y Lavandería,LAVALOZA LÍQUIDO MI DÍA,0,,,,Pendiente por Costear,Estante 6
+340,Aseo del Hogar y Lavandería,LIMPIA VIDRIOS MI DÍA PISTOLA,0,,,,Pendiente por Costear,Estante 6
+341,Aseo del Hogar y Lavandería,LIMPIADOR DESINFECTANTE MI DÍA,0,,,,Pendiente por Costear,Estante 6
+342,Aseo del Hogar y Lavandería,LIMPIADOR FABULOSO BOLSA / DOYPACK,0,,,,Pendiente por Costear,Estante 6
+343,Aseo del Hogar y Lavandería,LÍMPIDO ROPA COLOR GRANDE,0,,,,Pendiente por Costear,Estante 6
+344,Aseo del Hogar y Lavandería,LÍMPIDO ROPA COLOR PEQUEÑO,0,,,,Pendiente por Costear,Estante 6
+345,Aseo del Hogar y Lavandería,LÍQUIDO DESINFECTANTE SÚPER RIEL,0,,,,Pendiente por Costear,Estante 6
+346,Aseo del Hogar y Lavandería,PAPEL ALUMINIO ROLLO,0,,,,Pendiente por Costear,Estante 6
+347,Aseo del Hogar y Lavandería,PAPEL HIGIÉNICO BLANKOS 1 ROLLO,0,1550,2000,22.5%,Costeado,"Estante 5,6"
+348,Aseo del Hogar y Lavandería,PAPEL HIGIÉNICO ELITE 1 ROLLO ECONÓMICO,0,1100,1400,21.4%,Costeado,"Estante 5,6"
+349,Aseo del Hogar y Lavandería,PAPEL HIGIÉNICO ELITE DÚO PACK X 2,0,,,,Pendiente por Costear,Estante 6
+350,Aseo del Hogar y Lavandería,PAPEL HIGIÉNICO ELITE ROLLAZO,0,1700,2200,22.7%,Costeado,Estante 5
+351,Aseo del Hogar y Lavandería,PAPEL HIGIÉNICO FAMILIA 1 ROLLO,0,1900,2400,20.8%,Costeado,Estante 5
+352,Aseo del Hogar y Lavandería,QUITAMANCHAS VANISH EN POLVO SOBRE,0,2000,2500,20.0%,Costeado,Estante 9
+353,Aseo del Hogar y Lavandería,QUITAMANCHAS VANISH LÍQUIDO,0,,,,Pendiente por Costear,Estante 6
+354,Aseo del Hogar y Lavandería,SERVILLETAS DE PAPEL PAQUETE,0,,,,Pendiente por Costear,Estante 6
+355,Aseo del Hogar y Lavandería,SUAVIZANTE DE TELAS TARRO,0,,,,Pendiente por Costear,Estante 6
+356,Aseo del Hogar y Lavandería,SUAVIZANTE DERSA PEQUEÑO,0,,,,Pendiente por Costear,Estante 6
+357,Aseo del Hogar y Lavandería,SUAVIZANTE SUAVITEL GRANDE,0,,,,Pendiente por Costear,Estante 6
+358,Aseo del Hogar y Lavandería,SUAVIZANTE SUAVITEL MEDIANO,0,,,,Pendiente por Costear,Estante 6
+359,Aseo del Hogar y Lavandería,TOALLA DE COCINA ROLLO,0,,,,Pendiente por Costear,Estante 6
+360,Cuidado Personal y Cosméticos,ACEITE CAPILAR DE ARGÁN Y COCO,0,1800,2400,25.0%,Costeado,Estante 9
+361,Cuidado Personal y Cosméticos,ACEITE DE ALMENDRAS FRASCO,0,1500,2000,25.0%,Costeado,Estante 9
+362,Cuidado Personal y Cosméticos,ACEITE PARA BEBÉ JOHNSON'S,0,1500,2000,25.0%,Costeado,Estante 4
+363,Cuidado Personal y Cosméticos,BANDAS ELÁSTICAS / CAUCHOS CABELLO,0,1000,1300,23.1%,Costeado,Estante 10
+364,Cuidado Personal y Cosméticos,BRILLO LABIAL MÁGICO,0,1000,1300,23.1%,Costeado,Estante 10
+365,Cuidado Personal y Cosméticos,CEPILLO / TINTURA CUBRECANAS,0,4000,5200,23.1%,Costeado,Estante 10
+366,Cuidado Personal y Cosméticos,CEPILLO DENTAL ADULTO,0,2000,2600,23.1%,Costeado,Estante 7
+367,Cuidado Personal y Cosméticos,CEPILLO DENTAL COLGATE ZIG ZAG,0,2200,2900,24.1%,Costeado,Estante 7
+368,Cuidado Personal y Cosméticos,CEPILLO DENTAL INFANTIL,0,2000,2600,23.1%,Costeado,Estante 7
+369,Cuidado Personal y Cosméticos,CERA CAPILAR EGO TARRO,0,1000,1300,23.1%,Costeado,Estante 7
+370,Cuidado Personal y Cosméticos,CORTACUTÍCULAS METÁLICO,0,2500,3300,24.2%,Costeado,Estante 10
+371,Cuidado Personal y Cosméticos,CORTAÚÑAS GRANDE,0,1500,2000,25.0%,Costeado,Estante 10
+372,Cuidado Personal y Cosméticos,CORTAÚÑAS PEQUEÑO,0,1000,1300,23.1%,Costeado,Estante 10
+373,Cuidado Personal y Cosméticos,CREMA CORPORAL LUBRIDERM SACHET,0,1100,1500,26.7%,Costeado,Estante 9
+374,Cuidado Personal y Cosméticos,CREMA DENTAL COLGATE MEDIANA 75ML,0,,,,Pendiente por Costear,Estante 6
+375,Cuidado Personal y Cosméticos,CREMA DENTAL COLGATE PEQUEÑA 50ML,0,,,,Pendiente por Costear,Estante 6
+376,Cuidado Personal y Cosméticos,CREMA DENTAL FLUOCARDENT,0,,,,Pendiente por Costear,Estante 6
+377,Cuidado Personal y Cosméticos,CREMA DENTAL FORTIDENT,0,,,,Pendiente por Costear,Estante 6
+378,Cuidado Personal y Cosméticos,CREMA FACIAL PONDS SOBRE,0,1700,2300,26.1%,Costeado,Estante 9
+379,Cuidado Personal y Cosméticos,CREMA PARA PEINAR EGO,0,900,1200,25.0%,Costeado,Estante 7
+380,Cuidado Personal y Cosméticos,CREMA PARA PEINAR PANTENE SOBRE,0,900,1200,25.0%,Costeado,Estante 7
+381,Cuidado Personal y Cosméticos,CUCHILLA DORCO HOJA DE AFEITAR,0,200,250,20.0%,Costeado,Estante 4
+382,Cuidado Personal y Cosméticos,CUCHILLA MINORA HOJA DE AFEITAR,0,300,400,25.0%,Costeado,Estante 4
+383,Cuidado Personal y Cosméticos,DESODORANTE BALANCE SACHET DÚO,0,1100,1500,26.7%,Costeado,Estante 9
+384,Cuidado Personal y Cosméticos,DESODORANTE DOVE SACHET,0,1000,1300,23.1%,Costeado,Estante 9
+385,Cuidado Personal y Cosméticos,DESODORANTE LADY SPEED STICK SACHET,0,1100,1500,26.7%,Costeado,Estante 9
+386,Cuidado Personal y Cosméticos,DESODORANTE LADY SPEED STICK TUBO,0,3100,4100,24.4%,Costeado,Estante 10
+387,Cuidado Personal y Cosméticos,DESODORANTE REXONA EN CREMA TUBO,0,3000,3900,23.1%,Costeado,Estante 10
+388,Cuidado Personal y Cosméticos,DESODORANTE REXONA SACHET / SOBRE,0,1000,1300,23.1%,Costeado,Estante 9
+389,Cuidado Personal y Cosméticos,DESODORANTE YODORA TUBO 50G,0,3000,3900,23.1%,Costeado,Estante 10
+390,Cuidado Personal y Cosméticos,DESODORANTE YODORA TUBO CREMA,0,3300,4300,23.3%,Costeado,Estante 4
+391,Cuidado Personal y Cosméticos,ESMALTE PARA UÑAS FRASCO,0,1500,2000,25.0%,Costeado,Estante 10
+392,Cuidado Personal y Cosméticos,GEL FIJADOR BACHUÉ DOYPACK,0,2200,2900,24.1%,Costeado,Estante 7
+393,Cuidado Personal y Cosméticos,GEL FIJADOR BACHUÉ SOBRE,0,900,1200,25.0%,Costeado,Estante 7
+394,Cuidado Personal y Cosméticos,GEL FIJADOR EGO SOBRE,0,900,1200,25.0%,Costeado,Estante 7
+395,Cuidado Personal y Cosméticos,GEL FIJADOR EGO TARRO 250ML,0,3500,4600,23.9%,Costeado,"Estante 7,10"
+396,Cuidado Personal y Cosméticos,GUANTE EXFOLIANTE DE BAÑO,0,1500,2000,25.0%,Costeado,Estante 10
+397,Cuidado Personal y Cosméticos,JABÓN ANTIBACTERIAL PROTEX,0,,,,Pendiente por Costear,Estante 6
+398,Cuidado Personal y Cosméticos,JABÓN DE BAÑO CRISTALINO,0,,,,Pendiente por Costear,Estante 6
+399,Cuidado Personal y Cosméticos,JABÓN DE BAÑO DESEO,0,,,,Pendiente por Costear,Estante 6
+400,Cuidado Personal y Cosméticos,JABÓN DE BAÑO JOHNSON'S BEBÉ,0,,,,Pendiente por Costear,Estante 6
+401,Cuidado Personal y Cosméticos,JABÓN DE BAÑO LUX / LAK,0,,,,Pendiente por Costear,Estante 6
+402,Cuidado Personal y Cosméticos,JABÓN DE BAÑO MI DÍA,0,,,,Pendiente por Costear,Estante 6
+403,Cuidado Personal y Cosméticos,JABÓN DE BAÑO PALMOLIVE,0,,,,Pendiente por Costear,Estante 6
+404,Cuidado Personal y Cosméticos,JABÓN DE BAÑO REXONA,0,,,,Pendiente por Costear,Estante 6
+405,Cuidado Personal y Cosméticos,JABÓN ÍNTIMO NOSOTRAS SOBRE,0,1000,1300,23.1%,Costeado,Estante 7
+406,Cuidado Personal y Cosméticos,LIJA PARA PIES Y TALONES,0,2000,2600,23.1%,Costeado,Estante 10
+407,Cuidado Personal y Cosméticos,LIMA DE CARTÓN PARA UÑAS,0,600,800,25.0%,Costeado,Estante 10
+408,Cuidado Personal y Cosméticos,LIMA METÁLICA PARA UÑAS,0,1000,1300,23.1%,Costeado,Estante 10
+409,Cuidado Personal y Cosméticos,LÁPIZ DELINEADOR DE CEJAS,0,1000,1300,23.1%,Costeado,Estante 10
+410,Cuidado Personal y Cosméticos,MOÑAS ADELMO DECORATIVAS,0,1000,1300,23.1%,Costeado,Estante 10
+411,Cuidado Personal y Cosméticos,MOÑAS PARA EL CABELLO GRANDES,0,5000,6500,23.1%,Costeado,Estante 10
+412,Cuidado Personal y Cosméticos,MOÑAS PARA EL CABELLO PEQUEÑAS,0,300,400,25.0%,Costeado,Estante 10
+413,Cuidado Personal y Cosméticos,MÁQUINA DE AFEITAR DORCO,0,700,1000,30.0%,Costeado,Estante 3
+414,Cuidado Personal y Cosméticos,MÁQUINA DE AFEITAR GILLETTE MACH3,0,3800,5000,24.0%,Costeado,Estante 3
+415,Cuidado Personal y Cosméticos,MÁQUINA DE AFEITAR GILLETTE PRESTOBARBA 2,0,2800,3700,24.3%,Costeado,Estante 3
+416,Cuidado Personal y Cosméticos,MÁQUINA DE AFEITAR MINORA AMARILLA,0,1500,2000,25.0%,Costeado,Estante 3
+417,Cuidado Personal y Cosméticos,MÁQUINA DE AFEITAR SCHICK QUATTRO / 3 HOJAS,0,2800,3700,24.3%,Costeado,Estante 3
+418,Cuidado Personal y Cosméticos,PAÑAL PARA ADULTO TALLA L UNIDAD,0,3500,4600,23.9%,Costeado,Estante 9
+419,Cuidado Personal y Cosméticos,PAÑAL PARA ADULTO TALLA M UNIDAD,0,3500,4600,23.9%,Costeado,Estante 9
+420,Cuidado Personal y Cosméticos,PAÑAL WINNY ETAPA 2 UNIDAD,0,1100,1500,26.7%,Costeado,Estante 4
+421,Cuidado Personal y Cosméticos,PAÑAL WINNY ETAPA 3 UNIDAD,0,1250,1700,26.5%,Costeado,Estante 4
+422,Cuidado Personal y Cosméticos,PAÑAL WINNY ETAPA 4 UNIDAD,0,1400,1900,26.3%,Costeado,Estante 4
+423,Cuidado Personal y Cosméticos,PAÑAL WINNY ETAPA 5 UNIDAD,0,1450,1900,23.7%,Costeado,Estante 4
+424,Cuidado Personal y Cosméticos,PAÑITOS HÚMEDOS GRANDES PAQUETE,0,,,,Pendiente por Costear,Estante 6
+425,Cuidado Personal y Cosméticos,PAÑITOS HÚMEDOS PEQUEÑÍN PAQUETE,0,,,,Pendiente por Costear,Estante 6
+426,Cuidado Personal y Cosméticos,PAÑITOS HÚMEDOS WINNY PEQUEÑO,0,,,,Pendiente por Costear,Estante 6
+427,Cuidado Personal y Cosméticos,PEINE SACA-PIOJOS METÁLICO,0,1500,2000,25.0%,Costeado,Estante 10
+428,Cuidado Personal y Cosméticos,PEINILLA CON CABO METÁLICO/PLÁSTICO,0,700,1000,30.0%,Costeado,Estante 10
+429,Cuidado Personal y Cosméticos,PEINILLA DE BOLSILLO PLÁSTICA,0,300,400,25.0%,Costeado,Estante 10
+430,Cuidado Personal y Cosméticos,PEINILLA PIOJERA METÁLICA,0,300,400,25.0%,Costeado,Estante 10
+431,Cuidado Personal y Cosméticos,PERFILADOR DE CEJAS,0,1000,1300,23.1%,Costeado,Estante 10
+432,Cuidado Personal y Cosméticos,PINZAS / CAIMANES NEGROS CABELLO,0,1000,1300,23.1%,Costeado,Estante 10
+433,Cuidado Personal y Cosméticos,POLÍMERO Y LACIOS TRATAMIENTO SACHET,0,2700,3600,25.0%,Costeado,Estante 9
+434,Cuidado Personal y Cosméticos,PROTECTOR NOSOTRAS DIARIO INDIVIDUAL,0,150,200,25.0%,Costeado,Estante 5
+435,Cuidado Personal y Cosméticos,PROTECTOR SOLAR SOBRE / SACHET,0,2200,2900,24.1%,Costeado,Estante 9
+436,Cuidado Personal y Cosméticos,PROTECTORES NOSOTRAS DIARIOS PAQUETE,0,1600,2100,23.8%,Costeado,Estante 5
+437,Cuidado Personal y Cosméticos,REMOVEDOR DE ESMALTE FRASCO,0,1000,1300,23.1%,Costeado,Estante 9
+438,Cuidado Personal y Cosméticos,SEDA DENTAL 50M,0,2500,3300,24.2%,Costeado,Estante 4
+439,Cuidado Personal y Cosméticos,SHAMPOO DOVE SACHET,0,900,1200,25.0%,Costeado,Estante 7
+440,Cuidado Personal y Cosméticos,SHAMPOO HEAD & SHOULDERS SACHET GRANDE,0,1300,1700,23.5%,Costeado,Estante 7
+441,Cuidado Personal y Cosméticos,SHAMPOO HEAD & SHOULDERS SOBRE,0,900,1200,25.0%,Costeado,Estante 7
+442,Cuidado Personal y Cosméticos,SHAMPOO JOHNSON'S BEBÉ FRASCO,0,1100,1500,26.7%,Costeado,Estante 9
+443,Cuidado Personal y Cosméticos,SHAMPOO NUTRIBELLA SACHET,0,900,1200,25.0%,Costeado,"Estante 3,9"
+444,Cuidado Personal y Cosméticos,SHAMPOO PANTENE SACHET GRANDE,0,1300,1700,23.5%,Costeado,Estante 7
+445,Cuidado Personal y Cosméticos,SHAMPOO SAVITAL SACHET / COJÍN,0,900,1200,25.0%,Costeado,"Estante 3,9"
+446,Cuidado Personal y Cosméticos,TALCO MEXSANA / PEQUEÑO,0,3000,3900,23.1%,Costeado,Estante 4
+447,Cuidado Personal y Cosméticos,TAMPÓN NOSOTRAS UNIDAD INDIVIDUAL,0,800,1100,27.3%,Costeado,Estante 9
+448,Cuidado Personal y Cosméticos,TINTE CAPILAR 5 MINUTOS SOBRE,0,5300,6900,23.2%,Costeado,Estante 9
+449,Cuidado Personal y Cosméticos,TOALLAS HIGIÉNICAS ELLAS PAQUETE,0,2500,3300,24.2%,Costeado,Estante 5
+450,Cuidado Personal y Cosméticos,TOALLAS HIGIÉNICAS STAYFREE PAQUETE,0,3000,3900,23.1%,Costeado,Estante 5
+451,Cuidado Personal y Cosméticos,TOALLAS NOSOTRAS BUENAS NOCHES PAQUETE,0,4400,5800,24.1%,Costeado,Estante 5
+452,Cuidado Personal y Cosméticos,TOALLAS NOSOTRAS RAPI-GEL PAQUETE,0,4500,5900,23.7%,Costeado,Estante 5
+453,Cuidado Personal y Cosméticos,TRATAMIENTO NUTRIBELLA SACHET,0,1300,1700,23.5%,Costeado,Estante 3
+454,Cuidado Personal y Cosméticos,VASELINA PURA FRASCO,0,1000,1300,23.1%,Costeado,Estante 9
+455,Farmacia y Botiquín,ACETAMINOFÉN 500MG TABLETA,0,70,100,30.0%,Costeado,Estante 4
+456,Farmacia y Botiquín,ACETAMINOFÉN JARABE INFANTIL,0,5000,6800,26.5%,Costeado,Estante 4
+457,Farmacia y Botiquín,ADVIL GRIPA CÁPSULAS,0,2000,2700,25.9%,Costeado,Estante 4
+458,Farmacia y Botiquín,ADVIL GRIPA MAX CÁPSULAS,0,2200,3000,26.7%,Costeado,Estante 4
+459,Farmacia y Botiquín,ADVIL MAX CÁPSULAS LIQUIDAS,0,2000,2700,25.9%,Costeado,Estante 4
+460,Farmacia y Botiquín,ADVIL ULTRA CÁPSULAS LIQUIDAS,0,2000,2700,25.9%,Costeado,Estante 4
+461,Farmacia y Botiquín,ALCOHOL ANTISÉPTICO 120ML,0,2900,4000,27.5%,Costeado,Estante 4
+462,Farmacia y Botiquín,ALCOHOL ANTISÉPTICO BOTELLA 350ML,0,4500,6100,26.2%,Costeado,Estante 4
+463,Farmacia y Botiquín,ALGODÓN HIDRÓFILO PAQUETE,0,1500,2100,28.6%,Costeado,Estante 4
+464,Farmacia y Botiquín,ALKA-SELTZER EXTREME SOBRE,0,2000,2700,25.9%,Costeado,Estante 4
+465,Farmacia y Botiquín,ALKA-SELTZER SOBRE X 2 TABLETAS,0,1000,1400,28.6%,Costeado,Estante 4
+466,Farmacia y Botiquín,AMOXICILINA 500MG CÁPSULA,0,400,600,33.3%,Costeado,Estante 4
+467,Farmacia y Botiquín,ANTIÁCIDO GASTRUM SOBRE,0,2000,2700,25.9%,Costeado,Estante 4
+468,Farmacia y Botiquín,APRONAX 275MG / 550MG BLISTER,0,1000,1400,28.6%,Costeado,Estante 4
+469,Farmacia y Botiquín,ASPIRINA EFERVESCENTE SOBRE,0,1000,1400,28.6%,Costeado,Estante 4
+470,Farmacia y Botiquín,ASPIRINA ULTRA PASTILLAS,0,1000,1400,28.6%,Costeado,Estante 4
+471,Farmacia y Botiquín,ASPIRINETA 100MG BLISTER,0,600,900,33.3%,Costeado,Estante 4
+472,Farmacia y Botiquín,BONFIEST PLUS EFERVESCENTE SOBRE,0,3100,4200,26.2%,Costeado,Estante 4
+473,Farmacia y Botiquín,BUSCAPINA COMPUESTA PASTILLAS,0,1700,2300,26.1%,Costeado,Estante 4
+474,Farmacia y Botiquín,BUSCAPINA FEM PASTILLAS,0,1700,2300,26.1%,Costeado,Estante 4
+475,Farmacia y Botiquín,CALMIDOL MAX PASTILLAS,0,1100,1500,26.7%,Costeado,Estante 4
+476,Farmacia y Botiquín,COLIK FORTE GOTAS / PASTILLAS,0,1200,1700,29.4%,Costeado,Estante 4
+477,Farmacia y Botiquín,CONDONES TODAY / HAWAI CAJA X 3,0,1200,1700,29.4%,Costeado,Estante 9
+478,Farmacia y Botiquín,COPITOS DE ALGODÓN SOBRE,0,600,900,33.3%,Costeado,Estante 4
+479,Farmacia y Botiquín,CURAS ADHESIVAS UNIDAD,0,100,150,33.3%,Costeado,Estante 4
+480,Farmacia y Botiquín,DOLEX ADULTO 500MG BLISTER / SOBRE,0,700,1000,30.0%,Costeado,Estante 4
+481,Farmacia y Botiquín,DOLEX FORTE BLISTER,0,1800,2500,28.0%,Costeado,Estante 4
+482,Farmacia y Botiquín,DOLEX GRIPA BLISTER / SOBRE,0,1800,2500,28.0%,Costeado,Estante 4
+483,Farmacia y Botiquín,DOLEX NIÑOS MASTICABLE / JARABE,0,900,1300,30.8%,Costeado,Estante 4
+484,Farmacia y Botiquín,DURAFLEX PASTILLAS ANALGÉSICAS,0,2000,2700,25.9%,Costeado,Estante 4
+485,Farmacia y Botiquín,ESPARADRAPO ROLLO,0,1000,1400,28.6%,Costeado,Estante 4
+486,Farmacia y Botiquín,GASA ESTÉRIL SOBRE,0,1500,2100,28.6%,Costeado,Estante 4
+487,Farmacia y Botiquín,GUANTES DE LÁTEX PAR,0,500,700,28.6%,Costeado,Estante 9
+488,Farmacia y Botiquín,IBUFLASH MIGRAÑA CÁPSULAS,0,2000,2700,25.9%,Costeado,Estante 4
+489,Farmacia y Botiquín,IBUPROFENO 800MG TABLETA,0,400,600,33.3%,Costeado,Estante 4
+490,Farmacia y Botiquín,JERINGA DESECHABLE 5ML / 10ML,0,400,600,33.3%,Costeado,Estante 4
+491,Farmacia y Botiquín,LOMOTIL PASTILLAS ANTIDIARREICAS,0,600,900,33.3%,Costeado,Estante 4
+492,Farmacia y Botiquín,LORATADINA 10MG PASTILLAS,0,400,600,33.3%,Costeado,Estante 4
+493,Farmacia y Botiquín,LUMBAL PASTILLAS PARA ESPALDA,0,1300,1800,27.8%,Costeado,Estante 4
+494,Farmacia y Botiquín,MAREOL PASTILLAS,0,800,1100,27.3%,Costeado,Estante 4
+495,Farmacia y Botiquín,MICROPORE CINTA QUIRÚRGICA,0,1000,1400,28.6%,Costeado,Estante 4
+496,Farmacia y Botiquín,NORAVER GARGANTA PASTILLAS SOBRE,0,1800,2500,28.0%,Costeado,Estante 4
+497,Farmacia y Botiquín,NORAVER GRIPA CÁPSULAS SOBRE,0,1900,2600,26.9%,Costeado,Estante 4
+498,Farmacia y Botiquín,NORAVER POLVO EFERVESCENTE SOBRE,0,2300,3200,28.1%,Costeado,Estante 4
+499,Farmacia y Botiquín,NOXPIRIN PASTILLAS SOBRE,0,1300,1800,27.8%,Costeado,Estante 4
+500,Farmacia y Botiquín,NOXPIRIN POLVO SOBRE,0,2200,3000,26.7%,Costeado,Estante 4
+501,Farmacia y Botiquín,OMEPRAZOL 20MG CÁPSULA,0,300,400,25.0%,Costeado,Estante 4
+502,Farmacia y Botiquín,PASTILLAS VICK MENTOL SOBRE,0,400,600,33.3%,Costeado,Estante 4
+503,Farmacia y Botiquín,SAL DE FRUTAS LÚA SOBRE,0,2300,3200,28.1%,Costeado,Estante 4
+504,Farmacia y Botiquín,SEVEDOL EXTRA FUERTE BLISTER,0,1300,1800,27.8%,Costeado,Estante 4
+505,Farmacia y Botiquín,TAPABOCAS TERMOSELLADO UNIDAD,0,500,700,28.6%,Costeado,Estante 9
+506,Farmacia y Botiquín,VICKS VAPORUB UNGÜENTO,0,4800,6500,26.2%,Costeado,Estante 4
+507,Farmacia y Botiquín,VITAFEN / VITA FER JARABE / VIAL,0,2000,2700,25.9%,Costeado,Estante 4
+508,Farmacia y Botiquín,X-RAY DOL PASTILLAS,0,1500,2100,28.6%,Costeado,Estante 4
+509,"Papelería, Escolar y Oficina",BARRA DE SILICONA DELGADA CALIENTE,0,500,700,28.6%,Costeado,Estante 10
+510,"Papelería, Escolar y Oficina",BARRA DE SILICONA GRUESA CALIENTE,0,1000,1400,28.6%,Costeado,Estante 10
+511,"Papelería, Escolar y Oficina",BISTURÍ EXACTO ESCOLAR,0,1200,1700,29.4%,Costeado,Estante 10
+512,"Papelería, Escolar y Oficina",BLOCK DE HOJAS CUADRICULADAS,0,3000,4100,26.8%,Costeado,Estante 10
+513,"Papelería, Escolar y Oficina",BLOCK DE PAPEL CARTA SIN RAYAS,0,3000,4100,26.8%,Costeado,Estante 10
+514,"Papelería, Escolar y Oficina",BOLÍGRAFO / LAPICERO KILOMÉTRICO (AZUL/NEGRO/ROJO),0,600,900,33.3%,Costeado,Estante 10
+515,"Papelería, Escolar y Oficina",BORRADOR DE NATA LÍNEA AZUL PELIKAN,0,1300,1800,27.8%,Costeado,Estante 10
+516,"Papelería, Escolar y Oficina",CAJA DE CLIPS METÁLICOS X 100,0,1500,2100,28.6%,Costeado,Estante 10
+517,"Papelería, Escolar y Oficina",CAJA DE TÉMPERAS X 6 COLORES,0,2500,3400,26.5%,Costeado,Estante 10
+518,"Papelería, Escolar y Oficina",CINTA DE ENMASCARAR / TIRRO ROLLO,0,2200,3000,26.7%,Costeado,Estante 10
+519,"Papelería, Escolar y Oficina",CINTA TRANSPARENTE DE EMBALAJE GRANDE,0,1800,2500,28.0%,Costeado,Estante 10
+520,"Papelería, Escolar y Oficina",CINTA TRANSPARENTE PEQUEÑA,0,500,700,28.6%,Costeado,Estante 10
+521,"Papelería, Escolar y Oficina",COLORES ESCOLARES CAJA LARGA X 24,0,1400,1900,26.3%,Costeado,Estante 10
+522,"Papelería, Escolar y Oficina",COLORES ESCOLARES CAJA PEQUEÑA X 12,0,900,1300,30.8%,Costeado,Estante 10
+523,"Papelería, Escolar y Oficina",COMPÁS ESCOLAR METÁLICO,0,1500,2100,28.6%,Costeado,Estante 10
+524,"Papelería, Escolar y Oficina",CORRECTOR LÍQUIDO TIPO LÁPIZ,0,1200,1700,29.4%,Costeado,Estante 10
+525,"Papelería, Escolar y Oficina",CRAYOLAS CAJA GRANDE X 24,0,1450,2000,27.5%,Costeado,Estante 10
+526,"Papelería, Escolar y Oficina",CRAYOLAS CAJA PEQUEÑA X 12,0,1200,1700,29.4%,Costeado,Estante 10
+527,"Papelería, Escolar y Oficina",CUADERNO / BLOCK DE DIBUJO,0,4000,5400,25.9%,Costeado,Estante 10
+528,"Papelería, Escolar y Oficina",CUADERNO COSIDO / ARGOLLADO 100 HOJAS,0,3000,4100,26.8%,Costeado,Estante 10
+529,"Papelería, Escolar y Oficina",ESCARCHA DECORATIVA EN TUBO,0,300,400,25.0%,Costeado,Estante 10
+530,"Papelería, Escolar y Oficina",FORMATO CONTRATO DE ARRENDAMIENTO,0,1000,1400,28.6%,Costeado,Estante 10
+531,"Papelería, Escolar y Oficina",FORMATO HOJA DE VIDA MINERVA 1003,0,300,400,25.0%,Costeado,Estante 10
+532,"Papelería, Escolar y Oficina",FORMATO LETRA DE CAMBIO PAQUETE,0,2000,2700,25.9%,Costeado,Estante 10
+533,"Papelería, Escolar y Oficina",HOJA DE BLOCK RAYADA / CUADRICULADA SUELTA,0,50,100,50.0%,Costeado,Estante 10
+534,"Papelería, Escolar y Oficina",LECHE ENTERA COLANTA MEGA 1.1L,0,4500,6100,26.2%,Costeado,Estante 8
+535,"Papelería, Escolar y Oficina",LÁPIZ GRAFITO HB MIRADO / MONGOL,0,700,1000,30.0%,Costeado,Estante 10
+536,"Papelería, Escolar y Oficina",MARCADOR BORRABLE PARA TABLERO,0,1200,1700,29.4%,Costeado,Estante 10
+537,"Papelería, Escolar y Oficina",MARCADOR MICRO-PUNTA FINA,0,1500,2100,28.6%,Costeado,Estante 10
+538,"Papelería, Escolar y Oficina",MARCADOR PERMANENTE SHARPIE / PELIKAN,0,1200,1700,29.4%,Costeado,Estante 10
+539,"Papelería, Escolar y Oficina",MARCADOR SHARPIE PUNTA FINA,0,3200,4400,27.3%,Costeado,Estante 10
+540,"Papelería, Escolar y Oficina",PEGANTE BLANCO EGA MEDIANO 115G,0,1200,1700,29.4%,Costeado,Estante 10
+541,"Papelería, Escolar y Oficina",PEGANTE BLANCO EGA PEQUEÑO 40G,0,700,1000,30.0%,Costeado,Estante 10
+542,"Papelería, Escolar y Oficina",PEGANTE BLANCO EGA TARRO 250G,0,2500,3400,26.5%,Costeado,Estante 10
+543,"Papelería, Escolar y Oficina",PEGANTE EN BARRA GLUE STICK,0,1800,2500,28.0%,Costeado,Estante 10
+544,"Papelería, Escolar y Oficina",PINCEL ARTÍSTICO ESCOLAR,0,600,900,33.3%,Costeado,Estante 10
+545,"Papelería, Escolar y Oficina",PINTURA VINILO FRASCO GRANDE,0,1500,2100,28.6%,Costeado,Estante 10
+546,"Papelería, Escolar y Oficina",PLIEGO FOMMY / GOMA EVA ESCULTÓRICA,0,4000,5400,25.9%,Costeado,Estante 10
+547,"Papelería, Escolar y Oficina",SACAPUNTAS CON DEPÓSITO,0,1700,2300,26.1%,Costeado,Estante 10
+548,"Papelería, Escolar y Oficina",SACAPUNTAS METÁLICO SENCILLO,0,400,600,33.3%,Costeado,Estante 10
+549,"Papelería, Escolar y Oficina",SOBRE DE MANILA TAMAÑO CARTA / OFICIO,0,200,250,20.0%,Costeado,Estante 10
+550,"Papelería, Escolar y Oficina",TALONARIO DE RIFAS / BONOS,0,1200,1700,29.4%,Costeado,Estante 10
+551,"Papelería, Escolar y Oficina",TALONARIO FACTURERO COMERCIAL,0,1200,1700,29.4%,Costeado,Estante 10
+552,"Papelería, Escolar y Oficina",TALONARIO RECIBOS DE CAJA MENOR,0,1200,1700,29.4%,Costeado,Estante 10
+553,"Papelería, Escolar y Oficina",TIJERAS ESCOLARES PUNTA ROMA,0,1000,1400,28.6%,Costeado,Estante 10
+554,"Papelería, Escolar y Oficina",TIZAS BLANCAS Y COLORES CAJA,0,100,150,33.3%,Costeado,Estante 10
+555,"Papelería, Escolar y Oficina",TRANSPORTADOR GEOMÉTRICO 180°,0,1200,1700,29.4%,Costeado,Estante 10
+556,"Papelería, Escolar y Oficina",TÉMPERAS ESCOLARES FRASCO INDIVIDUAL,0,1000,1400,28.6%,Costeado,Estante 10
+557,"Papelería, Escolar y Oficina",UÑAS POSTIZAS SET,0,1000,1400,28.6%,Costeado,Estante 10
+558,"Ferretería, Hogar y Miscelánea",ADAPTADOR TERMINAL PVC PARA AGUA,0,300,400,25.0%,Costeado,Estante 10
+559,"Ferretería, Hogar y Miscelánea",ALCANCÍA DE BARRO GRANDE,0,1500,2100,28.6%,Costeado,Estante 8
+560,"Ferretería, Hogar y Miscelánea",ALCANCÍA DE BARRO MEDIANA,0,1200,1700,29.4%,Costeado,Estante 8
+561,"Ferretería, Hogar y Miscelánea",ALCANCÍA DE BARRO PEQUEÑA,0,1000,1400,28.6%,Costeado,Estante 8
+562,"Ferretería, Hogar y Miscelánea",BETÚN CHERRY / PEQUEÑO,0,2500,3400,26.5%,Costeado,Estante 4
+563,"Ferretería, Hogar y Miscelánea",BETÚN LÍQUIDO CHERRY,0,3800,5200,26.9%,Costeado,Estante 9
+564,"Ferretería, Hogar y Miscelánea",BOLSA INDUSTRIAL EXTRA GRANDE,0,800,1100,27.3%,Costeado,Estante 1
+565,"Ferretería, Hogar y Miscelánea",BOLSA PARA BASURA PAQUETE,0,200,250,20.0%,Costeado,Estante 1
+566,"Ferretería, Hogar y Miscelánea",BOLSA PLÁSTICA TRANSPARENTE 1 KILO PQ,0,3000,4100,26.8%,Costeado,Estante 9
+567,"Ferretería, Hogar y Miscelánea",BOLSA PLÁSTICA TRANSPARENTE 1 LIBRA PQ,0,2500,3400,26.5%,Costeado,Estante 9
+568,"Ferretería, Hogar y Miscelánea",BOMBAS / GLOBOS R12 UNIDAD,0,300,400,25.0%,Costeado,Estante 10
+569,"Ferretería, Hogar y Miscelánea",BOMBILLO AHORRADOR LED,0,3000,4100,26.8%,Costeado,Estante 3
+570,"Ferretería, Hogar y Miscelánea",BOMBILLO ECONÓMICO,0,1500,2100,28.6%,Costeado,Estante 3
+571,"Ferretería, Hogar y Miscelánea",CANDADO METÁLICO MEDIANO,0,4500,6100,26.2%,Costeado,Estante 10
+572,"Ferretería, Hogar y Miscelánea",CANDADO METÁLICO PEQUEÑO,0,3000,4100,26.8%,Costeado,Estante 10
+573,"Ferretería, Hogar y Miscelánea",CIGARRILLOS BOSTON ROJO CAJETILLA,0,4900,6700,26.9%,Costeado,Estante 9
+574,"Ferretería, Hogar y Miscelánea",CIGARRILLOS L&M AZUL MENTOLADO CAJETILLA,0,4200,5700,26.3%,Costeado,Estante 9
+575,"Ferretería, Hogar y Miscelánea",CIGARRILLOS L&M ROJO CAJETILLA,0,4200,5700,26.3%,Costeado,Estante 9
+576,"Ferretería, Hogar y Miscelánea",CIGARRILLOS LUCKY STRIKE CAJETILLA,0,6800,9200,26.1%,Costeado,Estante 9
+577,"Ferretería, Hogar y Miscelánea",CIGARRILLOS MARLBORO CAJETILLA,0,6000,8200,26.8%,Costeado,Estante 9
+578,"Ferretería, Hogar y Miscelánea",CIGARRILLOS ROTHMANS CAJETILLA,0,4000,5400,25.9%,Costeado,Estante 9
+579,"Ferretería, Hogar y Miscelánea",CIGARRILLOS STARLITE CAJETILLA,0,4000,5400,25.9%,Costeado,Estante 9
+580,"Ferretería, Hogar y Miscelánea",CINTA AISLANTE ELÉCTRICA NEGRA,0,600,900,33.3%,Costeado,Estante 10
+581,"Ferretería, Hogar y Miscelánea",CINTA DE TEFLÓN PARA TUBERÍA,0,600,900,33.3%,Costeado,Estante 10
+582,"Ferretería, Hogar y Miscelánea",COLADOR DE CAFÉ EN TELA,0,2000,2700,25.9%,Costeado,Estante 9
+583,"Ferretería, Hogar y Miscelánea",COLADOR PARA JUGO GRANDE,0,2000,2700,25.9%,Costeado,Estante 9
+584,"Ferretería, Hogar y Miscelánea",COLADOR PARA JUGO MEDIANO,0,1800,2500,28.0%,Costeado,Estante 9
+585,"Ferretería, Hogar y Miscelánea",COLADOR PARA JUGO PEQUEÑO,0,1500,2100,28.6%,Costeado,Estante 9
+586,"Ferretería, Hogar y Miscelánea",CORTINA DE BAÑO PLÁSTICA DECORATIVA,0,15000,20500,26.8%,Costeado,Estante 10
+587,"Ferretería, Hogar y Miscelánea",EMPAQUE CAUCHO PARA OLLA A PRESIÓN NEGRO,0,1000,1400,28.6%,Costeado,Estante 9
+588,"Ferretería, Hogar y Miscelánea",ENCENDEDOR / CANDELA DESECHABLE,0,600,900,33.3%,Costeado,Estante 9
+589,"Ferretería, Hogar y Miscelánea",ENCENDEDOR CANDELA CON RASTRILLO,0,650,900,27.8%,Costeado,Estante 9
+590,"Ferretería, Hogar y Miscelánea",FÓSFOROS EL REY CAJA GRANDE,0,1200,1700,29.4%,Costeado,Estante 9
+591,"Ferretería, Hogar y Miscelánea",FÓSFOROS EL REY CAJA PEQUEÑA,0,350,450,22.2%,Costeado,Estante 9
+592,"Ferretería, Hogar y Miscelánea",HILO DE COSER TUBINO COLORES,0,500,700,28.6%,Costeado,Estante 10
+593,"Ferretería, Hogar y Miscelánea",LUBRICANTE ACEITE 3 EN UNO,0,1500,2100,28.6%,Costeado,Estante 9
+594,"Ferretería, Hogar y Miscelánea",PALILLOS DE DIENTES CAJITA,0,1000,1400,28.6%,Costeado,Estante 9
+595,"Ferretería, Hogar y Miscelánea",PALOS PARA PALETA PAQUETE,0,1500,2100,28.6%,Costeado,Estante 9
+596,"Ferretería, Hogar y Miscelánea",PALOS PARA PINCHO PAQUETE,0,100,150,33.3%,Costeado,Estante 9
+597,"Ferretería, Hogar y Miscelánea",PILA CUADRADA 9V,0,2000,2700,25.9%,Costeado,Estante 9
+598,"Ferretería, Hogar y Miscelánea",PILAS AA / AAA ECONÓMICAS PAR,0,1900,2600,26.9%,Costeado,Estante 9
+599,"Ferretería, Hogar y Miscelánea",PILAS DURACELL / ENERGIZER ALCALINAS PAR,0,4000,5400,25.9%,Costeado,Estante 9
+600,"Ferretería, Hogar y Miscelánea",PILAS GRANDES TIPO D PAR,0,4500,6100,26.2%,Costeado,Estante 9
+601,"Ferretería, Hogar y Miscelánea",PLATOS DESECHABLES PARA SECO GRANDE PQ,0,6000,8200,26.8%,Costeado,Estante 3
+602,"Ferretería, Hogar y Miscelánea",PLATOS DESECHABLES PARA SECO MEDIANO PQ,0,5000,6800,26.5%,Costeado,Estante 3
+603,"Ferretería, Hogar y Miscelánea",PLATOS DESECHABLES PASTELEROS PQ,0,2500,3400,26.5%,Costeado,Estante 3
+604,"Ferretería, Hogar y Miscelánea",PLATOS DESECHABLES SOPEROS PQ,0,6000,8200,26.8%,Costeado,Estante 3
+605,"Ferretería, Hogar y Miscelánea",SOPORTE / BASE PARA CELULAR,0,5000,6800,26.5%,Costeado,Estante 10
+606,"Ferretería, Hogar y Miscelánea",TARROS / ENVASES TÉRMICOS PARA SOPA PQ,0,5000,6800,26.5%,Costeado,Estante 3
+607,"Ferretería, Hogar y Miscelánea",TIRAS TRANSPARENTES PARA BRASIER PAR,0,1200,1700,29.4%,Costeado,Estante 10
+608,"Ferretería, Hogar y Miscelánea",TOMACORRIENTE ELÉCTRICO TRIPLE,0,5000,6800,26.5%,Costeado,Estante 10
+609,"Ferretería, Hogar y Miscelánea",VASOS DESECHABLES PAQUETE,0,2000,2700,25.9%,Costeado,Estante 3
+610,"Ferretería, Hogar y Miscelánea",VELAS BLANCAS CORRIENTES PAQUETE,0,500,700,28.6%,Costeado,Estante 9
+611,"Ferretería, Hogar y Miscelánea",VELAS DE NÚMEROS / VOLCÁN CUMPLEAÑOS,0,1200,1700,29.4%,Costeado,Estante 10
+612,"Ferretería, Hogar y Miscelánea",VELAS DE SEBO PAQUETE,0,1200,1700,29.4%,Costeado,Estante 9
+613,Alimento para Mascotas,ALIMENTO GATO DON CAT ADULTO KILO,0,5700,7200,20.8%,Costeado,Estante 5
+614,Alimento para Mascotas,ALIMENTO GATO DON CAT CACHORRO KILO,0,5700,7200,20.8%,Costeado,Estante 5
+615,Alimento para Mascotas,ALIMENTO GATO MIRRINGO ADULTO KILO,0,4800,6000,20.0%,Costeado,Estante 5
+616,Alimento para Mascotas,ALIMENTO GATO OHMAIGAT 200G,0,3100,3900,20.5%,Costeado,Estante 5
+617,Alimento para Mascotas,ALIMENTO GATO Q-IDA CAT KILO,0,4500,5700,21.1%,Costeado,Estante 5
+618,Alimento para Mascotas,ALIMENTO GATO WHISKAS SOBRE HÚMEDO,0,2500,3200,21.9%,Costeado,Estante 5
+619,Alimento para Mascotas,ALIMENTO PERRO CHUNKY ADULTO KILO,0,4000,5000,20.0%,Costeado,Estante 5
+620,Alimento para Mascotas,ALIMENTO PERRO CHUNKY CACHORRO KILO,0,4500,5700,21.1%,Costeado,Estante 5
+621,Alimento para Mascotas,ALIMENTO PERRO DOG CHOW ADULTO KILO,0,4300,5400,20.4%,Costeado,Estante 5
+622,Alimento para Mascotas,ALIMENTO PERRO DOG CHOW CACHORRO KILO,0,4300,5400,20.4%,Costeado,Estante 5
+623,Alimento para Mascotas,ALIMENTO PERRO DOG CHOW SOBRE HÚMEDO,0,2500,3200,21.9%,Costeado,Estante 5
+624,Alimento para Mascotas,ALIMENTO PERRO DOGOURMET CACHORROS KILO,0,3000,3800,21.1%,Costeado,Estante 5
+625,Alimento para Mascotas,ALIMENTO PERRO DOGOURMET CARNES KILO,0,3000,3800,21.1%,Costeado,Estante 5
+626,Alimento para Mascotas,ALIMENTO PERRO NUTRECAN ADULTO KILO,0,4800,6000,20.0%,Costeado,Estante 5
+627,Alimento para Mascotas,ALIMENTO PERRO NUTRECAN CACHORRO KILO,0,4000,5000,20.0%,Costeado,Estante 5
+628,Alimento para Mascotas,ALIMENTO PERRO RINGO ADULTO KILO,0,4000,5000,20.0%,Costeado,Estante 5
+629,Alimento para Mascotas,ALPISTE PARA AVES SOBRE 100G,0,1600,2000,20.0%,Costeado,Estante 3
+630,Alimento para Mascotas,PAJARINA ALIMENTO AVES SOBRE,0,1600,2000,20.0%,Costeado,Estante 3
+631,Alimento para Mascotas,SEMILLAS DE GIRASOL PARA AVES,0,1600,2000,20.0%,Costeado,Estante 3
