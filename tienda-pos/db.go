@@ -28,6 +28,7 @@ type Product struct {
 	Location      string  `json:"location"`
 	Active        bool    `json:"active"`
 	IsQuickAccess bool    `json:"isQuickAccess"`
+	Category      string  `json:"category"`
 }
 
 type Location struct {
@@ -117,6 +118,13 @@ type Supplier struct {
 	Active       bool   `json:"active"`
 	CreatedAt    string `json:"createdAt"`
 	UpdatedAt    string `json:"updatedAt"`
+}
+
+type ImportCatalogResult struct {
+	TotalProcessed int      `json:"totalProcessed"`
+	Inserted       int      `json:"inserted"`
+	Updated        int      `json:"updated"`
+	Errors         []string `json:"errors"`
 }
 
 type Purchase struct {
@@ -216,7 +224,8 @@ func initDB(filepath string) *sql.DB {
 		unit_of_measure TEXT NOT NULL DEFAULT 'und',
 		color           TEXT NOT NULL DEFAULT '',
 		location        TEXT NOT NULL DEFAULT '',
-		active          INTEGER NOT NULL DEFAULT 1
+		active          INTEGER NOT NULL DEFAULT 1,
+		category        TEXT NOT NULL DEFAULT ''
 	);
 	CREATE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode);
 
@@ -328,6 +337,7 @@ func migrateProductsTable(db *sql.DB) {
 		"color":           "TEXT NOT NULL DEFAULT ''",
 		"location":        "TEXT NOT NULL DEFAULT ''",
 		"active":          "INTEGER NOT NULL DEFAULT 1",
+		"category":        "TEXT NOT NULL DEFAULT ''",
 	}
 
 	for col, colDef := range columnsToAdd {
@@ -364,7 +374,7 @@ func generateInternalSKU(db *sql.DB) (string, error) {
 
 func getProductByBarcode(db *sql.DB, barcode string) (*Product, error) {
 	query := `
-	SELECT id, barcode, name, cost_price, price, stock, weight, size, unit_of_measure, color, location, active, is_quick_access
+	SELECT id, barcode, name, cost_price, price, stock, weight, size, unit_of_measure, color, location, active, is_quick_access, category
 	FROM products
 	WHERE barcode = ?
 	LIMIT 1`
@@ -373,6 +383,7 @@ func getProductByBarcode(db *sql.DB, barcode string) (*Product, error) {
 	var p Product
 	var activeInt int
 	var quickAccessInt sql.NullInt64
+	var categoryStr sql.NullString
 	err := row.Scan(
 		&p.ID,
 		&p.Barcode,
@@ -387,12 +398,14 @@ func getProductByBarcode(db *sql.DB, barcode string) (*Product, error) {
 		&p.Location,
 		&activeInt,
 		&quickAccessInt,
+		&categoryStr,
 	)
 	if err != nil {
 		return nil, err
 	}
 	p.Active = (activeInt == 1)
 	p.IsQuickAccess = (quickAccessInt.Valid && quickAccessInt.Int64 == 1)
+	p.Category = categoryStr.String
 	return &p, nil
 }
 
@@ -446,7 +459,8 @@ func saveOrUpdateProduct(db *sql.DB, p Product) error {
 			color = ?,
 			location = ?,
 			active = ?,
-			is_quick_access = ?
+			is_quick_access = ?,
+			category = ?
 		WHERE id = ?;
 		`
 		_, err := db.Exec(
@@ -463,6 +477,7 @@ func saveOrUpdateProduct(db *sql.DB, p Product) error {
 			p.Location,
 			activeInt,
 			quickAccessInt,
+			p.Category,
 			p.ID,
 		)
 		if err != nil {
@@ -482,8 +497,8 @@ func saveOrUpdateProduct(db *sql.DB, p Product) error {
 	}
 
 	query := fmt.Sprintf(`
-	INSERT INTO products (barcode, name, cost_price, price, stock, weight, size, unit_of_measure, color, location, active, is_quick_access)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	INSERT INTO products (barcode, name, cost_price, price, stock, weight, size, unit_of_measure, color, location, active, is_quick_access, category)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	ON CONFLICT(barcode) DO UPDATE SET
 		name = excluded.name,
 		cost_price = excluded.cost_price,
@@ -495,7 +510,8 @@ func saveOrUpdateProduct(db *sql.DB, p Product) error {
 		color = excluded.color,
 		location = excluded.location,
 		active = excluded.active,
-		is_quick_access = excluded.is_quick_access;
+		is_quick_access = excluded.is_quick_access,
+		category = excluded.category;
 	`, stockUpdateClause)
 	_, err := db.Exec(
 		query,
@@ -511,6 +527,7 @@ func saveOrUpdateProduct(db *sql.DB, p Product) error {
 		p.Location,
 		activeInt,
 		quickAccessInt,
+		p.Category,
 	)
 	return err
 }
@@ -552,7 +569,7 @@ func restoreProduct(db *sql.DB, barcode string) error {
 
 func listAllProducts(db *sql.DB) ([]Product, error) {
 	rows, err := db.Query(`
-		SELECT id, barcode, name, cost_price, price, stock, weight, size, unit_of_measure, color, location, active, is_quick_access
+		SELECT id, barcode, name, cost_price, price, stock, weight, size, unit_of_measure, color, location, active, is_quick_access, category
 		FROM products
 		WHERE active = 1
 		ORDER BY name ASC
@@ -567,7 +584,7 @@ func listAllProducts(db *sql.DB) ([]Product, error) {
 
 func listInventoryProducts(db *sql.DB, includeArchived bool) ([]Product, error) {
 	query := `
-		SELECT id, barcode, name, cost_price, price, stock, weight, size, unit_of_measure, color, location, active, is_quick_access
+		SELECT id, barcode, name, cost_price, price, stock, weight, size, unit_of_measure, color, location, active, is_quick_access, category
 		FROM products
 	`
 	if !includeArchived {
@@ -587,12 +604,12 @@ func listInventoryProducts(db *sql.DB, includeArchived bool) ([]Product, error) 
 func searchProducts(db *sql.DB, search string) ([]Product, error) {
 	term := "%" + strings.TrimSpace(search) + "%"
 	rows, err := db.Query(`
-		SELECT id, barcode, name, cost_price, price, stock, weight, size, unit_of_measure, color, location, active, is_quick_access
+		SELECT id, barcode, name, cost_price, price, stock, weight, size, unit_of_measure, color, location, active, is_quick_access, category
 		FROM products
-		WHERE active = 1 AND (barcode LIKE ? OR name LIKE ? OR location LIKE ?)
+		WHERE active = 1 AND (barcode LIKE ? OR name LIKE ? OR location LIKE ? OR category LIKE ?)
 		ORDER BY name ASC
 		LIMIT 20
-	`, term, term, term)
+	`, term, term, term, term)
 	if err != nil {
 		return nil, err
 	}
@@ -607,6 +624,7 @@ func scanProductRows(rows *sql.Rows) ([]Product, error) {
 		var p Product
 		var activeInt int
 		var quickAccessInt sql.NullInt64
+		var categoryStr sql.NullString
 		err := rows.Scan(
 			&p.ID,
 			&p.Barcode,
@@ -621,12 +639,14 @@ func scanProductRows(rows *sql.Rows) ([]Product, error) {
 			&p.Location,
 			&activeInt,
 			&quickAccessInt,
+			&categoryStr,
 		)
 		if err != nil {
 			return nil, err
 		}
 		p.Active = (activeInt == 1)
 		p.IsQuickAccess = (quickAccessInt.Valid && quickAccessInt.Int64 == 1)
+		p.Category = categoryStr.String
 		list = append(list, p)
 	}
 	return list, nil
@@ -2432,3 +2452,316 @@ func ingestSyncedShiftTx(db *sql.DB, s CashShift) error {
 
 	return tx.Commit()
 }
+
+// --- Catalog Import & Smart Barcode Linking ---
+
+func cleanCSVNumber(val string) float64 {
+	val = strings.TrimSpace(val)
+	val = strings.ReplaceAll(val, "$", "")
+	val = strings.ReplaceAll(val, " ", "")
+	if val == "" || strings.Contains(strings.ToUpper(val), "PENDIENTE") {
+		return 0
+	}
+	if strings.Contains(val, ",") && !strings.Contains(val, ".") {
+		parts := strings.Split(val, ",")
+		if len(parts) == 2 && len(parts[1]) == 3 {
+			val = strings.ReplaceAll(val, ",", "")
+		} else if len(parts) > 2 {
+			val = strings.ReplaceAll(val, ",", "")
+		} else {
+			val = strings.ReplaceAll(val, ",", ".")
+		}
+	} else if strings.Contains(val, ".") && strings.Contains(val, ",") {
+		lastDot := strings.LastIndex(val, ".")
+		lastComma := strings.LastIndex(val, ",")
+		if lastComma > lastDot {
+			val = strings.ReplaceAll(val, ".", "")
+			val = strings.ReplaceAll(val, ",", ".")
+		} else {
+			val = strings.ReplaceAll(val, ",", "")
+		}
+	} else if strings.Contains(val, ".") {
+		parts := strings.Split(val, ".")
+		if len(parts) > 2 {
+			val = strings.Join(parts, "")
+		} else if len(parts) == 2 && len(parts[1]) == 3 {
+			val = strings.Join(parts, "")
+		}
+	}
+	f, _ := strconv.ParseFloat(val, 64)
+	return f
+}
+
+func isCatalogBulkItem(normName string, cat string) bool {
+	upper := strings.ToUpper(normName)
+	catUpper := strings.ToUpper(cat)
+	if strings.Contains(upper, "HUEVO") ||
+		strings.HasPrefix(upper, "PAN ") || strings.Contains(upper, "PAN ARTESANAL") || strings.Contains(upper, "PAN ROLLO") ||
+		strings.Contains(upper, "CARNE DE RES") || strings.Contains(upper, "PECHUGA") || strings.Contains(upper, "YUCA") ||
+		strings.Contains(upper, "BOMBÓN") || strings.Contains(upper, "BOMBON") || strings.Contains(upper, "GOMITA") ||
+		strings.Contains(upper, "BOLSA") || strings.Contains(upper, "FÓSFORO") || strings.Contains(upper, "FOSFORO") {
+		return true
+	}
+	if strings.Contains(catUpper, "CARNES") && (strings.Contains(upper, "LB") || strings.Contains(upper, "KILO")) {
+		return true
+	}
+	return false
+}
+
+func importCatalogCSVTx(db *sql.DB, csvContent string) (*ImportCatalogResult, error) {
+	csvContent = strings.TrimPrefix(csvContent, "\ufeff")
+	csvContent = strings.TrimPrefix(csvContent, "\xef\xbb\xbf")
+	csvContent = strings.TrimSpace(csvContent)
+	if csvContent == "" {
+		return &ImportCatalogResult{}, fmt.Errorf("el contenido CSV está vacío")
+	}
+
+	r := csv.NewReader(strings.NewReader(csvContent))
+	firstLine := strings.SplitN(csvContent, "\n", 2)[0]
+	if strings.Count(firstLine, ";") > strings.Count(firstLine, ",") {
+		r.Comma = ';'
+	} else {
+		r.Comma = ','
+	}
+	r.FieldsPerRecord = -1
+	r.TrimLeadingSpace = true
+
+	records, err := r.ReadAll()
+	if err != nil {
+		return nil, fmt.Errorf("error al interpretar archivo CSV: %w", err)
+	}
+	if len(records) < 2 {
+		return &ImportCatalogResult{}, fmt.Errorf("el archivo CSV no contiene registros de datos")
+	}
+
+	header := records[0]
+	colMap := make(map[string]int)
+	for idx, col := range header {
+		cleanCol := strings.ToUpper(strings.TrimSpace(strings.TrimPrefix(col, "\ufeff")))
+		colMap[cleanCol] = idx
+	}
+
+	getCol := func(names ...string) int {
+		for _, name := range names {
+			if idx, ok := colMap[name]; ok {
+				return idx
+			}
+		}
+		return -1
+	}
+
+	nameIdx := getCol("ARTICULO", "PRODUCTO", "NOMBRE", "NAME", "DESCRIPCION")
+	catIdx := getCol("CATEGORIA", "CATEGORY", "DEPARTAMENTO")
+	costIdx := getCol("PRECIO_COSTO_COP", "PRECIO_COSTO", "COSTO", "COST_PRICE")
+	priceIdx := getCol("PRECIO_VENTA_SUGERIDO_COP", "PRECIO_VENTA", "PRECIO", "PRICE", "SUGGESTED_PRICE")
+	stockIdx := getCol("CANTIDAD_STOCK", "STOCK", "CANTIDAD", "QTY")
+	shelfIdx := getCol("ESTANTE_ORIGINAL", "ESTANTE", "UBICACION", "LOCACION", "LOCATION")
+	barcodeIdx := getCol("BARCODE", "CODIGO", "CODIGO_BARRAS", "EAN")
+
+	if nameIdx == -1 {
+		return nil, fmt.Errorf("columna requerida 'ARTICULO' o 'NOMBRE' no encontrada en el CSV")
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	type existingProdInfo struct {
+		id            int64
+		barcode       string
+		costPrice     float64
+		price         float64
+		stock         int
+		category      string
+		location      string
+		isQuickAccess bool
+	}
+
+	existingByName := make(map[string]existingProdInfo)
+	existingBarcodes := make(map[string]bool)
+
+	rows, err := tx.Query("SELECT id, barcode, name, cost_price, price, stock, category, location, is_quick_access FROM products")
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var p existingProdInfo
+		var name string
+		var quick sql.NullInt64
+		if err := rows.Scan(&p.id, &p.barcode, &name, &p.costPrice, &p.price, &p.stock, &p.category, &p.location, &quick); err == nil {
+			p.isQuickAccess = (quick.Valid && quick.Int64 == 1)
+			norm := strings.ToUpper(strings.Join(strings.Fields(name), " "))
+			existingByName[norm] = p
+			existingBarcodes[p.barcode] = true
+		}
+	}
+	rows.Close()
+
+	var maxID sql.NullInt64
+	_ = tx.QueryRow("SELECT MAX(id) FROM products").Scan(&maxID)
+	nextSeq := int64(1)
+	if maxID.Valid {
+		nextSeq = maxID.Int64 + 1
+	}
+
+	generateInternalBarcode := func() string {
+		for {
+			code := fmt.Sprintf("ILUZ-%04d", nextSeq)
+			nextSeq++
+			if !existingBarcodes[code] {
+				existingBarcodes[code] = true
+				return code
+			}
+		}
+	}
+
+	result := &ImportCatalogResult{
+		Errors: make([]string, 0),
+	}
+
+	stmtInsert, err := tx.Prepare(`
+		INSERT INTO products (barcode, name, category, cost_price, price, stock, location, active, is_quick_access)
+		VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer stmtInsert.Close()
+
+	stmtUpdate, err := tx.Prepare(`
+		UPDATE products SET
+			category = CASE WHEN category = '' THEN ? ELSE category END,
+			cost_price = CASE WHEN cost_price = 0 THEN ? ELSE cost_price END,
+			price = CASE WHEN price = 0 THEN ? ELSE price END,
+			stock = CASE WHEN stock = 0 THEN ? ELSE stock END,
+			location = CASE WHEN location = '' THEN ? ELSE location END,
+			is_quick_access = CASE WHEN is_quick_access = 0 AND ? = 1 THEN 1 ELSE is_quick_access END
+		WHERE id = ?
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer stmtUpdate.Close()
+
+	for rowIdx, record := range records[1:] {
+		if nameIdx >= len(record) {
+			continue
+		}
+		rawName := strings.TrimSpace(record[nameIdx])
+		if rawName == "" {
+			continue
+		}
+
+		normName := strings.ToUpper(strings.Join(strings.Fields(rawName), " "))
+
+		var cat, shelf, customBarcode string
+		var cost, price float64
+		var stock int
+
+		if catIdx != -1 && catIdx < len(record) {
+			cat = strings.TrimSpace(record[catIdx])
+		}
+		if costIdx != -1 && costIdx < len(record) {
+			cost = cleanCSVNumber(record[costIdx])
+		}
+		if priceIdx != -1 && priceIdx < len(record) {
+			price = cleanCSVNumber(record[priceIdx])
+		}
+		if stockIdx != -1 && stockIdx < len(record) {
+			stock = int(cleanCSVNumber(record[stockIdx]))
+		}
+		if shelfIdx != -1 && shelfIdx < len(record) {
+			shelf = strings.TrimSpace(record[shelfIdx])
+		}
+		if barcodeIdx != -1 && barcodeIdx < len(record) {
+			customBarcode = strings.TrimSpace(record[barcodeIdx])
+		}
+
+		quickAccess := 0
+		if isCatalogBulkItem(rawName, cat) {
+			quickAccess = 1
+		}
+
+		if existing, found := existingByName[normName]; found {
+			_, err := stmtUpdate.Exec(cat, cost, price, stock, shelf, quickAccess, existing.id)
+			if err != nil {
+				result.Errors = append(result.Errors, fmt.Sprintf("Fila %d: error actualizando '%s': %v", rowIdx+2, rawName, err))
+			} else {
+				result.Updated++
+			}
+		} else {
+			barcodeToUse := ""
+			if customBarcode != "" && !existingBarcodes[customBarcode] {
+				barcodeToUse = customBarcode
+				existingBarcodes[customBarcode] = true
+			} else {
+				barcodeToUse = generateInternalBarcode()
+			}
+
+			res, err := stmtInsert.Exec(barcodeToUse, rawName, cat, cost, price, stock, shelf, quickAccess)
+			if err != nil {
+				result.Errors = append(result.Errors, fmt.Sprintf("Fila %d: error insertando '%s': %v", rowIdx+2, rawName, err))
+			} else {
+				newID, _ := res.LastInsertId()
+				existingByName[normName] = existingProdInfo{
+					id:            newID,
+					barcode:       barcodeToUse,
+					costPrice:     cost,
+					price:         price,
+					stock:         stock,
+					category:      cat,
+					location:      shelf,
+					isQuickAccess: (quickAccess == 1),
+				}
+				result.Inserted++
+			}
+		}
+		result.TotalProcessed++
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("error confirmando importación: %w", err)
+	}
+
+	return result, nil
+}
+
+func linkBarcodeToProductDB(db *sql.DB, productID int64, barcode string) error {
+	barcode = strings.TrimSpace(barcode)
+	if barcode == "" {
+		return fmt.Errorf("el código de barras no puede estar vacío")
+	}
+	if productID <= 0 {
+		return fmt.Errorf("ID de producto inválido")
+	}
+
+	var existingID int64
+	var existingName string
+	err := db.QueryRow("SELECT id, name FROM products WHERE barcode = ? AND id != ?", barcode, productID).Scan(&existingID, &existingName)
+	if err == nil {
+		return fmt.Errorf("el código de barras '%s' ya está asignado al producto '%s'", barcode, existingName)
+	}
+	if err != sql.ErrNoRows {
+		return err
+	}
+
+	var curName string
+	err = db.QueryRow("SELECT name FROM products WHERE id = ?", productID).Scan(&curName)
+	if err == sql.ErrNoRows {
+		return fmt.Errorf("producto con ID %d no encontrado", productID)
+	}
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec("UPDATE products SET barcode = ? WHERE id = ?", barcode, productID)
+	if err != nil {
+		return fmt.Errorf("error al vincular código de barras: %w", err)
+	}
+
+	_, _ = db.Exec("UPDATE inventory_session_items SET barcode = ? WHERE product_id = ?", barcode, productID)
+	return nil
+}
+

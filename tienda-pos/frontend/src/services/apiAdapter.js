@@ -83,13 +83,229 @@ const apiAdapter = {
   },
 
   async updateProductLocation(barcode, newLocation) {
-    if (isWails() && window.go.main.App.UpdateProductLocation) {
+    if (isWails() && window.go?.main?.App?.UpdateProductLocation) {
       return await window.go.main.App.UpdateProductLocation(barcode, newLocation);
     }
     const products = getLocal('iluz_products', []);
     const updated = products.map((p) => (p.barcode === barcode ? { ...p, location: newLocation } : p));
     setLocal('iluz_products', updated);
     return true;
+  },
+
+  async importCatalogCSV(csvContent) {
+    if (isWails() && window.go?.main?.App?.ImportCatalogCSV) {
+      return await window.go.main.App.ImportCatalogCSV(csvContent);
+    }
+    return this._parseAndImportCSVLocal(csvContent);
+  },
+
+  async linkBarcodeToProduct(productId, barcode) {
+    if (isWails() && window.go?.main?.App?.LinkBarcodeToProduct) {
+      return await window.go.main.App.LinkBarcodeToProduct(productId, barcode);
+    }
+    const cleanBarcode = (barcode || '').trim();
+    if (!cleanBarcode) throw new Error('El código de barras no puede estar vacío');
+    if (!productId || productId <= 0) throw new Error('ID de producto inválido');
+
+    const products = getLocal('iluz_products', []);
+    const existing = products.find((p) => p.barcode === cleanBarcode && p.id !== productId);
+    if (existing) {
+      throw new Error(`El código de barras '${cleanBarcode}' ya está asignado al producto '${existing.name}'`);
+    }
+
+    const idx = products.findIndex((p) => p.id === productId);
+    if (idx === -1) {
+      throw new Error(`Producto con ID ${productId} no encontrado`);
+    }
+
+    products[idx] = {
+      ...products[idx],
+      barcode: cleanBarcode,
+    };
+    setLocal('iluz_products', products);
+    return true;
+  },
+
+  _parseAndImportCSVLocal(csvContent) {
+    let clean = (csvContent || '').replace(/^\uFEFF/, '').trim();
+    if (!clean) throw new Error('El contenido CSV está vacío');
+
+    const lines = clean.split(/\r?\n/).filter((l) => l.trim().length > 0);
+    if (lines.length < 2) throw new Error('El archivo CSV no contiene registros de datos');
+
+    const firstLine = lines[0];
+    const delimiter = firstLine.split(';').length > firstLine.split(',').length ? ';' : ',';
+
+    const parseLine = (line) => {
+      const res = [];
+      let inQuote = false;
+      let cur = '';
+      for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (c === '"') {
+          if (inQuote && line[i + 1] === '"') {
+            cur += '"';
+            i++;
+          } else {
+            inQuote = !inQuote;
+          }
+        } else if (c === delimiter && !inQuote) {
+          res.push(cur.trim());
+          cur = '';
+        } else {
+          cur += c;
+        }
+      }
+      res.push(cur.trim());
+      return res;
+    };
+
+    const header = parseLine(lines[0]).map((h) => h.toUpperCase().replace(/^\uFEFF/, '').trim());
+    const findCol = (...names) => {
+      for (const n of names) {
+        const idx = header.indexOf(n);
+        if (idx !== -1) return idx;
+      }
+      return -1;
+    };
+
+    const nameIdx = findCol('ARTICULO', 'PRODUCTO', 'NOMBRE', 'NAME', 'DESCRIPCION');
+    const catIdx = findCol('CATEGORIA', 'CATEGORY', 'DEPARTAMENTO');
+    const costIdx = findCol('PRECIO_COSTO_COP', 'PRECIO_COSTO', 'COSTO', 'COST_PRICE');
+    const priceIdx = findCol('PRECIO_VENTA_SUGERIDO_COP', 'PRECIO_VENTA', 'PRECIO', 'PRICE', 'SUGGESTED_PRICE');
+    const stockIdx = findCol('CANTIDAD_STOCK', 'STOCK', 'CANTIDAD', 'QTY');
+    const shelfIdx = findCol('ESTANTE_ORIGINAL', 'ESTANTE', 'UBICACION', 'LOCACION', 'LOCATION');
+    const barcodeIdx = findCol('BARCODE', 'CODIGO', 'CODIGO_BARRAS', 'EAN');
+
+    if (nameIdx === -1) throw new Error("Columna requerida 'ARTICULO' o 'NOMBRE' no encontrada en el CSV");
+
+    const cleanNum = (val) => {
+      if (!val) return 0;
+      let s = String(val).replace(/\$/g, '').replace(/\s/g, '');
+      if (s.toUpperCase().includes('PENDIENTE')) return 0;
+      if (s.includes(',') && !s.includes('.')) {
+        const parts = s.split(',');
+        if (parts.length === 2 && parts[1].length === 3) s = s.replace(/,/g, '');
+        else if (parts.length > 2) s = s.replace(/,/g, '');
+        else s = s.replace(/,/g, '.');
+      } else if (s.includes('.') && s.includes(',')) {
+        if (s.lastIndexOf(',') > s.lastIndexOf('.')) {
+          s = s.replace(/\./g, '').replace(/,/g, '.');
+        } else {
+          s = s.replace(/,/g, '');
+        }
+      } else if (s.includes('.')) {
+        const parts = s.split('.');
+        if (parts.length > 2 || (parts.length === 2 && parts[1].length === 3)) {
+          s = parts.join('');
+        }
+      }
+      const num = parseFloat(s);
+      return isNaN(num) ? 0 : num;
+    };
+
+    const isBulk = (name, cat) => {
+      const u = (name || '').toUpperCase();
+      const cu = (cat || '').toUpperCase();
+      if (
+        u.includes('HUEVO') ||
+        u.startsWith('PAN ') ||
+        u.includes('PAN ARTESANAL') ||
+        u.includes('PAN ROLLO') ||
+        u.includes('CARNE DE RES') ||
+        u.includes('PECHUGA') ||
+        u.includes('YUCA') ||
+        u.includes('BOMBÓN') ||
+        u.includes('BOMBON') ||
+        u.includes('GOMITA') ||
+        u.includes('BOLSA') ||
+        u.includes('FÓSFORO') ||
+        u.includes('FOSFORO')
+      ) return true;
+      if (cu.includes('CARNES') && (u.includes('LB') || u.includes('KILO'))) return true;
+      return false;
+    };
+
+    const products = getLocal('iluz_products', []);
+    let maxId = products.reduce((m, p) => Math.max(m, p.id || 0), 0);
+    let nextSeq = maxId + 1;
+    const existingBarcodes = new Set(products.map((p) => p.barcode));
+    const genBarcode = () => {
+      while (true) {
+        const code = `ILUZ-${String(nextSeq).padStart(4, '0')}`;
+        nextSeq++;
+        if (!existingBarcodes.has(code)) {
+          existingBarcodes.add(code);
+          return code;
+        }
+      }
+    };
+
+    let inserted = 0;
+    let updated = 0;
+    const errors = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const row = parseLine(lines[i]);
+      if (nameIdx >= row.length) continue;
+      const rawName = (row[nameIdx] || '').trim();
+      if (!rawName) continue;
+
+      const normName = rawName.replace(/\s+/g, ' ').toUpperCase();
+      const cat = catIdx !== -1 && catIdx < row.length ? row[catIdx].trim() : '';
+      const cost = costIdx !== -1 && costIdx < row.length ? cleanNum(row[costIdx]) : 0;
+      const price = priceIdx !== -1 && priceIdx < row.length ? cleanNum(row[priceIdx]) : 0;
+      const stock = stockIdx !== -1 && stockIdx < row.length ? Math.round(cleanNum(row[stockIdx])) : 0;
+      const shelf = shelfIdx !== -1 && shelfIdx < row.length ? row[shelfIdx].trim() : '';
+      const customBc = barcodeIdx !== -1 && barcodeIdx < row.length ? row[barcodeIdx].trim() : '';
+      const quickAccess = isBulk(rawName, cat);
+
+      const existingIdx = products.findIndex(
+        (p) => (p.name || '').replace(/\s+/g, ' ').toUpperCase() === normName
+      );
+
+      if (existingIdx !== -1) {
+        const ex = products[existingIdx];
+        products[existingIdx] = {
+          ...ex,
+          category: ex.category || cat,
+          costPrice: ex.costPrice > 0 ? ex.costPrice : cost,
+          price: ex.price > 0 ? ex.price : price,
+          stock: ex.stock > 0 ? ex.stock : stock,
+          location: ex.location || shelf,
+          isQuickAccess: Boolean(ex.isQuickAccess || quickAccess),
+        };
+        updated++;
+      } else {
+        let bc = customBc && !existingBarcodes.has(customBc) ? customBc : genBarcode();
+        maxId++;
+        products.push({
+          id: maxId,
+          barcode: bc,
+          name: rawName,
+          category: cat,
+          costPrice: cost,
+          price: price,
+          stock: stock,
+          weight: 0,
+          size: '',
+          unitOfMeasure: 'und',
+          color: '',
+          location: shelf,
+          active: true,
+          isQuickAccess: quickAccess,
+        });
+        inserted++;
+      }
+    }
+
+    setLocal('iluz_products', products);
+    return {
+      totalProcessed: inserted + updated,
+      inserted,
+      updated,
+      errors,
+    };
   },
 
   // --- Suppliers ---

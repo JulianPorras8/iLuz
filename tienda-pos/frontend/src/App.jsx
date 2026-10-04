@@ -24,6 +24,7 @@ import SupplierModal from './components/SupplierModal.jsx';
 import PurchaseIntakeView from './components/PurchaseIntakeView.jsx';
 import ReportsView from './components/ReportsView.jsx';
 import HardwareModal from './components/HardwareModal.jsx';
+import BarcodeLinkModal from './components/BarcodeLinkModal.jsx';
 
 // Shared singleton AudioContext for responsive audio feedback without leaking contexts
 let audioCtxSingleton = null;
@@ -129,6 +130,10 @@ export default function App() {
   const [reportData, setReportData] = useState(null);
   const [currentReportPeriod, setCurrentReportPeriod] = useState('month');
 
+  // Barcode Linking & Catalog Import
+  const [isBarcodeLinkModalOpen, setIsBarcodeLinkModalOpen] = useState(false);
+  const [pendingBarcodeToLink, setPendingBarcodeToLink] = useState('');
+
   // Toast
   const [toast, setToast] = useState(null);
   const toastTimeoutRef = useRef(null);
@@ -231,6 +236,8 @@ export default function App() {
           playSoundChime(false);
           setUnregisteredBarcode(barcode);
           setLastScannedProduct(null);
+          setPendingBarcodeToLink(barcode);
+          setIsBarcodeLinkModalOpen(true);
         }
       } else if (currentTab === 'positioning') {
         if (found && product) {
@@ -245,9 +252,9 @@ export default function App() {
           setEditingProduct(product);
           setIsProductModalOpen(true);
         } else {
-          showToast(`Código no registrado: ${barcode}`, 'warning');
-          setEditingProduct({ barcode, active: true });
-          setIsProductModalOpen(true);
+          playSoundChime(false);
+          setPendingBarcodeToLink(barcode);
+          setIsBarcodeLinkModalOpen(true);
         }
       } else if (currentTab === 'audit') {
         if (isReconciliationModalOpen) {
@@ -602,6 +609,66 @@ export default function App() {
     } catch (err) {
       console.error('Error updating product location:', err);
       showToast('❌ Error al actualizar ubicación', 'error');
+    }
+  };
+
+  // --- Catalog Import & Barcode Linking ---
+  const handleLinkBarcode = async (productId, barcodeToLink, optionalStock) => {
+    try {
+      await apiAdapter.linkBarcodeToProduct(productId, barcodeToLink);
+      if (optionalStock !== null && optionalStock !== undefined && !isNaN(optionalStock)) {
+        const targetProd = products.find((p) => p.id === productId);
+        if (targetProd) {
+          await apiAdapter.saveProduct({
+            ...targetProd,
+            barcode: barcodeToLink,
+            stock: optionalStock,
+          });
+        }
+      }
+      setIsBarcodeLinkModalOpen(false);
+      showToast(`✅ Código vinculado: ${barcodeToLink}`, 'success');
+
+      const updated = await apiAdapter.listProducts(true);
+      setProducts(updated || []);
+
+      if (currentTab === 'pos') {
+        const linkedProduct = (updated || []).find((p) => p.id === productId || p.barcode === barcodeToLink);
+        if (linkedProduct) {
+          playSoundChime(true);
+          setLastScannedProduct(linkedProduct);
+          setUnregisteredBarcode(null);
+          setCart((prev) => {
+            const existing = prev.find((item) => item.id === productId || item.barcode === barcodeToLink);
+            if (existing) {
+              return prev.map((item) =>
+                item.id === productId || item.barcode === barcodeToLink
+                  ? { ...item, qty: (item.qty || 1) + 1 }
+                  : item
+              );
+            }
+            return [...prev, { ...linkedProduct, qty: 1 }];
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Error linking barcode:', err);
+      showToast(`❌ Error al vincular código: ${err.message || err}`, 'error');
+      throw err;
+    }
+  };
+
+  const handleImportCatalogCSV = async (csvContent) => {
+    try {
+      const res = await apiAdapter.importCatalogCSV(csvContent);
+      const updated = await apiAdapter.listProducts(true);
+      setProducts(updated || []);
+      showToast(`✅ Catálogo importado: ${res.inserted || 0} nuevos, ${res.updated || 0} actualizados`, 'success');
+      return res;
+    } catch (err) {
+      console.error('Error importing catalog CSV:', err);
+      showToast(`❌ Error al importar catálogo: ${err.message || err}`, 'error');
+      throw err;
     }
   };
 
@@ -1159,6 +1226,10 @@ export default function App() {
               setLastScannedProduct(null);
               setUnregisteredBarcode(null);
             }}
+            onOpenBarcodeLink={(bc) => {
+              setPendingBarcodeToLink(bc);
+              setIsBarcodeLinkModalOpen(true);
+            }}
           />
         )}
 
@@ -1188,6 +1259,11 @@ export default function App() {
             }}
             onToggleActive={handleToggleProductActive}
             onExportCSV={handleExportCSV}
+            onImportCSV={handleImportCatalogCSV}
+            onOpenBarcodeLink={(prod) => {
+              setPendingBarcodeToLink(prod.barcode || '');
+              setIsBarcodeLinkModalOpen(true);
+            }}
           />
         )}
 
@@ -1446,6 +1522,20 @@ export default function App() {
           onRefreshPorts={handleRefreshPorts}
         />
       )}
+
+      {/* Barcode Linking Modal (Pistoleo de Enlace) */}
+      <BarcodeLinkModal
+        isOpen={isBarcodeLinkModalOpen}
+        barcode={pendingBarcodeToLink}
+        products={products}
+        onLink={handleLinkBarcode}
+        onCreateNew={(bc) => {
+          setIsBarcodeLinkModalOpen(false);
+          setEditingProduct({ barcode: bc, active: true });
+          setIsProductModalOpen(true);
+        }}
+        onClose={() => setIsBarcodeLinkModalOpen(false)}
+      />
 
       {/* Toast Feedback */}
       <Toast toast={toast} />

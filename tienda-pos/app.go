@@ -659,3 +659,29 @@ func (a *App) UpdateSyncPairToken(token string) error {
 	a.syncServer.mu.Unlock()
 	return nil
 }
+
+func (a *App) ImportCatalogCSV(csvContent string) (*ImportCatalogResult, error) {
+	if a.db == nil {
+		return nil, fmt.Errorf("base de datos no inicializada")
+	}
+	return importCatalogCSVTx(a.db, csvContent)
+}
+
+func (a *App) ImportCatalogFromFile(filePath string) (*ImportCatalogResult, error) {
+	if a.db == nil {
+		return nil, fmt.Errorf("base de datos no inicializada")
+	}
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("no se pudo leer el archivo: %w", err)
+	}
+	return importCatalogCSVTx(a.db, string(content))
+}
+
+func (a *App) LinkBarcodeToProduct(productID int64, barcode string) error {
+	if a.db == nil {
+		return fmt.Errorf("base de datos no inicializada")
+	}
+	return linkBarcodeToProductDB(a.db, productID, barcode)
+}
+

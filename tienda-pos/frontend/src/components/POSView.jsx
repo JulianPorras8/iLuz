@@ -13,6 +13,7 @@ export default function POSView({
   onClearCart,
   onOpenCheckout,
   onClearLastScanned,
+  onOpenBarcodeLink,
 }) {
   const [newProdName, setNewProdName] = useState('');
   const [newProdPrice, setNewProdPrice] = useState('');
@@ -345,9 +346,28 @@ export default function POSView({
               <h3 style={{ fontFamily: 'monospace', margin: '8px 0' }}>
                 {unregisteredBarcode}
               </h3>
-              <p style={{ color: '#64748b', fontSize: '12px' }}>
-                Ingresa los datos para registrarlo e ingresarlo a la venta de inmediato:
+              <p style={{ color: '#64748b', fontSize: '12px', margin: '0 0 10px 0' }}>
+                ¿Este producto ya existe en el catálogo? Vincúlalo rápidamente:
               </p>
+              {onOpenBarcodeLink && (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => onOpenBarcodeLink(unregisteredBarcode)}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    fontWeight: 700,
+                    fontSize: '13px',
+                    padding: '8px 12px',
+                  }}
+                >
+                  🔗 Vincular a Producto del Catálogo
+                </button>
+              )}
             </div>
 
             <form onSubmit={handleQuickRegisterSubmit} style={{ marginTop: '14px' }}>
