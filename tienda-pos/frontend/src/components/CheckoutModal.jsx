@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import apiAdapter from '../services/apiAdapter';
 
 export default function CheckoutModal({
   isOpen,
@@ -27,11 +28,9 @@ export default function CheckoutModal({
       setIsSubmitting(false);
 
       // Load credit accounts for fiao
-      if (window.go?.main?.App?.ListCreditAccounts) {
-        window.go.main.App.ListCreditAccounts()
-          .then((accs) => setCreditAccounts(accs || []))
-          .catch(() => setCreditAccounts([]));
-      }
+      apiAdapter.listCreditAccounts()
+        .then((accs) => setCreditAccounts(accs || []))
+        .catch(() => setCreditAccounts([]));
     }
   }, [isOpen, totalAmount]);
 

@@ -394,6 +394,281 @@ const apiAdapter = {
     }
     return syncService.getServerConfig();
   },
+
+  // --- Credit Accounts ---
+  async listCreditAccounts() {
+    if (isWails() && window.go.main.App.ListCreditAccounts) {
+      return await window.go.main.App.ListCreditAccounts();
+    }
+    return getLocal('iluz_credit_accounts', []);
+  },
+
+  async recordCreditPayment(accountId, amount, notes = '') {
+    if (isWails() && window.go.main.App.RecordCreditPayment) {
+      return await window.go.main.App.RecordCreditPayment(accountId, parseFloat(amount) || 0, notes);
+    }
+    const accounts = getLocal('iluz_credit_accounts', []);
+    const acc = accounts.find((a) => a.id === accountId);
+    if (acc) {
+      acc.currentDebt = Math.max(0, (acc.currentDebt || 0) - (parseFloat(amount) || 0));
+      setLocal('iluz_credit_accounts', accounts);
+    }
+    return true;
+  },
+
+  // --- Inventory CSV ---
+  async exportInventoryCSV() {
+    if (isWails() && window.go.main.App.ExportInventoryCSV) {
+      return await window.go.main.App.ExportInventoryCSV();
+    }
+    const prods = getLocal('iluz_products', []);
+    let csv = 'Código,Nombre,Categoría,Precio,Costo,Stock,Ubicación,Estado\n';
+    prods.forEach((p) => {
+      csv += `"${p.barcode || ''}","${p.name || ''}","${p.category || ''}",${p.price || 0},${p.costPrice || 0},${p.stock || 0},"${p.location || ''}","${p.active !== false ? 'Activo' : 'Inactivo'}"\n`;
+    });
+    return csv;
+  },
+
+  async exportInventoryCSVFile() {
+    if (isWails() && window.go.main.App.ExportInventoryCSVFile) {
+      return await window.go.main.App.ExportInventoryCSVFile();
+    }
+    return null;
+  },
+
+  // --- Inventory Audits (Physical Stock Take) ---
+  async startInventorySession(name, responsible, scope = 'ALL', notes = '') {
+    if (isWails() && window.go.main.App.StartInventorySession) {
+      return await window.go.main.App.StartInventorySession(name, responsible, scope, notes);
+    }
+    const sess = {
+      id: Date.now(),
+      name,
+      responsible,
+      scope,
+      notes,
+      status: 'active',
+      startedAt: new Date().toISOString(),
+      closedAt: null,
+    };
+    const sessions = getLocal('iluz_audit_sessions', []);
+    sessions.push(sess);
+    setLocal('iluz_audit_sessions', sessions);
+    setLocal('iluz_active_audit_session', sess);
+
+    // Populate initial items from active catalog
+    const prods = getLocal('iluz_products', []);
+    const items = prods.filter((p) => p.active !== false).map((p, idx) => ({
+      id: sess.id + idx + 1,
+      sessionId: sess.id,
+      productId: p.id,
+      barcode: p.barcode,
+      productName: p.name,
+      category: p.category || '',
+      systemStock: p.stock || 0,
+      countedStock: 0,
+      discrepancy: 0 - (p.stock || 0),
+      locationBreakdown: {},
+      lastCountedAt: null,
+    }));
+    setLocal(`iluz_audit_items_${sess.id}`, items);
+    return sess;
+  },
+
+  async getActiveInventorySession() {
+    if (isWails() && window.go.main.App.GetActiveInventorySession) {
+      return await window.go.main.App.GetActiveInventorySession();
+    }
+    return getLocal('iluz_active_audit_session', null);
+  },
+
+  async listInventorySessionItems(sessionId) {
+    if (isWails() && window.go.main.App.ListInventorySessionItems) {
+      return await window.go.main.App.ListInventorySessionItems(sessionId);
+    }
+    return getLocal(`iluz_audit_items_${sessionId}`, []);
+  },
+
+  async recordInventoryScan(sessionId, barcode, locationCode) {
+    if (isWails() && window.go.main.App.RecordInventoryScan) {
+      return await window.go.main.App.RecordInventoryScan(sessionId, barcode, locationCode);
+    }
+    const items = getLocal(`iluz_audit_items_${sessionId}`, []);
+    let item = items.find((i) => i.barcode === barcode);
+    if (!item) {
+      // Check if product exists in catalog
+      const prods = getLocal('iluz_products', []);
+      const p = prods.find((prod) => prod.barcode === barcode);
+      if (!p) {
+        throw new Error(`UNKNOWN_BARCODE:${barcode}`);
+      }
+      item = {
+        id: Date.now(),
+        sessionId,
+        productId: p.id,
+        barcode: p.barcode,
+        productName: p.name,
+        category: p.category || '',
+        systemStock: p.stock || 0,
+        countedStock: 1,
+        discrepancy: 1 - (p.stock || 0),
+        locationBreakdown: { [locationCode || 'TIENDA']: 1 },
+        lastCountedAt: new Date().toISOString(),
+      };
+      items.push(item);
+    } else {
+      item.countedStock = (item.countedStock || 0) + 1;
+      item.discrepancy = item.countedStock - item.systemStock;
+      const loc = locationCode || 'TIENDA';
+      item.locationBreakdown = item.locationBreakdown || {};
+      item.locationBreakdown[loc] = (item.locationBreakdown[loc] || 0) + 1;
+      item.lastCountedAt = new Date().toISOString();
+    }
+    setLocal(`iluz_audit_items_${sessionId}`, items);
+    return item;
+  },
+
+  async recordBatchCount(sessionItemId, locationCode, qty, replace = false) {
+    if (isWails() && window.go.main.App.RecordBatchCount) {
+      return await window.go.main.App.RecordBatchCount(sessionItemId, locationCode, qty, replace);
+    }
+    const sess = getLocal('iluz_active_audit_session', null);
+    if (!sess) return false;
+    const items = getLocal(`iluz_audit_items_${sess.id}`, []);
+    const item = items.find((i) => i.id === sessionItemId);
+    if (item) {
+      const addedQty = parseInt(qty, 10) || 0;
+      if (replace) {
+        item.countedStock = addedQty;
+      } else {
+        item.countedStock = (item.countedStock || 0) + addedQty;
+      }
+      item.discrepancy = item.countedStock - item.systemStock;
+      const loc = locationCode || 'TIENDA';
+      item.locationBreakdown = item.locationBreakdown || {};
+      item.locationBreakdown[loc] = (item.locationBreakdown[loc] || 0) + addedQty;
+      item.lastCountedAt = new Date().toISOString();
+      setLocal(`iluz_audit_items_${sess.id}`, items);
+    }
+    return true;
+  },
+
+  async undoLastCount(sessionItemId) {
+    if (isWails() && window.go.main.App.UndoLastCount) {
+      return await window.go.main.App.UndoLastCount(sessionItemId);
+    }
+    const sess = getLocal('iluz_active_audit_session', null);
+    if (!sess) return false;
+    const items = getLocal(`iluz_audit_items_${sess.id}`, []);
+    const item = items.find((i) => i.id === sessionItemId);
+    if (item && item.countedStock > 0) {
+      item.countedStock -= 1;
+      item.discrepancy = item.countedStock - item.systemStock;
+      setLocal(`iluz_audit_items_${sess.id}`, items);
+    }
+    return true;
+  },
+
+  async closeInventorySession(sessionId, productIdsToUpdate = []) {
+    if (isWails() && window.go.main.App.CloseInventorySession) {
+      return await window.go.main.App.CloseInventorySession(sessionId, productIdsToUpdate);
+    }
+    const sessions = getLocal('iluz_audit_sessions', []);
+    const sess = sessions.find((s) => s.id === sessionId);
+    if (sess) {
+      sess.status = 'closed';
+      sess.closedAt = new Date().toISOString();
+      setLocal('iluz_audit_sessions', sessions);
+    }
+    setLocal('iluz_active_audit_session', null);
+
+    // Update product stock for selected products
+    const items = getLocal(`iluz_audit_items_${sessionId}`, []);
+    const prods = getLocal('iluz_products', []);
+    items.forEach((item) => {
+      if (productIdsToUpdate.length === 0 || productIdsToUpdate.includes(item.productId)) {
+        const p = prods.find((prod) => prod.id === item.productId);
+        if (p) p.stock = item.countedStock;
+      }
+    });
+    setLocal('iluz_products', prods);
+
+    const completed = getLocal('iluz_completed_audit_sessions', []);
+    if (sess) completed.unshift(sess);
+    setLocal('iluz_completed_audit_sessions', completed);
+    return true;
+  },
+
+  async cancelInventorySession(sessionId) {
+    if (isWails() && window.go.main.App.CancelInventorySession) {
+      return await window.go.main.App.CancelInventorySession(sessionId);
+    }
+    const sessions = getLocal('iluz_audit_sessions', []).filter((s) => s.id !== sessionId);
+    setLocal('iluz_audit_sessions', sessions);
+    setLocal('iluz_active_audit_session', null);
+    return true;
+  },
+
+  async listCompletedInventorySessions() {
+    if (isWails() && window.go.main.App.ListCompletedInventorySessions) {
+      return await window.go.main.App.ListCompletedInventorySessions();
+    }
+    return getLocal('iluz_completed_audit_sessions', []);
+  },
+
+  async exportInventorySessionCSV(sessionId) {
+    if (isWails() && window.go.main.App.ExportInventorySessionCSV) {
+      return await window.go.main.App.ExportInventorySessionCSV(sessionId);
+    }
+    const items = getLocal(`iluz_audit_items_${sessionId}`, []);
+    let csv = 'Código,Producto,Categoría,Stock Sistema,Conteo Físico,Diferencia\n';
+    items.forEach((i) => {
+      csv += `"${i.barcode || ''}","${i.productName || ''}","${i.category || ''}",${i.systemStock || 0},${i.countedStock || 0},${i.discrepancy || 0}\n`;
+    });
+    return csv;
+  },
+
+  async exportInventorySessionCSVFile(sessionId) {
+    if (isWails() && window.go.main.App.ExportInventorySessionCSVFile) {
+      return await window.go.main.App.ExportInventorySessionCSVFile(sessionId);
+    }
+    return null;
+  },
+
+  // --- Hardware / COM Ports ---
+  async getAvailablePorts() {
+    if (isWails() && window.go.main.App.GetAvailablePorts) {
+      return await window.go.main.App.GetAvailablePorts();
+    }
+    return [];
+  },
+
+  async getCurrentPort() {
+    if (isWails() && window.go.main.App.GetCurrentPort) {
+      return await window.go.main.App.GetCurrentPort();
+    }
+    return '';
+  },
+
+  async setScannerPort(portName) {
+    if (isWails() && window.go.main.App.SetScannerPort) {
+      return await window.go.main.App.SetScannerPort(portName);
+    }
+    return null;
+  },
+
+  async processBarcode(barcode) {
+    if (isWails() && window.go.main.App.ProcessBarcode) {
+      return await window.go.main.App.ProcessBarcode(barcode);
+    }
+    const product = await this.searchBarcode(barcode);
+    return {
+      barcode,
+      found: Boolean(product),
+      product,
+      timestamp: new Date().toISOString(),
+    };
+  },
 };
 
 export default apiAdapter;

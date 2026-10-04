@@ -222,6 +222,103 @@ describe('apiAdapter - Android / Non-Wails (Local-First Offline) Mode', () => {
       expect(read.allowNegativeStock).toBe(false);
     });
   });
+
+  describe('Credit Accounts & Payments', () => {
+    it('manages credit debt and partial payments without crashing', async () => {
+      localStorage.setItem(
+        'iluz_credit_accounts',
+        JSON.stringify([{ id: 10, customerName: 'Don Ramón', currentDebt: 50000, active: true }])
+      );
+
+      const accounts = await apiAdapter.listCreditAccounts();
+      expect(accounts).toHaveLength(1);
+      expect(accounts[0].customerName).toBe('Don Ramón');
+
+      await apiAdapter.recordCreditPayment(10, 20000, 'Abono en efectivo');
+      const updated = await apiAdapter.listCreditAccounts();
+      expect(updated[0].currentDebt).toBe(30000);
+    });
+  });
+
+  describe('Inventory Audits (Physical Stock Take)', () => {
+    it('executes full audit session lifecycle: start, count, batch, undo, reconcile and CSV export', async () => {
+      // 1. Seed catalog with 2 products
+      await apiAdapter.saveProduct({ id: 1, barcode: 'AUDIT01', name: 'Arroz Diana', stock: 10, active: true });
+      await apiAdapter.saveProduct({ id: 2, barcode: 'AUDIT02', name: 'Aceite Premier', stock: 5, active: true });
+
+      // 2. Start session
+      const session = await apiAdapter.startInventorySession('Toma Mensual Octubre', 'Julián', 'ALL', 'Conteo general');
+      expect(session).toBeDefined();
+      expect(session.id).toBeGreaterThan(0);
+      expect(session.status).toBe('active');
+
+      // 3. Verify session items seeded
+      let items = await apiAdapter.listInventorySessionItems(session.id);
+      expect(items).toHaveLength(2);
+      expect(items[0].countedStock).toBe(0);
+
+      // 4. Record single scan
+      const scannedItem = await apiAdapter.recordInventoryScan(session.id, 'AUDIT01', 'EST01');
+      expect(scannedItem.countedStock).toBe(1);
+
+      // 5. Record batch count
+      await apiAdapter.recordBatchCount(scannedItem.id, 'EST01', 9, false); // +9 -> 10
+      items = await apiAdapter.listInventorySessionItems(session.id);
+      const arrozItem = items.find((i) => i.barcode === 'AUDIT01');
+      expect(arrozItem.countedStock).toBe(10);
+
+      // 6. Undo count
+      await apiAdapter.undoLastCount(arrozItem.id);
+      items = await apiAdapter.listInventorySessionItems(session.id);
+      expect(items.find((i) => i.barcode === 'AUDIT01').countedStock).toBe(9);
+
+      // 7. Export CSV
+      const csv = await apiAdapter.exportInventorySessionCSV(session.id);
+      expect(csv).toContain('Arroz Diana');
+      expect(csv).toContain('AUDIT01');
+
+      // 8. Close session and reconcile stock
+      await apiAdapter.closeInventorySession(session.id, [1]);
+      const activeAfter = await apiAdapter.getActiveInventorySession();
+      expect(activeAfter).toBeNull();
+
+      const completed = await apiAdapter.listCompletedInventorySessions();
+      expect(completed).toHaveLength(1);
+      expect(completed[0].id).toBe(session.id);
+
+      // Verify product stock updated to physical count (9)
+      const reconciledProd = await apiAdapter.searchBarcode('AUDIT01');
+      expect(reconciledProd.stock).toBe(9);
+    });
+
+    it('cancels active audit session without modifying catalog stock', async () => {
+      await apiAdapter.saveProduct({ id: 100, barcode: 'TEST_CANCEL', name: 'Atún', stock: 15, active: true });
+      const session = await apiAdapter.startInventorySession('Toma a Cancelar', 'Admin', 'ALL');
+      await apiAdapter.recordInventoryScan(session.id, 'TEST_CANCEL', 'TIENDA');
+
+      await apiAdapter.cancelInventorySession(session.id);
+      const active = await apiAdapter.getActiveInventorySession();
+      expect(active).toBeNull();
+
+      const prod = await apiAdapter.searchBarcode('TEST_CANCEL');
+      expect(prod.stock).toBe(15); // Unchanged!
+    });
+  });
+
+  describe('Hardware & Scanner COM Ports', () => {
+    it('returns empty ports safely without crashing in browser/android mode', async () => {
+      const ports = await apiAdapter.getAvailablePorts();
+      expect(Array.isArray(ports)).toBe(true);
+
+      const curPort = await apiAdapter.getCurrentPort();
+      expect(typeof curPort).toBe('string');
+
+      await apiAdapter.setScannerPort('COM4');
+      const scanRes = await apiAdapter.processBarcode('NOT_EXISTING_123');
+      expect(scanRes.found).toBe(false);
+      expect(scanRes.barcode).toBe('NOT_EXISTING_123');
+    });
+  });
 });
 
 describe('apiAdapter - Wails Desktop Mode (Delegation Verification)', () => {

@@ -279,8 +279,9 @@ export default function ProductModal({ isOpen, product, locations = [], onSave, 
             {/* Row 1: Identification */}
             <div className="grid-2">
               <div className="form-group">
-                <label>Código de Barras (Opcional):</label>
+                <label htmlFor="prod-barcode">Código de Barras (Opcional):</label>
                 <input
+                  id="prod-barcode"
                   type="text"
                   value={formData.barcode}
                   onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
@@ -292,8 +293,9 @@ export default function ProductModal({ isOpen, product, locations = [], onSave, 
                 </small>
               </div>
               <div className="form-group">
-                <label>Nombre del Producto (*):</label>
+                <label htmlFor="prod-name">Nombre del Producto (*):</label>
                 <input
+                  id="prod-name"
                   type="text"
                   required
                   value={formData.name}
@@ -307,8 +309,9 @@ export default function ProductModal({ isOpen, product, locations = [], onSave, 
             {/* Row 2: Economics & Stock */}
             <div className="grid-3">
               <div className="form-group">
-                <label>Precio de Costo ($):</label>
+                <label htmlFor="prod-cost">Precio de Costo ($):</label>
                 <input
+                  id="prod-cost"
                   type="number"
                   step="0.01"
                   min="0"
@@ -321,8 +324,9 @@ export default function ProductModal({ isOpen, product, locations = [], onSave, 
                 </small>
               </div>
               <div className="form-group">
-                <label>Precio de Venta (*):</label>
+                <label htmlFor="prod-price">Precio de Venta (*):</label>
                 <input
+                  id="prod-price"
                   type="number"
                   step="0.01"
                   min="0"
@@ -342,8 +346,9 @@ export default function ProductModal({ isOpen, product, locations = [], onSave, 
                 )}
               </div>
               <div className="form-group">
-                <label>Stock Actual (*):</label>
+                <label htmlFor="prod-stock">Stock Actual (*):</label>
                 <input
+                  id="prod-stock"
                   type="number"
                   min="0"
                   required

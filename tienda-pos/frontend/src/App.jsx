@@ -145,14 +145,14 @@ export default function App() {
       const isWailsApp = typeof window !== 'undefined' && !!window.go?.main?.App;
 
       const [status, ports, port, locs, shs, prods, activeSess, completedSess, shift, cfg, sups, rep] = await Promise.all([
-        isWailsApp && window.go.main.App.GetScannerStatus ? window.go.main.App.GetScannerStatus() : Promise.resolve(null),
-        isWailsApp && window.go.main.App.GetAvailablePorts ? window.go.main.App.GetAvailablePorts() : Promise.resolve([]),
-        isWailsApp && window.go.main.App.GetCurrentPort ? window.go.main.App.GetCurrentPort() : Promise.resolve('COM3'),
+        isWailsApp && window.go?.main?.App?.GetScannerStatus ? window.go.main.App.GetScannerStatus() : Promise.resolve(null),
+        apiAdapter.getAvailablePorts(),
+        apiAdapter.getCurrentPort(),
         apiAdapter.getAllLocations(),
         apiAdapter.getAllShelves(),
         apiAdapter.listProducts(true),
-        isWailsApp && window.go.main.App.GetActiveInventorySession ? window.go.main.App.GetActiveInventorySession() : Promise.resolve(null),
-        isWailsApp && window.go.main.App.ListCompletedInventorySessions ? window.go.main.App.ListCompletedInventorySessions() : Promise.resolve([]),
+        apiAdapter.getActiveInventorySession(),
+        apiAdapter.listCompletedInventorySessions(),
         apiAdapter.getCurrentCashShift(),
         apiAdapter.getStoreConfig(),
         apiAdapter.listSuppliers(false),
@@ -172,8 +172,8 @@ export default function App() {
       setSuppliers(sups || []);
       if (rep) setReportData(rep);
 
-      if (activeSess && isWailsApp && window.go.main.App.ListInventorySessionItems) {
-        const items = await window.go.main.App.ListInventorySessionItems(activeSess.id);
+      if (activeSess) {
+        const items = await apiAdapter.listInventorySessionItems(activeSess.id);
         setAuditItems(items || []);
       }
     } catch (err) {
@@ -258,7 +258,7 @@ export default function App() {
         if (activeAuditSession) {
           (async () => {
             try {
-              const updated = await window.go.main.App.RecordInventoryScan(
+              const updated = await apiAdapter.recordInventoryScan(
                 activeAuditSession.id,
                 barcode,
                 auditLocationCode
@@ -267,7 +267,7 @@ export default function App() {
                 playSoundChime(true);
                 showToast(`+1 en ${auditLocationCode}: ${updated.productName}`, 'success');
                 setLastTouchedAuditItemId(updated.id);
-                const items = await window.go.main.App.ListInventorySessionItems(activeAuditSession.id);
+                const items = await apiAdapter.listInventorySessionItems(activeAuditSession.id);
                 setAuditItems(items || []);
               }
             } catch (err) {
@@ -347,21 +347,19 @@ export default function App() {
 
       const unbindAuditSession = window.runtime.EventsOn('inventory:session_changed', async (sess) => {
         setActiveAuditSession(sess || null);
-        if (sess && window.go?.main?.App?.ListInventorySessionItems) {
-          const items = await window.go.main.App.ListInventorySessionItems(sess.id);
+        if (sess) {
+          const items = await apiAdapter.listInventorySessionItems(sess.id);
           setAuditItems(items || []);
         } else {
           setAuditItems([]);
         }
-        if (window.go?.main?.App?.ListCompletedInventorySessions) {
-          const completed = await window.go.main.App.ListCompletedInventorySessions();
-          setCompletedAuditSessions(completed || []);
-        }
+        const completed = await apiAdapter.listCompletedInventorySessions();
+        setCompletedAuditSessions(completed || []);
       });
 
       const unbindItemCounted = window.runtime.EventsOn('inventory:item_counted', async () => {
-        if (activeAuditSession?.id && window.go?.main?.App?.ListInventorySessionItems) {
-          const items = await window.go.main.App.ListInventorySessionItems(activeAuditSession.id);
+        if (activeAuditSession?.id) {
+          const items = await apiAdapter.listInventorySessionItems(activeAuditSession.id);
           setAuditItems(items || []);
         }
       });
@@ -434,25 +432,16 @@ export default function App() {
           e.preventDefault();
           const scannedCode = keyBuffer;
           keyBuffer = '';
-          if (window.go?.main?.App?.ProcessBarcode) {
-            window.go.main.App.ProcessBarcode(scannedCode);
-          } else {
-            (async () => {
-              try {
-                let product = null;
-                let found = false;
-                try {
-                  product = await apiAdapter.searchBarcode(scannedCode);
-                  if (product && product.id) found = true;
-                } catch {
-                  found = false;
-                }
-                handleIncomingScan({ barcode: scannedCode, found, product });
-              } catch (err) {
-                console.error('Scan handling error:', err);
+          (async () => {
+            try {
+              const res = await apiAdapter.processBarcode(scannedCode);
+              if (!apiAdapter.isWails) {
+                handleIncomingScan(res);
               }
-            })();
-          }
+            } catch (err) {
+              console.error('Scan handling error:', err);
+            }
+          })();
         }
       } else if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
         keyBuffer += e.key;
@@ -466,30 +455,26 @@ export default function App() {
   // --- Port Switching ---
   const handlePortChange = async (newPort) => {
     setCurrentPort(newPort);
-    if (window.go?.main?.App?.SetScannerPort) {
-      try {
-        await window.go.main.App.SetScannerPort(newPort);
-        showToast(`Cambiando puerto a ${newPort}...`, 'info');
-      } catch (err) {
-        console.error('Error changing port:', err);
-        showToast(`Error conectando a ${newPort}`, 'error');
-      }
+    try {
+      await apiAdapter.setScannerPort(newPort);
+      showToast(`Cambiando puerto a ${newPort}...`, 'info');
+    } catch (err) {
+      console.error('Error changing port:', err);
+      showToast(`Error conectando a ${newPort}`, 'error');
     }
   };
 
   const handleRefreshPorts = async () => {
-    if (window.go?.main?.App) {
-      try {
-        const [ports, cur] = await Promise.all([
-          window.go.main.App.GetAvailablePorts(),
-          window.go.main.App.GetCurrentPort(),
-        ]);
-        setAvailablePorts(ports || []);
-        if (cur) setCurrentPort(cur);
-        showToast('Puertos COM actualizados', 'info');
-      } catch (err) {
-        console.error('Error refreshing ports:', err);
-      }
+    try {
+      const [ports, cur] = await Promise.all([
+        apiAdapter.getAvailablePorts(),
+        apiAdapter.getCurrentPort(),
+      ]);
+      setAvailablePorts(ports || []);
+      if (cur) setCurrentPort(cur);
+      showToast('Puertos COM actualizados', 'info');
+    } catch (err) {
+      console.error('Error refreshing ports:', err);
     }
   };
 
@@ -517,7 +502,7 @@ export default function App() {
         } else if (currentTab === 'audit' && activeAuditSession) {
           // Auto-enroll new product into active audit session with initial +1 count (Spec Rule 5)
           try {
-            const updatedItem = await window.go.main.App.RecordInventoryScan(
+            const updatedItem = await apiAdapter.recordInventoryScan(
               activeAuditSession.id,
               prodData.barcode,
               auditLocationCode
@@ -557,8 +542,8 @@ export default function App() {
       }
 
       // Refresh audit items if session active
-      if (activeAuditSession && window.go?.main?.App?.ListInventorySessionItems) {
-        const freshAuditItems = await window.go.main.App.ListInventorySessionItems(activeAuditSession.id);
+      if (activeAuditSession) {
+        const freshAuditItems = await apiAdapter.listInventorySessionItems(activeAuditSession.id);
         setAuditItems(freshAuditItems || []);
       }
     } catch (err) {
@@ -706,7 +691,7 @@ export default function App() {
   const handleExportCSV = async () => {
     try {
       // 1. Try native Windows save dialog
-      const savedPath = await window.go?.main?.App?.ExportInventoryCSVFile().catch(() => null);
+      const savedPath = await apiAdapter.exportInventoryCSVFile().catch(() => null);
       if (savedPath) {
         showToast(`💾 Exportado en: ${savedPath}`, 'success');
         window.focus();
@@ -714,7 +699,7 @@ export default function App() {
       }
 
       // 2. Fallback to browser blob download
-      const csvData = await window.go.main.App.ExportInventoryCSV();
+      const csvData = await apiAdapter.exportInventoryCSV();
       const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -734,13 +719,13 @@ export default function App() {
   // --- Physical Inventory Audit Operations (Mode B) ---
   const handleStartAuditSession = async ({ name, responsible, scope, notes }) => {
     try {
-      const sess = await window.go.main.App.StartInventorySession(name, responsible, scope, notes);
+      const sess = await apiAdapter.startInventorySession(name, responsible, scope, notes);
       setIsStartAuditModalOpen(false);
       setActiveAuditSession(sess);
       setCurrentTab('audit');
       showToast(`🚀 Toma "${sess.name}" iniciada`, 'success');
 
-      const items = await window.go.main.App.ListInventorySessionItems(sess.id);
+      const items = await apiAdapter.listInventorySessionItems(sess.id);
       setAuditItems(items || []);
     } catch (err) {
       console.error('Error starting inventory session:', err);
@@ -751,7 +736,7 @@ export default function App() {
   const handleRecordAuditScan = async (barcode, locationCode) => {
     if (!activeAuditSession) return null;
     try {
-      const updated = await window.go.main.App.RecordInventoryScan(
+      const updated = await apiAdapter.recordInventoryScan(
         activeAuditSession.id,
         barcode,
         locationCode
@@ -759,13 +744,13 @@ export default function App() {
       if (updated) {
         playSoundChime(true);
         setLastTouchedAuditItemId(updated.id);
-        const items = await window.go.main.App.ListInventorySessionItems(activeAuditSession.id);
+        const items = await apiAdapter.listInventorySessionItems(activeAuditSession.id);
         setAuditItems(items || []);
       }
       return updated;
     } catch (err) {
       playSoundChime(false);
-      const errStr = String(err || '');
+      const errStr = String(err?.message || err || '');
       if (errStr.includes('UNKNOWN_BARCODE:')) {
         const code = errStr.split('UNKNOWN_BARCODE:')[1] || barcode;
         showToast(`Código ${code} no registrado. Abriendo catálogo para crearlo...`, 'warning');
@@ -781,10 +766,10 @@ export default function App() {
 
   const handleBatchAuditCount = async (sessionItemId, locationCode, qty, replace) => {
     try {
-      await window.go.main.App.RecordBatchCount(sessionItemId, locationCode, qty, replace);
+      await apiAdapter.recordBatchCount(sessionItemId, locationCode, qty, replace);
       showToast('✅ Conteo registrado exitosamente', 'success');
       if (activeAuditSession) {
-        const items = await window.go.main.App.ListInventorySessionItems(activeAuditSession.id);
+        const items = await apiAdapter.listInventorySessionItems(activeAuditSession.id);
         setAuditItems(items || []);
       }
     } catch (err) {
@@ -795,10 +780,10 @@ export default function App() {
 
   const handleUndoAuditCount = async (sessionItemId) => {
     try {
-      await window.go.main.App.UndoLastCount(sessionItemId);
+      await apiAdapter.undoLastCount(sessionItemId);
       showToast('↺ Último conteo deshecho', 'info');
       if (activeAuditSession) {
-        const items = await window.go.main.App.ListInventorySessionItems(activeAuditSession.id);
+        const items = await apiAdapter.listInventorySessionItems(activeAuditSession.id);
         setAuditItems(items || []);
       }
     } catch (err) {
@@ -810,18 +795,18 @@ export default function App() {
   const handleConfirmCloseAudit = async (productIdsToUpdate) => {
     if (!activeAuditSession) return;
     try {
-      await window.go.main.App.CloseInventorySession(activeAuditSession.id, productIdsToUpdate);
+      await apiAdapter.closeInventorySession(activeAuditSession.id, productIdsToUpdate);
       setIsReconciliationModalOpen(false);
       showToast('🏁 Toma de inventario finalizada y existencias ajustadas', 'success');
 
-      // Refresh products from SQLite to show updated stock
-      const updatedProds = await window.go.main.App.ListInventoryProducts(true);
+      // Refresh products from SQLite or local-first store
+      const updatedProds = await apiAdapter.listProducts(true);
       setProducts(updatedProds || []);
 
       // Refresh active session and completed list
       setActiveAuditSession(null);
       setAuditItems([]);
-      const completed = await window.go.main.App.ListCompletedInventorySessions();
+      const completed = await apiAdapter.listCompletedInventorySessions();
       setCompletedAuditSessions(completed || []);
     } catch (err) {
       console.error('Error closing inventory session:', err);
@@ -839,11 +824,11 @@ export default function App() {
       onConfirm: async () => {
         setConfirmDialog({ isOpen: false });
         try {
-          await window.go.main.App.CancelInventorySession(activeAuditSession.id);
+          await apiAdapter.cancelInventorySession(activeAuditSession.id);
           setActiveAuditSession(null);
           setAuditItems([]);
           showToast('ℹ️ Toma de inventario cancelada', 'info');
-          const completed = await window.go.main.App.ListCompletedInventorySessions();
+          const completed = await apiAdapter.listCompletedInventorySessions();
           setCompletedAuditSessions(completed || []);
         } catch (err) {
           console.error('Error cancelling inventory session:', err);
@@ -858,7 +843,7 @@ export default function App() {
     const idToExport = actualSessionId || activeAuditSession?.id || completedAuditSessions[0]?.id;
     if (!idToExport) return;
     try {
-      const savedPath = await window.go?.main?.App?.ExportInventorySessionCSVFile(idToExport).catch(() => null);
+      const savedPath = await apiAdapter.exportInventorySessionCSVFile(idToExport).catch(() => null);
       if (savedPath) {
         showToast(`💾 Reporte exportado en: ${savedPath}`, 'success');
         window.focus();
@@ -866,7 +851,7 @@ export default function App() {
       }
 
       // Browser fallback
-      const csvData = await window.go.main.App.ExportInventorySessionCSV(idToExport);
+      const csvData = await apiAdapter.exportInventorySessionCSV(idToExport);
       const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -894,10 +879,9 @@ export default function App() {
       showToast(`✓ Venta #${sale.ticketNumber} registrada ($${sale.totalAmount?.toLocaleString()})`, 'success');
 
       // Refresh products to show updated live stock
-      if (window.go?.main?.App?.ListInventoryProducts) {
-        const prods = await window.go.main.App.ListInventoryProducts(true);
-        setProducts(prods || []);
-      }
+      const prods = await apiAdapter.listProducts(true);
+      setProducts(prods || []);
+
       // Refresh current shift
       if (apiAdapter.getCurrentCashShift) {
         const shift = await apiAdapter.getCurrentCashShift();
@@ -1045,7 +1029,7 @@ export default function App() {
 
   const handleFinalizePurchase = async (purchaseData) => {
     try {
-      const res = await window.go.main.App.CreatePurchase({
+      const res = await apiAdapter.createPurchase({
         supplierId: parseInt(purchaseData.supplierId, 10),
         invoiceNumber: purchaseData.invoiceNumber,
         invoiceDate: purchaseData.invoiceDate,
@@ -1064,15 +1048,13 @@ export default function App() {
       });
       setActivePurchase(null);
       playSoundChime(true);
-      showToast(`✅ Factura #${res.invoiceNumber} ingresada a inventario`, 'success');
+      showToast(`✅ Factura #${res.invoiceNumber || 'de compra'} ingresada a inventario`, 'success');
 
       // Refresh products and reports
-      const prods = await window.go.main.App.ListInventoryProducts(true);
+      const prods = await apiAdapter.listProducts(true);
       setProducts(prods || []);
-      if (window.go.main.App.GetFinancialReports) {
-        const rep = await window.go.main.App.GetFinancialReports(currentReportPeriod);
-        setReportData(rep);
-      }
+      const rep = await apiAdapter.getFinancialReports(currentReportPeriod);
+      if (rep) setReportData(rep);
     } catch (err) {
       playSoundChime(false);
       console.error('Error finalizing purchase:', err);
@@ -1088,13 +1070,11 @@ export default function App() {
   // --- Reports Operations ---
   const handleFetchReports = async (period) => {
     setCurrentReportPeriod(period);
-    if (window.go?.main?.App?.GetFinancialReports) {
-      try {
-        const rep = await window.go.main.App.GetFinancialReports(period);
-        setReportData(rep);
-      } catch (err) {
-        console.error('Error fetching reports:', err);
-      }
+    try {
+      const rep = await apiAdapter.getFinancialReports(period);
+      if (rep) setReportData(rep);
+    } catch (err) {
+      console.error('Error fetching reports:', err);
     }
   };
 
@@ -1292,7 +1272,7 @@ export default function App() {
             onExportSessionCSV={handleExportSessionCSV}
             onRefresh={async () => {
               if (activeAuditSession) {
-                const items = await window.go.main.App.ListInventorySessionItems(activeAuditSession.id);
+                const items = await apiAdapter.listInventorySessionItems(activeAuditSession.id);
                 setAuditItems(items || []);
               }
             }}
