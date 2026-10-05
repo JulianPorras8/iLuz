@@ -101,8 +101,9 @@ export default function Header({
   return (
     <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 18px', background: '#0f172a', borderBottom: '1px solid #1e293b' }}>
       <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, overflow: 'hidden' }}>
-        <div className="brand-title" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '20px', fontWeight: 800, color: '#f8fafc', whiteSpace: 'nowrap' }}>
-          <span>⚡ iLuz</span>
+        <div className="brand-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '20px', fontWeight: 800, color: '#f8fafc', whiteSpace: 'nowrap' }}>
+          <img src="/icon.png" alt="iLuz" style={{ width: '28px', height: '28px', borderRadius: '7px', objectFit: 'contain', boxShadow: '0 0 10px rgba(16, 185, 129, 0.35)' }} />
+          <span>iLuz</span>
         </div>
 
         {/* Scrollable Navigation Suite Tabs */}
